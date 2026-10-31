@@ -261,3 +261,23 @@ def test_real_thermal_inference_and_gradcam(client, sample_valid_thermal_bytes):
     else:
         assert data["status"] == "awaiting_model_training"
 
+
+def test_dataset_scan_endpoint(client):
+    """Verifies that POST /api/dataset/scan responds with structured scan status."""
+    response = client.post("/api/dataset/scan")
+    assert response.status_code == 200
+    data = response.json()
+    assert "status" in data
+    assert data["status"] in ["scan_complete", "waiting_for_downloads"]
+    assert "workspace_root" in data
+
+
+def test_dataset_import_dry_run_endpoint(client):
+    """Verifies that POST /api/dataset/import with dry_run=True succeeds safely."""
+    response = client.post("/api/dataset/import", json={"dry_run": True})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["dry_run"] is True
+    assert "status" in data
+
+

@@ -181,6 +181,7 @@ export interface EvaluationBenchmark {
     test_metrics: {
       overall_accuracy: number;
       macro_f1: number;
+      macro_precision?: number;
       macro_sensitivity_recall: number;
       macro_specificity: number;
       macro_roc_auc: number;
@@ -195,6 +196,7 @@ export interface EvaluationBenchmark {
     test_metrics: {
       overall_accuracy: number;
       macro_f1: number;
+      macro_precision?: number;
       macro_sensitivity_recall: number;
       macro_specificity: number;
       macro_roc_auc: number;
@@ -469,6 +471,24 @@ export async function exportResearchReportMarkdown(payload: AnalysisResponse): P
     body: JSON.stringify(payload)
   });
   if (!res.ok) throw new Error('Failed to generate research report');
+  return res.json();
+}
+
+export async function scanDatasetDropbox(): Promise<any> {
+  const res = await fetch(`${API_BASE}/api/dataset/scan`, {
+    method: 'POST'
+  });
+  if (!res.ok) throw new Error(`Dataset scan failed: ${res.status}`);
+  return res.json();
+}
+
+export async function importDatasetDropbox(dryRun: boolean = false): Promise<any> {
+  const res = await fetch(`${API_BASE}/api/dataset/import`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dry_run: dryRun })
+  });
+  if (!res.ok) throw new Error(`Dataset import failed: ${res.status}`);
   return res.json();
 }
 

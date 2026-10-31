@@ -26,6 +26,7 @@ from src.validation.modality_detector import (
     MAMMOGRAM_ERROR_MSG,
     THERMAL_ERROR_MSG,
 )
+from src.ingestion.pipeline import run_ingestion_pipeline
 
 # Setup sanitized logging without patient or credential leaks
 logging.basicConfig(
@@ -491,6 +492,49 @@ def get_dataset_statistics() -> Dict[str, Any]:
             "readable_images": sum(1 for r in thermal_records if r.get("validation_status") == "valid")
         }
     }
+
+
+class DatasetImportRequest(BaseModel):
+    dry_run: bool = False
+
+
+@app.post("/api/dataset/scan")
+def scan_dataset_dropbox() -> Dict[str, Any]:
+    """Scans dataset_dropbox directories and workspace root for available datasets without modifying files."""
+    try:
+        scan_summary = run_ingestion_pipeline(
+            workspace_root=PROJECT_ROOT,
+            dry_run=True,
+            scan_only=True,
+            auto_detect_workspace_datasets=True
+        )
+        return scan_summary
+    except Exception as exc:
+        logger.error(f"Error scanning dataset dropbox: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Dataset scan failed: {str(exc)}"
+        )
+
+
+@app.post("/api/dataset/import")
+def import_dataset_from_dropbox(request: Optional[DatasetImportRequest] = None) -> Dict[str, Any]:
+    """Safely extracts archives, organizes files into data/raw/, regenerates manifests, and builds audit report."""
+    is_dry_run = request.dry_run if request else False
+    try:
+        import_summary = run_ingestion_pipeline(
+            workspace_root=PROJECT_ROOT,
+            dry_run=is_dry_run,
+            scan_only=False,
+            auto_detect_workspace_datasets=True
+        )
+        return import_summary
+    except Exception as exc:
+        logger.error(f"Error executing dataset ingestion pipeline: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Dataset import failed: {str(exc)}"
+        )
 
 
 @app.get("/api/manifests/records")

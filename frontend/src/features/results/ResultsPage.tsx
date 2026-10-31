@@ -645,7 +645,7 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ latestResult, onNaviga
                     Precision
                   </div>
                   <div className="mono" style={{ fontSize: '24px', fontWeight: 700, color: 'var(--status-benign)', marginTop: '4px' }}>
-                    {((testMetrics as any).macro_precision ? ((testMetrics as any).macro_precision * 100).toFixed(1) : '39.1')}%
+                    {testMetrics.macro_precision != null ? `${(testMetrics.macro_precision * 100).toFixed(1)}%` : 'N/A'}
                   </div>
                   <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
                     Positive Predictive Value
