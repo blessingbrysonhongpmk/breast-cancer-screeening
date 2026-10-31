@@ -60,6 +60,7 @@ export function App() {
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [modelStatus, setModelStatus] = useState<ModelStatus | null>(null);
   const [latestAnalysis, setLatestAnalysis] = useState<AnalysisResponse | null>(null);
+  const [targetSample, setTargetSample] = useState<string | null>(null);
 
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
@@ -124,10 +125,13 @@ export function App() {
     { id: 'about', label: 'About', icon: Info }
   ];
 
-  const handleNavigate = (view: string, modality?: 'mammogram' | 'thermal') => {
+  const handleNavigate = (view: string, modality?: 'mammogram' | 'thermal', sampleFilename?: string) => {
     const normalized = normalizeView(view);
     if (modality) {
       setActiveModality(modality);
+    }
+    if (sampleFilename !== undefined) {
+      setTargetSample(sampleFilename);
     }
     setCurrentView(normalized);
     window.location.hash = normalized;
@@ -292,10 +296,11 @@ export function App() {
 
             {/* Sync Button */}
             <button
+              type="button"
               onClick={syncBackendData}
               disabled={isSyncing}
               className="btn-secondary"
-              style={{ padding: '5px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+              style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
               title="Refresh connection status"
             >
               <RefreshCw size={12} className={isSyncing ? 'spinning' : ''} />
@@ -317,6 +322,8 @@ export function App() {
           {currentView === 'examination' && (
             <AnalysisPage
               initialModality={activeModality}
+              initialSampleFilename={targetSample}
+              onClearTargetSample={() => setTargetSample(null)}
               modelReadiness={modelReadiness}
               onNavigate={handleNavigate}
               onAnalysisComplete={(res) => setLatestAnalysis(res)}

@@ -89,8 +89,9 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
                     className="btn-danger"
                     onClick={handleClearHistory}
                     disabled={isClearing}
-                    style={{ fontSize: '12px', padding: '6px 12px' }}
+                    style={{ fontSize: '12px', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}
                   >
+                    {isClearing && <RefreshCw size={12} className="spinning" />}
                     <span>{isClearing ? 'Clearing...' : 'Confirm Clear'}</span>
                   </button>
                   <button
@@ -108,7 +109,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
                   type="button"
                   className="btn-secondary"
                   onClick={() => setShowClearConfirm(true)}
-                  style={{ fontSize: '12px', padding: '6px 12px', color: 'var(--status-malignant)' }}
+                  style={{ fontSize: '12px', padding: '6px 12px', color: 'var(--status-malignant)', display: 'flex', alignItems: 'center', gap: '6px' }}
                   title="Clear saved examination records"
                 >
                   <Trash2 size={13} />
@@ -123,10 +124,10 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
             className="btn-secondary"
             onClick={loadHistory}
             disabled={isLoading}
-            style={{ fontSize: '12px', padding: '6px 12px' }}
+            style={{ fontSize: '12px', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
             <RefreshCw size={12} className={isLoading ? 'spinning' : ''} />
-            <span>Refresh</span>
+            <span>{isLoading ? 'Refreshing...' : 'Refresh'}</span>
           </button>
         </div>
       </div>

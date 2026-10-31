@@ -239,3 +239,4 @@ tests\test_transforms.py .........                                       [100%]
 2. **Dataset Size and Imbalance:** The MIAS dataset contains limited biopsy-confirmed malignant cases (7 in the test partition), which skews classification towards majority classes.
 3. **Sensor and Protocol Variations:** Mendeley thermal scans exhibit variance across ambient room temperature and subject stabilization.
 4. **Research Notice:** This system is an academic research platform for investigating explainable computer vision in oncology. Outputs must not be used for medical diagnosis, clinical screening, or treatment selection.
+

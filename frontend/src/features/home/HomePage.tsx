@@ -16,7 +16,7 @@ import { HealthResponse, ModelReadinessResponse } from '../../services/api';
 interface HomePageProps {
   health: HealthResponse | null;
   modelReadiness: ModelReadinessResponse | null;
-  onNavigate: (view: string, modality?: 'mammogram' | 'thermal') => void;
+  onNavigate: (view: string, modality?: 'mammogram' | 'thermal', sampleFilename?: string) => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNavigate }) => {
@@ -159,8 +159,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
             flexDirection: 'column',
             justifyContent: 'space-between',
             padding: '24px',
-            cursor: 'pointer',
-            transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+            cursor: 'pointer'
           }}
           onClick={() => onNavigate('examination', 'mammogram')}
         >
@@ -245,8 +244,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
             flexDirection: 'column',
             justifyContent: 'space-between',
             padding: '24px',
-            cursor: 'pointer',
-            transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+            cursor: 'pointer'
           }}
           onClick={() => onNavigate('examination', 'thermal')}
         >
@@ -351,7 +349,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
           <button
             type="button"
             className="btn-secondary"
-            onClick={() => onNavigate('examination', 'mammogram')}
+            onClick={() => onNavigate('examination', 'mammogram', 'mdb001.pgm')}
             style={{
               padding: '10px 14px',
               justifyContent: 'space-between',
@@ -370,7 +368,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
           <button
             type="button"
             className="btn-secondary"
-            onClick={() => onNavigate('examination', 'mammogram')}
+            onClick={() => onNavigate('examination', 'mammogram', 'mdb002.pgm')}
             style={{
               padding: '10px 14px',
               justifyContent: 'space-between',
@@ -389,7 +387,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
           <button
             type="button"
             className="btn-secondary"
-            onClick={() => onNavigate('examination', 'thermal')}
+            onClick={() => onNavigate('examination', 'thermal', 'IIR0110_anterior.png')}
             style={{
               padding: '10px 14px',
               justifyContent: 'space-between',

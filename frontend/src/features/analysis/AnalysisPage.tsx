@@ -23,6 +23,8 @@ import {
 
 interface AnalysisPageProps {
   initialModality?: 'mammogram' | 'thermal';
+  initialSampleFilename?: string | null;
+  onClearTargetSample?: () => void;
   modelReadiness: ModelReadinessResponse | null;
   onNavigate: (view: string) => void;
   onAnalysisComplete: (result: AnalysisResponse) => void;
@@ -30,6 +32,8 @@ interface AnalysisPageProps {
 
 export const AnalysisPage: React.FC<AnalysisPageProps> = ({
   initialModality = 'mammogram',
+  initialSampleFilename,
+  onClearTargetSample,
   modelReadiness,
   onNavigate,
   onAnalysisComplete
@@ -60,6 +64,27 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       .then((data) => setSamples(data))
       .catch((err) => console.error('Failed to load samples:', err));
   }, []);
+
+  // Auto-select initial sample if specified by navigation
+  useEffect(() => {
+    if (!initialSampleFilename || samples.length === 0) return;
+    const match = samples.find(
+      (s) => s.filename.toLowerCase() === initialSampleFilename.toLowerCase() ||
+             s.filename.toLowerCase().startsWith(initialSampleFilename.toLowerCase().split('.')[0])
+    );
+    if (!match) return;
+
+    const timer = setTimeout(() => {
+      setModality(match.modality);
+      setUploadedFile(null);
+      setSelectedSample(match);
+      setErrorMsg(null);
+      setPreviewUrl(getSampleImageUrl(match.modality, match.filename));
+      if (onClearTargetSample) onClearTargetSample();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [initialSampleFilename, samples, onClearTargetSample]);
 
   // Adjust modality when initialModality prop changes
   const [prevInitialModality, setPrevInitialModality] = useState(initialModality);
@@ -254,11 +279,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
             style={{
               flex: '1 1 200px',
               padding: '12px 16px',
-              justifyContent: 'center',
-              backgroundColor: modality === 'mammogram' ? 'var(--primary-rose)' : 'var(--bg-surface)',
-              color: modality === 'mammogram' ? '#FFFFFF' : 'var(--text-primary)',
-              borderColor: modality === 'mammogram' ? 'var(--primary-rose)' : 'var(--border-subtle)',
-              boxShadow: modality === 'mammogram' ? '0 2px 8px rgba(178, 59, 85, 0.25)' : 'none'
+              justifyContent: 'center'
             }}
           >
             <Eye size={18} />
@@ -277,11 +298,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
             style={{
               flex: '1 1 200px',
               padding: '12px 16px',
-              justifyContent: 'center',
-              backgroundColor: modality === 'thermal' ? 'var(--primary-rose)' : 'var(--bg-surface)',
-              color: modality === 'thermal' ? '#FFFFFF' : 'var(--text-primary)',
-              borderColor: modality === 'thermal' ? 'var(--primary-rose)' : 'var(--border-subtle)',
-              boxShadow: modality === 'thermal' ? '0 2px 8px rgba(178, 59, 85, 0.25)' : 'none'
+              justifyContent: 'center'
             }}
           >
             <Flame size={18} />
@@ -323,28 +340,33 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
               Select a reference scan from the verified {modality === 'mammogram' ? 'MIAS' : 'Mendeley'} cohort:
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
-              {filteredSamples.map((sample) => (
-                <button
-                  key={sample.id}
-                  type="button"
-                  onClick={() => handleSelectSample(sample)}
-                  style={{
-                    padding: '8px 12px',
-                    textAlign: 'left',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-light)',
-                    background: selectedSample?.id === sample.id ? 'var(--bg-blush)' : 'var(--bg-surface)',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {sample.filename}
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    Reference: <strong>{sample.label.toUpperCase()}</strong> • {sample.view}
-                  </div>
-                </button>
-              ))}
+              {filteredSamples.map((sample) => {
+                const isSelected = selectedSample?.id === sample.id;
+                return (
+                  <button
+                    key={sample.id}
+                    type="button"
+                    onClick={() => handleSelectSample(sample)}
+                    className={`btn-secondary ${isSelected ? 'active' : ''}`}
+                    style={{
+                      padding: '10px 12px',
+                      textAlign: 'left',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      gap: '2px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <div style={{ fontSize: '12px', fontWeight: 600 }}>
+                      {sample.filename}
+                    </div>
+                    <div style={{ fontSize: '11px', opacity: 0.85 }}>
+                      Reference: <strong>{sample.label.toUpperCase()}</strong> • {sample.view}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -589,7 +611,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
             type="button"
             className="btn-primary"
             onClick={handleRunAnalysis}
-            disabled={!hasImage || isSubmitting}
+            disabled={!hasImage || isSubmitting || !isCurrentModalityReady}
             style={{ padding: '10px 22px', fontSize: '13px', minWidth: '180px', justifyContent: 'center' }}
           >
             {isSubmitting ? (
@@ -597,6 +619,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                 <RefreshCw size={15} className="spinning" />
                 <span>Running Inference...</span>
               </>
+            ) : !isCurrentModalityReady ? (
+              <span>Model Not Available</span>
             ) : (
               <>
                 <span>Run Analysis</span>

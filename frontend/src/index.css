@@ -101,6 +101,22 @@ h6 {
   font-feature-settings: 'tnum' 1;
 }
 
+/* Keyframe Animations */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinning {
+  animation: spin 0.85s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 /* Layout Utilities */
 .layout-root {
   display: flex;
@@ -151,7 +167,6 @@ h6 {
   margin-left: 260px;
   flex: 1;
   min-width: 0;
-  /* CRITICAL: prevents horizontal flex blowout */
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -192,7 +207,6 @@ h6 {
   padding: 24px;
   box-shadow: var(--shadow-sm);
   min-width: 0;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .card-elevated {
@@ -204,7 +218,7 @@ h6 {
   min-width: 0;
 }
 
-/* Sidebar Navigation Items - Premium Styled */
+/* Sidebar Navigation Items */
 .sidebar-nav-item {
   display: flex;
   align-items: center;
@@ -220,9 +234,10 @@ h6 {
   border: 1px solid transparent;
   cursor: pointer;
   text-align: left;
-  transition: all 0.15s ease-in-out;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   outline: none;
   user-select: none;
+  line-height: 1.2;
 }
 
 .sidebar-nav-item:hover {
@@ -236,7 +251,7 @@ h6 {
   color: #FFFFFF;
   font-weight: 600;
   border-color: var(--primary-rose);
-  box-shadow: 0 2px 8px rgba(178, 59, 85, 0.25);
+  box-shadow: 0 2px 6px rgba(178, 59, 85, 0.22);
 }
 
 .sidebar-nav-item.active svg {
@@ -262,23 +277,21 @@ h6 {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 2px 4px rgba(178, 59, 85, 0.2), 0 1px 2px rgba(44, 24, 32, 0.05);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(44, 24, 32, 0.08);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
   letter-spacing: 0.01em;
   text-decoration: none;
   user-select: none;
+  line-height: 1.2;
 }
 
 .btn-primary:hover:not(:disabled) {
   background-color: var(--primary-rose-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(178, 59, 85, 0.3), 0 2px 4px rgba(44, 24, 32, 0.08);
+  border-color: var(--primary-rose-active);
 }
 
 .btn-primary:active:not(:disabled) {
   background-color: var(--primary-rose-active);
-  transform: translateY(0);
-  box-shadow: 0 1px 3px rgba(178, 59, 85, 0.2);
 }
 
 .btn-primary:focus-visible {
@@ -290,7 +303,7 @@ h6 {
   opacity: 0.55;
   cursor: not-allowed;
   box-shadow: none;
-  transform: none;
+  pointer-events: none;
 }
 
 .btn-secondary {
@@ -307,22 +320,32 @@ h6 {
   justify-content: center;
   gap: 8px;
   box-shadow: 0 1px 2px rgba(44, 24, 32, 0.04);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   text-decoration: none;
   user-select: none;
+  line-height: 1.2;
 }
 
 .btn-secondary:hover:not(:disabled) {
   background-color: var(--bg-blush);
   border-color: var(--border-rose);
   color: var(--primary-rose);
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(178, 59, 85, 0.08);
 }
 
 .btn-secondary:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(44, 24, 32, 0.04);
+  background-color: var(--bg-blush-subtle);
+}
+
+.btn-secondary.active {
+  background-color: var(--primary-rose) !important;
+  color: #FFFFFF !important;
+  border-color: var(--primary-rose) !important;
+  box-shadow: 0 1px 4px rgba(178, 59, 85, 0.22);
+  font-weight: 600;
+}
+
+.btn-secondary.active svg {
+  color: #FFFFFF !important;
 }
 
 .btn-secondary:focus-visible {
@@ -333,7 +356,7 @@ h6 {
 .btn-secondary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  transform: none;
+  pointer-events: none;
 }
 
 .btn-danger {
@@ -349,20 +372,19 @@ h6 {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
   user-select: none;
+  line-height: 1.2;
 }
 
 .btn-danger:hover:not(:disabled) {
   background-color: #FFE4E6;
   border-color: #FDA4AF;
   color: #9F1239;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(190, 18, 60, 0.15);
 }
 
 .btn-danger:active:not(:disabled) {
-  transform: translateY(0);
+  background-color: #FECDD3;
 }
 
 .btn-danger:focus-visible {
@@ -373,7 +395,7 @@ h6 {
 .btn-danger:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  transform: none;
+  pointer-events: none;
 }
 
 /* Status Badges */
@@ -426,7 +448,7 @@ h6 {
   padding: 32px 24px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .dropzone:hover,

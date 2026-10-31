@@ -14,7 +14,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Eye,
-  Flame
+  Flame,
+  RefreshCw
 } from 'lucide-react';
 import {
   AnalysisResponse,
@@ -93,14 +94,7 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ latestResult, onNaviga
             type="button"
             className={`btn-secondary ${activeTab === 'findings' ? 'active' : ''}`}
             onClick={() => setActiveTab('findings')}
-            style={{
-              padding: '8px 16px',
-              fontSize: '13px',
-              fontWeight: 600,
-              backgroundColor: activeTab === 'findings' ? 'var(--primary-rose)' : 'var(--bg-surface)',
-              color: activeTab === 'findings' ? '#FFFFFF' : 'var(--text-secondary)',
-              borderColor: activeTab === 'findings' ? 'var(--primary-rose)' : 'var(--border-subtle)'
-            }}
+            style={{ padding: '8px 16px', fontSize: '13px' }}
           >
             <FileCheck2 size={15} />
             <span>Examination Findings & XAI</span>
@@ -110,14 +104,7 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ latestResult, onNaviga
             type="button"
             className={`btn-secondary ${activeTab === 'evaluation' ? 'active' : ''}`}
             onClick={() => setActiveTab('evaluation')}
-            style={{
-              padding: '8px 16px',
-              fontSize: '13px',
-              fontWeight: 600,
-              backgroundColor: activeTab === 'evaluation' ? 'var(--primary-rose)' : 'var(--bg-surface)',
-              color: activeTab === 'evaluation' ? '#FFFFFF' : 'var(--text-secondary)',
-              borderColor: activeTab === 'evaluation' ? 'var(--primary-rose)' : 'var(--border-subtle)'
-            }}
+            style={{ padding: '8px 16px', fontSize: '13px' }}
           >
             <BarChart3 size={15} />
             <span>Model Evaluation & Validation Graphs</span>
@@ -131,11 +118,11 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ latestResult, onNaviga
               className="btn-secondary"
               onClick={handleDownloadReport}
               disabled={isExporting}
-              style={{ fontSize: '12px', padding: '7px 14px' }}
+              style={{ fontSize: '12px', padding: '7px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
               title="Download formatted research report"
             >
-              <Download size={13} />
-              <span>{isExporting ? 'Generating...' : 'Download Report'}</span>
+              {isExporting ? <RefreshCw size={13} className="spinning" /> : <Download size={13} />}
+              <span>{isExporting ? 'Generating Report...' : 'Download Report'}</span>
             </button>
 
             <button
@@ -582,13 +569,7 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ latestResult, onNaviga
                 type="button"
                 className={`btn-secondary ${evalModality === 'mammogram' ? 'active' : ''}`}
                 onClick={() => setEvalModality('mammogram')}
-                style={{
-                  padding: '7px 14px',
-                  fontSize: '12px',
-                  backgroundColor: evalModality === 'mammogram' ? 'var(--primary-rose)' : 'var(--bg-surface)',
-                  color: evalModality === 'mammogram' ? '#FFFFFF' : 'var(--text-secondary)',
-                  borderColor: evalModality === 'mammogram' ? 'var(--primary-rose)' : 'var(--border-subtle)'
-                }}
+                style={{ padding: '7px 14px', fontSize: '12px' }}
               >
                 <Eye size={14} />
                 <span>Mammogram (MIAS)</span>
@@ -598,13 +579,7 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ latestResult, onNaviga
                 type="button"
                 className={`btn-secondary ${evalModality === 'thermal' ? 'active' : ''}`}
                 onClick={() => setEvalModality('thermal')}
-                style={{
-                  padding: '7px 14px',
-                  fontSize: '12px',
-                  backgroundColor: evalModality === 'thermal' ? 'var(--primary-rose)' : 'var(--bg-surface)',
-                  color: evalModality === 'thermal' ? '#FFFFFF' : 'var(--text-secondary)',
-                  borderColor: evalModality === 'thermal' ? 'var(--primary-rose)' : 'var(--border-subtle)'
-                }}
+                style={{ padding: '7px 14px', fontSize: '12px' }}
               >
                 <Flame size={14} />
                 <span>Thermal (Mendeley)</span>
@@ -613,8 +588,9 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ latestResult, onNaviga
           </div>
 
           {isLoadingBenchmark ? (
-            <div className="card" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              Loading empirical evaluation benchmark...
+            <div className="card" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+              <RefreshCw size={16} className="spinning" />
+              <span>Loading clinical evaluation benchmarks...</span>
             </div>
           ) : !testMetrics ? (
             <div className="card" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
