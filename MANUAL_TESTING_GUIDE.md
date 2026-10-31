@@ -147,18 +147,35 @@ py -3.10 -m pytest tests/test_api_reliability.py -v
 
 ---
 
-## 4. Test Suite Execution Summary
+## 4. Testing the 8 Combined Upload & Pair Status Combinations
+
+Mode 3 (Combined Multimodal Screening) enforces independent states (`empty`, `uploaded`, `format_validated`, `modality_verified`, `invalid`, `error`) and calculates Pair Status strictly:
+
+| Combination # | Scenario Tested | Mammogram State | Thermal State | Pair Status Displayed | Analyze Button |
+|---|---|---|---|---|---|
+| **Comb 1** | Neither image uploaded | `empty` | `empty` | **"No images uploaded"** (muted) | **Disabled** |
+| **Comb 2** | Mammogram only | `modality_verified` | `empty` | **"Mammogram uploaded — Thermal image required"** (amber) | **Disabled** |
+| **Comb 3** | Thermal only | `empty` | `modality_verified` | **"Thermal image uploaded — Mammogram required"** (amber) | **Disabled** |
+| **Comb 4** | Both uploaded (during validation) | `uploaded` | `uploaded` | **"Validating image pair..."** (blush) | **Disabled** |
+| **Comb 5** | Invalid mammogram + valid thermal | `invalid` | `modality_verified` | **"Pair validation failed"** (red alert) | **Disabled** |
+| **Comb 6** | Valid mammogram + invalid thermal | `modality_verified` | `invalid` | **"Pair validation failed"** (red alert) | **Disabled** |
+| **Comb 7** | Both valid, fusion model loaded | `modality_verified` | `modality_verified` | **"Both images validated"** (green) | **Enabled** |
+| **Comb 8** | Both valid, fusion model missing | `modality_verified` | `modality_verified` | **"Images validated — Combined model unavailable"** (amber/info) | **Disabled** |
+
+---
+
+## 5. Test Suite Execution Summary
 
 | Test File | Total Tests | Status | Execution Time |
 |---|---|---|---|
 | `tests/test_advanced_backend.py` | 6 | **PASS** | 0.85s |
 | `tests/test_api_reliability.py` | 15 | **PASS** | 4.12s |
 | `tests/test_archive_safety.py` | 4 | **PASS** | 0.12s |
-| `tests/test_dashboard_functionality_and_truth.py` | 4 | **PASS** | 8.87s |
+| `tests/test_dashboard_functionality_and_truth.py` | 4 | **PASS** | 9.79s |
 | `tests/test_deeplearning.py` | 6 | **PASS** | 3.45s |
-| `tests/test_examination_modes_and_modality_validation.py` | 9 | **PASS** | 14.79s |
+| `tests/test_examination_modes_and_modality_validation.py` | 10 | **PASS** | 44.54s |
 | `tests/test_manifest_and_idempotence.py` | 3 | **PASS** | 0.22s |
 | `tests/test_metadata_parser.py` | 1 | **PASS** | 0.08s |
 | `tests/test_scanner_and_identifier.py` | 4 | **PASS** | 0.18s |
 | `tests/test_transforms.py` | 9 | **PASS** | 0.95s |
-| **Total Automated Tests** | **61** | **ALL PASS** | **24.54s** |
+| **Total Automated Tests** | **62** | **ALL PASS** | **64.30s** |

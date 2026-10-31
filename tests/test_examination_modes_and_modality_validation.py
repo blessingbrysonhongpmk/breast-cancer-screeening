@@ -311,3 +311,80 @@ def test_scenario_9_validate_scan_endpoint_distinguishes_format_and_modality():
     assert d4["modality_verified"] is False
     assert d4["error"] == THERMAL_ERROR_MSG
 
+
+# ----------------------------------------------------------------------
+# Scenario 10: All 8 pair upload and validation combinations
+# ----------------------------------------------------------------------
+def test_scenario_10_all_pair_upload_and_validation_combinations():
+    """Verifies all 8 user-specified combinations:
+    1. Neither image uploaded -> 422 Unprocessable (missing fields)
+    2. Mammogram only -> 422 Unprocessable (missing thermal_file)
+    3. Thermal only -> 422 Unprocessable (missing mammogram_file)
+    4. Both uploaded (validated independently)
+    5. Invalid mammogram + valid thermal -> 400 Bad Request (MAMMOGRAM_ERROR_MSG)
+    6. Valid mammogram + invalid thermal -> 400 Bad Request (THERMAL_ERROR_MSG)
+    7. Both valid images -> validated through backend
+    8. Both valid images but fusion model missing -> 503 Service Unavailable ("Combined analysis model is not yet available.")
+    """
+    valid_mammo = _create_synthetic_pgm_bytes()
+    valid_thermal = _create_synthetic_thermal_bytes()
+    invalid_mammo_color = _create_synthetic_thermal_bytes()  # Colorful thermal in mammogram slot
+    invalid_thermal_pgm = _create_synthetic_pgm_bytes()      # PGM in thermal slot
+
+    # Combination 1: Neither image uploaded
+    res1 = client.post("/api/analyze/combined", data={"case_id": "MF-TEST-1"})
+    assert res1.status_code == 422
+
+    # Combination 2: Mammogram only
+    res2 = client.post(
+        "/api/analyze/combined",
+        files={"mammogram_file": ("mammo.pgm", valid_mammo, "image/x-portable-graymap")},
+        data={"case_id": "MF-TEST-2"}
+    )
+    assert res2.status_code == 422
+
+    # Combination 3: Thermal only
+    res3 = client.post(
+        "/api/analyze/combined",
+        files={"thermal_file": ("thermal.jpg", valid_thermal, "image/jpeg")},
+        data={"case_id": "MF-TEST-3"}
+    )
+    assert res3.status_code == 422
+
+    # Combination 5: Invalid mammogram + valid thermal
+    res5 = client.post(
+        "/api/analyze/combined",
+        files={
+            "mammogram_file": ("thermal_in_mammo.jpg", invalid_mammo_color, "image/jpeg"),
+            "thermal_file": ("thermal.jpg", valid_thermal, "image/jpeg")
+        },
+        data={"case_id": "MF-TEST-5"}
+    )
+    assert res5.status_code == 400
+    assert res5.json()["detail"] == MAMMOGRAM_ERROR_MSG
+
+    # Combination 6: Valid mammogram + invalid thermal
+    res6 = client.post(
+        "/api/analyze/combined",
+        files={
+            "mammogram_file": ("mammo.pgm", valid_mammo, "image/x-portable-graymap"),
+            "thermal_file": ("pgm_in_thermal.pgm", invalid_thermal_pgm, "image/x-portable-graymap")
+        },
+        data={"case_id": "MF-TEST-6"}
+    )
+    assert res6.status_code == 400
+    assert res6.json()["detail"] == THERMAL_ERROR_MSG
+
+    # Combination 7 & 8: Both valid images, but fusion model not yet available
+    res78 = client.post(
+        "/api/analyze/combined",
+        files={
+            "mammogram_file": ("mammo.pgm", valid_mammo, "image/x-portable-graymap"),
+            "thermal_file": ("thermal.jpg", valid_thermal, "image/jpeg")
+        },
+        data={"case_id": "MF-TEST-78"}
+    )
+    assert res78.status_code == 503
+    assert res78.json()["detail"] == "Combined analysis model is not yet available."
+
+
