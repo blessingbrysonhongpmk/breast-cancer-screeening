@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Home,
+  LayoutDashboard,
   PlusCircle,
   FileCheck2,
   History,
@@ -33,22 +33,23 @@ export function App() {
 
   const normalizeView = (hash: string): string => {
     const clean = hash.replace('#', '').trim().toLowerCase();
-    if (['home', 'analyze', 'results', 'history', 'about'].includes(clean)) {
+    if (['dashboard', 'examination', 'results', 'history', 'about'].includes(clean)) {
       return clean;
     }
-    // Backward compatibility for existing links
-    if (clean === 'overview') return 'home';
+    // Backward compatibility for existing links and hashes
+    if (clean === 'home' || clean === 'overview') return 'dashboard';
+    if (clean === 'analyze') return 'examination';
     if (clean === 'mammogram') {
       setActiveModality('mammogram');
-      return 'analyze';
+      return 'examination';
     }
     if (clean === 'thermal') {
       setActiveModality('thermal');
-      return 'analyze';
+      return 'examination';
     }
-    if (clean === 'explainability') return 'results';
-    if (['datasets', 'evaluation', 'settings'].includes(clean)) return 'about';
-    return 'home';
+    if (clean === 'explainability' || clean === 'evaluation') return 'results';
+    if (['datasets', 'settings'].includes(clean)) return 'about';
+    return 'dashboard';
   };
 
   const getInitialView = () => normalizeView(window.location.hash);
@@ -114,20 +115,22 @@ export function App() {
     };
   }, []);
 
+  // Exactly the 5 items required by the user
   const navItems = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'analyze', label: 'New Analysis', icon: PlusCircle },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'examination', label: 'New Examination', icon: PlusCircle },
     { id: 'results', label: 'Results', icon: FileCheck2 },
-    { id: 'history', label: 'Analysis History', icon: History },
-    { id: 'about', label: 'About & Disclaimer', icon: Info }
+    { id: 'history', label: 'Patient History', icon: History },
+    { id: 'about', label: 'About', icon: Info }
   ];
 
   const handleNavigate = (view: string, modality?: 'mammogram' | 'thermal') => {
+    const normalized = normalizeView(view);
     if (modality) {
       setActiveModality(modality);
     }
-    setCurrentView(view);
-    window.location.hash = view;
+    setCurrentView(normalized);
+    window.location.hash = normalized;
     setMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -148,7 +151,7 @@ export function App() {
         {/* Brand Wordmark */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
           <div
-            onClick={() => handleNavigate('home')}
+            onClick={() => handleNavigate('dashboard')}
             style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
           >
             <div style={{
@@ -199,7 +202,7 @@ export function App() {
           </button>
         </div>
 
-        {/* Navigation Menu */}
+        {/* Navigation Menu (5 exact items) */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -238,7 +241,7 @@ export function App() {
               }} />
             </div>
             <div style={{ color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-              {isBackendConnected ? 'Backend Service Active' : 'Reconnecting to Server...'}
+              {isBackendConnected ? 'Backend Service Active' : 'Connecting to Server...'}
             </div>
           </div>
         </div>
@@ -303,7 +306,7 @@ export function App() {
 
         {/* Viewport Content */}
         <main className="content-container">
-          {currentView === 'home' && (
+          {currentView === 'dashboard' && (
             <HomePage
               health={health}
               modelReadiness={modelReadiness}
@@ -311,7 +314,7 @@ export function App() {
             />
           )}
 
-          {currentView === 'analyze' && (
+          {currentView === 'examination' && (
             <AnalysisPage
               initialModality={activeModality}
               modelReadiness={modelReadiness}

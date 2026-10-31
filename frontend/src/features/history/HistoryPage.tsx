@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, ArrowRight, Eye, Flame, RefreshCw, Trash2 } from 'lucide-react';
+import { Clock, ArrowRight, Eye, Flame, RefreshCw, Trash2, ShieldCheck } from 'lucide-react';
 import { fetchRecentAnalyses, clearRecentAnalyses, AnalysisResponse } from '../../services/api';
 
 interface HistoryPageProps {
@@ -60,16 +60,22 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
     };
   }, []);
 
+  const formatCaseReference = (filename: string, index: number): string => {
+    const clean = (filename || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    const prefix = clean.length >= 4 ? clean.slice(0, 8) : `CASE-${String(index + 1).padStart(3, '0')}`;
+    return `REF-${prefix}`;
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '860px', margin: '0 auto', width: '100%' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h2 style={{ fontSize: '24px', marginBottom: '4px', color: 'var(--text-primary)' }}>
-            Session Analysis History
+            Patient Examination History
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
-            Genuine scans analyzed during your current session. Stored locally for active review.
+            Previously saved examination records from genuine backend deep learning inferences.
           </p>
         </div>
 
@@ -103,7 +109,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
                   className="btn-secondary"
                   onClick={() => setShowClearConfirm(true)}
                   style={{ fontSize: '12px', padding: '6px 12px', color: 'var(--status-malignant)' }}
-                  title="Clear saved analysis records"
+                  title="Clear saved examination records"
                 >
                   <Trash2 size={13} />
                   <span>Clear History</span>
@@ -125,17 +131,30 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
         </div>
       </div>
 
-      {/* History List or Empty State */}
+      {/* History List or Honest Empty State */}
       {history.length > 0 ? (
         <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light)', background: 'var(--bg-blush-subtle)', fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)' }}>
-            Session Records ({history.length})
+          <div style={{
+            padding: '16px 20px',
+            borderBottom: '1px solid var(--border-light)',
+            background: 'var(--bg-blush-subtle)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)' }}>
+              Examination Records ({history.length})
+            </span>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+              Stored locally during session
+            </span>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {history.map((record, idx) => {
               const modality = record.modality?.toLowerCase();
               const predictedClass = record.predicted_class?.toLowerCase();
+              const caseRef = formatCaseReference(record.filename, idx);
 
               return (
                 <div
@@ -151,10 +170,10 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
                     transition: 'background-color 0.15s ease'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                     <div style={{
-                      width: '36px',
-                      height: '36px',
+                      width: '38px',
+                      height: '38px',
                       borderRadius: '8px',
                       background: 'var(--bg-blush)',
                       border: '1px solid var(--border-rose)',
@@ -168,17 +187,21 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
 
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="mono" style={{ fontWeight: 700, fontSize: '12px', color: 'var(--primary-rose)' }}>
+                          {caseRef}
+                        </span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>•</span>
                         <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)' }}>
                           {record.filename}
                         </span>
                         <span className="badge badge-normal" style={{ fontSize: '10px' }}>
-                          {record.modality?.toUpperCase()}
+                          {record.modality === 'thermal' ? 'THERMAL' : 'MAMMOGRAM'}
                         </span>
                       </div>
 
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                        {record.dimensions?.width} × {record.dimensions?.height} • {record.format || 'Image'}
-                        {record.timestamp ? ` • ${new Date(record.timestamp).toLocaleTimeString()}` : ''}
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px' }}>
+                        {record.dimensions?.width} × {record.dimensions?.height} px • {record.format || 'Image'}
+                        {record.timestamp ? ` • ${new Date(record.timestamp).toLocaleString()}` : ''}
                       </div>
                     </div>
                   </div>
@@ -208,7 +231,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
                             : 'var(--status-normal-border)'
                           }`
                       }}>
-                        {predictedClass} ({record.confidence ? `${(record.confidence * 100).toFixed(0)}%` : 'Ready'})
+                        {predictedClass} ({record.confidence ? `${(record.confidence * 100).toFixed(0)}%` : 'Evaluated'})
                       </span>
                     )}
 
@@ -220,9 +243,9 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
                           onSelectResult(record);
                           onNavigate('results');
                         }}
-                        style={{ fontSize: '11px', padding: '5px 10px' }}
+                        style={{ fontSize: '11px', padding: '6px 12px' }}
                       >
-                        <span>View</span>
+                        <span>View Results</span>
                         <ArrowRight size={12} />
                       </button>
                     )}
@@ -236,22 +259,41 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
         <div className="card" style={{ padding: '48px 24px', textAlign: 'center' }}>
           <Clock size={36} color="var(--dusty-rose)" style={{ margin: '0 auto 12px' }} />
           <h3 style={{ fontSize: '16px', marginBottom: '6px', color: 'var(--text-primary)' }}>
-            No Analysis Records in Session
+            No Examination Records Found
           </h3>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto 18px' }}>
-            Analyses performed during your active session will be logged here with prediction summaries and timestamps.
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '440px', margin: '0 auto 18px', lineHeight: 1.5 }}>
+            Analyses conducted through New Examination are automatically archived here with privacy-conscious reference IDs, timestamps, and model predictions.
           </p>
           <button
             type="button"
             className="btn-primary"
-            onClick={() => onNavigate('analyze')}
+            onClick={() => onNavigate('examination')}
             style={{ fontSize: '13px', padding: '10px 18px' }}
           >
-            <span>Run an Analysis</span>
+            <span>Start an Examination</span>
             <ArrowRight size={14} />
           </button>
         </div>
       )}
+
+      {/* Privacy Notice */}
+      <div style={{
+        padding: '14px 18px',
+        borderRadius: 'var(--radius-md)',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-subtle)',
+        fontSize: '12px',
+        color: 'var(--text-muted)',
+        lineHeight: 1.5,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px'
+      }}>
+        <ShieldCheck size={16} color="var(--primary-rose)" style={{ flexShrink: 0 }} />
+        <span>
+          <strong>Patient Privacy Notice:</strong> Examination history uses de-identified reference tokens. Scan bytes and temporary saliency overlays are managed securely in local cache.
+        </span>
+      </div>
     </div>
   );
 };

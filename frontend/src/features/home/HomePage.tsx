@@ -6,7 +6,10 @@ import {
   ShieldCheck,
   AlertCircle,
   Activity,
-  CheckCircle2
+  CheckCircle2,
+  Cpu,
+  Layers,
+  Database
 } from 'lucide-react';
 import { HealthResponse, ModelReadinessResponse } from '../../services/api';
 
@@ -55,31 +58,29 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
             color: 'var(--text-muted)',
             fontWeight: 500
           }}>
-            Release 1.0 • PyTorch ResNet-50
+            Final Year Engineering Project • ResNet-50 PyTorch
           </span>
         </div>
 
         <h1 style={{
-          fontSize: '30px',
+          fontSize: '28px',
           fontWeight: 700,
           color: 'var(--text-primary)',
           letterSpacing: '-0.025em',
-          lineHeight: 1.2,
+          lineHeight: 1.25,
           marginBottom: '10px'
         }}>
-          Multimodal Breast Oncology Imaging & Explainability
+          Multimodal Explainable AI-Based Breast Cancer Screening and Risk Prediction System
         </h1>
 
         <p style={{
           fontSize: '14px',
           color: 'var(--text-secondary)',
           lineHeight: 1.6,
-          maxWidth: '740px',
+          maxWidth: '760px',
           marginBottom: '20px'
         }}>
-          MammoFusion-XAI provides rigorous deep learning evaluation on full-field mammography (MIAS cohort)
-          and infrared surface thermography (Mendeley cohort). Run genuine ResNet-50 inference, quantify predictive
-          entropy, and inspect layer4 Grad-CAM focal visual attributions.
+          A clinical research platform integrating full-field digital mammography (MIAS cohort) and infrared surface thermography (Mendeley cohort). Features real ResNet-50 inference, predictive Shannon entropy quantification, layer4 Grad-CAM focal visual attributions, and patient-isolated validation.
         </p>
 
         {/* Live System Telemetry Bar */}
@@ -105,7 +106,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
             fontWeight: 600
           }}>
             {isBackendHealthy ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
-            <span>Backend: {isBackendHealthy ? 'Service Active (FastAPI :8000)' : 'Connecting...'}</span>
+            <span>Backend: {isBackendHealthy ? 'FastAPI Service Connected' : 'Connecting to Server...'}</span>
           </div>
 
           {/* Mammogram Model */}
@@ -122,7 +123,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
             fontWeight: 600
           }}>
             {mammoReady ? <ShieldCheck size={13} /> : <AlertCircle size={13} />}
-            <span>Mammogram ResNet-50: {mammoReady ? 'Model Ready (Grad-CAM active)' : 'Not Available'}</span>
+            <span>Mammogram ResNet-50: {mammoReady ? 'Ready (Grad-CAM active)' : 'Not Available'}</span>
           </div>
 
           {/* Thermal Model */}
@@ -139,12 +140,12 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
             fontWeight: 600
           }}>
             {thermalReady ? <ShieldCheck size={13} /> : <AlertCircle size={13} />}
-            <span>Thermal ResNet-50: {thermalReady ? 'Model Ready (Grad-CAM active)' : 'Not Available'}</span>
+            <span>Thermal ResNet-50: {thermalReady ? 'Ready (Grad-CAM active)' : 'Not Available'}</span>
           </div>
         </div>
       </div>
 
-      {/* Primary Modality Workstations */}
+      {/* Primary Modality Examination Cards */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
@@ -161,7 +162,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
             cursor: 'pointer',
             transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
-          onClick={() => onNavigate('analyze', 'mammogram')}
+          onClick={() => onNavigate('examination', 'mammogram')}
         >
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
@@ -188,20 +189,20 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
                 color: mammoReady ? 'var(--status-normal)' : 'var(--text-muted)',
                 border: `1px solid ${mammoReady ? 'var(--status-normal-border)' : 'var(--border-light)'}`
               }}>
-                {mammoReady ? 'Verified Ready' : 'Model not available'}
+                {mammoReady ? 'Model Ready' : 'Model Not Available'}
               </span>
             </div>
 
             <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Radiographic Morphology
+              Structural Radiography
             </div>
 
             <h3 style={{ fontSize: '18px', fontWeight: 700, margin: '4px 0 8px', color: 'var(--text-primary)' }}>
-              Full-Field X-Ray Mammography
+              Full-Field Digital Mammography
             </h3>
 
             <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '16px' }}>
-              Inspect tissue density patterns, circumscribed masses, and architectural distortions using 224×224 normalized grayscale scans.
+              Examine tissue density, circumscribed masses, and microcalcifications using 224×224 normalized grayscale scans from the verified MIAS cohort.
             </p>
 
             <div style={{
@@ -216,9 +217,9 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
               borderRadius: 'var(--radius-sm)',
               border: '1px solid var(--border-light)'
             }}>
-              <div>• <strong>Architecture:</strong> ResNet-50 (layer4 bottleneck)</div>
-              <div>• <strong>Categories:</strong> Normal, Benign, Malignant</div>
-              <div>• <strong>Explainability:</strong> Dual-view Grad-CAM heatmap</div>
+              <div>• <strong>Network:</strong> ResNet-50 (layer4 feature maps)</div>
+              <div>• <strong>Outputs:</strong> Normal, Benign, Malignant</div>
+              <div>• <strong>XAI:</strong> Gradient-weighted Class Activation Mapping</div>
             </div>
           </div>
 
@@ -228,10 +229,10 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
             style={{ width: '100%', padding: '11px 16px', fontSize: '13px' }}
             onClick={(e) => {
               e.stopPropagation();
-              onNavigate('analyze', 'mammogram');
+              onNavigate('examination', 'mammogram');
             }}
           >
-            <span>Launch Mammography Analysis</span>
+            <span>Launch Mammogram Examination</span>
             <ArrowRight size={15} />
           </button>
         </div>
@@ -247,7 +248,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
             cursor: 'pointer',
             transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
-          onClick={() => onNavigate('analyze', 'thermal')}
+          onClick={() => onNavigate('examination', 'thermal')}
         >
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
@@ -274,7 +275,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
                 color: thermalReady ? 'var(--status-normal)' : 'var(--text-muted)',
                 border: `1px solid ${thermalReady ? 'var(--status-normal-border)' : 'var(--border-light)'}`
               }}>
-                {thermalReady ? 'Verified Ready' : 'Model not available'}
+                {thermalReady ? 'Model Ready' : 'Model Not Available'}
               </span>
             </div>
 
@@ -287,7 +288,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
             </h3>
 
             <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '16px' }}>
-              Analyze metabolic heat distribution, vascular hyperthermia gradients, and temperature asymmetry across breast quadrants.
+              Analyze metabolic thermal patterns, vascular asymmetry, and localized hyperthermia across frontal and oblique projections (Mendeley cohort).
             </p>
 
             <div style={{
@@ -302,9 +303,9 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
               borderRadius: 'var(--radius-sm)',
               border: '1px solid var(--border-light)'
             }}>
-              <div>• <strong>Architecture:</strong> ResNet-50 3-Channel RGB</div>
-              <div>• <strong>Categories:</strong> Normal, Benign, Malignant</div>
-              <div>• <strong>Explainability:</strong> Focal hyperthermic localization</div>
+              <div>• <strong>Network:</strong> ResNet-50 3-Channel RGB</div>
+              <div>• <strong>Outputs:</strong> Normal, Benign, Malignant</div>
+              <div>• <strong>XAI:</strong> Hyperthermic gradient localization</div>
             </div>
           </div>
 
@@ -314,34 +315,34 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
             style={{ width: '100%', padding: '11px 16px', fontSize: '13px' }}
             onClick={(e) => {
               e.stopPropagation();
-              onNavigate('analyze', 'thermal');
+              onNavigate('examination', 'thermal');
             }}
           >
-            <span>Launch Thermography Analysis</span>
+            <span>Launch Thermography Examination</span>
             <ArrowRight size={15} />
           </button>
         </div>
       </div>
 
-      {/* Quick-Access Research Benchmark Suite */}
+      {/* Quick-Access Reference Case Suite */}
       <div className="card" style={{ padding: '20px 24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
           <div>
             <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
-              Quick-Start Benchmarks
+              Reference Case Benchmarks
             </div>
             <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-              Test genuine pre-evaluated scans from the peer-reviewed research cohorts:
+              Test pre-evaluated scans from the peer-reviewed research cohorts:
             </div>
           </div>
 
           <button
             type="button"
             className="btn-secondary"
-            onClick={() => onNavigate('analyze')}
+            onClick={() => onNavigate('examination')}
             style={{ fontSize: '12px', padding: '6px 12px' }}
           >
-            <span>Open Analysis Workspace</span>
+            <span>Open Examination Workspace</span>
             <ArrowRight size={13} />
           </button>
         </div>
@@ -350,7 +351,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
           <button
             type="button"
             className="btn-secondary"
-            onClick={() => onNavigate('analyze', 'mammogram')}
+            onClick={() => onNavigate('examination', 'mammogram')}
             style={{
               padding: '10px 14px',
               justifyContent: 'space-between',
@@ -369,7 +370,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
           <button
             type="button"
             className="btn-secondary"
-            onClick={() => onNavigate('analyze', 'mammogram')}
+            onClick={() => onNavigate('examination', 'mammogram')}
             style={{
               padding: '10px 14px',
               justifyContent: 'space-between',
@@ -388,7 +389,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
           <button
             type="button"
             className="btn-secondary"
-            onClick={() => onNavigate('analyze', 'thermal')}
+            onClick={() => onNavigate('examination', 'thermal')}
             style={{
               padding: '10px 14px',
               justifyContent: 'space-between',
@@ -403,6 +404,43 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
             </div>
             <ArrowRight size={14} color="var(--primary-rose)" />
           </button>
+        </div>
+      </div>
+
+      {/* Core Engineering Methodology Highlights */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        gap: '16px'
+      }}>
+        <div className="card" style={{ padding: '16px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <Layers size={16} color="var(--primary-rose)" />
+            <h4 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Explainable AI</h4>
+          </div>
+          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            Grad-CAM visual attributions calculate exact target gradients through ResNet-50 layer4 to map high-salience tumor and vascular regions.
+          </p>
+        </div>
+
+        <div className="card" style={{ padding: '16px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <Cpu size={16} color="var(--primary-rose)" />
+            <h4 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Uncertainty & TTA</h4>
+          </div>
+          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            Shannon entropy metrics and bilateral test-time augmentation (TTA) measure predictive stability and confidence intervals.
+          </p>
+        </div>
+
+        <div className="card" style={{ padding: '16px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <Database size={16} color="var(--primary-rose)" />
+            <h4 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Zero Leakage</h4>
+          </div>
+          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            Strict patient-level data partitioning prevents data leakage between training, validation, and held-out test evaluation benchmarks.
+          </p>
         </div>
       </div>
 

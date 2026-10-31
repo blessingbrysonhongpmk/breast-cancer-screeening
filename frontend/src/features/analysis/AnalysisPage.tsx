@@ -159,7 +159,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
 
   const handleRunAnalysis = async () => {
     if (!uploadedFile && !selectedSample) {
-      setErrorMsg('Please select or upload an image before running analysis.');
+      setErrorMsg('Please select or upload an image before running examination.');
       return;
     }
 
@@ -174,7 +174,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       } else if (selectedSample) {
         const sampleUrl = getSampleImageUrl(selectedSample.modality, selectedSample.filename);
         const res = await fetch(sampleUrl);
-        if (!res.ok) throw new Error('Could not retrieve sample image from server.');
+        if (!res.ok) throw new Error('Could not retrieve reference sample from server.');
         const blob = await res.blob();
         fileToUpload = new File([blob], selectedSample.filename, { type: blob.type || 'image/png' });
       } else {
@@ -185,8 +185,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       onAnalysisComplete(result);
       onNavigate('results');
     } catch (err: any) {
-      console.error('Analysis error:', err);
-      setErrorMsg(err.message || 'The analysis service is unavailable. Please try again.');
+      console.error('Examination error:', err);
+      setErrorMsg(err.message || 'The analysis service is currently unavailable. Please verify backend connection.');
     } finally {
       setIsSubmitting(false);
     }
@@ -205,10 +205,10 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       {/* Header */}
       <div>
         <h2 style={{ fontSize: '24px', marginBottom: '6px', color: 'var(--text-primary)' }}>
-          New Image Analysis
+          New Examination
         </h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-          Select an imaging modality, upload a breast scan, and run deep learning research inspection.
+          Select an examination modality, upload an oncology scan, and initiate deep learning research analysis.
         </p>
       </div>
 
@@ -216,7 +216,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       <div className="card" style={{ padding: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
           <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
-            Imaging Modality Selection
+            Examination Modality
           </div>
 
           {/* Modality Model Readiness Pill */}
@@ -235,7 +235,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
             {isCurrentModalityReady ? <ShieldCheck size={13} /> : <AlertCircle size={13} />}
             <span>
               {isCurrentModalityReady
-                ? `${modality.toUpperCase()} Model: ResNet-50 Ready (Grad-CAM active)`
+                ? `${modality.toUpperCase()} Model: Ready (ResNet-50 Grad-CAM active)`
                 : `${modality.toUpperCase()} Model: Model not available`}
             </span>
           </div>
@@ -262,7 +262,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
             }}
           >
             <Eye size={18} />
-            <span style={{ fontWeight: 600 }}>Mammogram (X-ray)</span>
+            <span style={{ fontWeight: 600 }}>Mammogram Analysis (X-ray)</span>
           </button>
 
           <button
@@ -285,7 +285,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
             }}
           >
             <Flame size={18} />
-            <span style={{ fontWeight: 600 }}>Thermal Image (Infrared)</span>
+            <span style={{ fontWeight: 600 }}>Thermal Image Analysis (Infrared)</span>
           </button>
         </div>
       </div>
@@ -305,7 +305,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
               onClick={() => setShowSamplesDrawer(!showSamplesDrawer)}
               style={{ fontSize: '12px', padding: '6px 12px' }}
             >
-              <span>{showSamplesDrawer ? 'Hide Samples' : 'Try a Verified Sample'}</span>
+              <span>{showSamplesDrawer ? 'Hide Reference Samples' : 'Select Reference Sample'}</span>
             </button>
           )}
         </div>
@@ -320,7 +320,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
             marginBottom: '16px'
           }}>
             <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
-              Select a reference scan from the verified {modality === 'mammogram' ? 'MIAS' : 'Mendeley'} dataset:
+              Select a reference scan from the verified {modality === 'mammogram' ? 'MIAS' : 'Mendeley'} cohort:
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
               {filteredSamples.map((sample) => (
@@ -341,7 +341,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                     {sample.filename}
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    Truth: <strong>{sample.label.toUpperCase()}</strong> • {sample.view}
+                    Reference: <strong>{sample.label.toUpperCase()}</strong> • {sample.view}
                   </div>
                 </button>
               ))}
@@ -489,13 +489,13 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                   <FileImage size={36} style={{ margin: '0 auto 8px', opacity: 0.7 }} />
                   <div style={{ fontSize: '13px', fontWeight: 600 }}>MIAS PGM Raw Grayscale Image</div>
                   <div style={{ fontSize: '11px', opacity: 0.6, marginTop: '4px' }}>
-                    Standard browser canvas cannot render 8-bit PGM directly. Image will be converted safely by the neural network on upload.
+                    Standard browser canvas cannot render 8-bit PGM directly. Image will be processed safely by the neural network on submission.
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Quick Diagnostic Toggles */}
+            {/* Diagnostic Filter Toggles */}
             {previewUrl && (
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
@@ -595,11 +595,11 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
             {isSubmitting ? (
               <>
                 <RefreshCw size={15} className="spinning" />
-                <span>Processing Model...</span>
+                <span>Running Inference...</span>
               </>
             ) : (
               <>
-                <span>Run Deep Learning Analysis</span>
+                <span>Run Analysis</span>
                 <ArrowRight size={15} />
               </>
             )}
