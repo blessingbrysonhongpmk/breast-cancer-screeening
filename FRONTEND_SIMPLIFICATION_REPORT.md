@@ -131,3 +131,4 @@ pytest tests/
    - Raw `.pgm` files (from the MIAS archive) are greyscale binary raster maps not natively rendered by browser `<img>` tags. The application gracefully handles this by displaying a clear notification banner with the file metadata, transmitting the binary to the server, and rendering the decoded PNG and Grad-CAM in the Results view.
 2. **Raw Thermogram Calibration:**
    - Mendeley thermal images lack ambient camera calibration curves, leading to a baseline ResNet-50 test accuracy of 25.0%. This limitation is honestly disclosed in the Technical Benchmark section of `AboutPage.tsx`.
+

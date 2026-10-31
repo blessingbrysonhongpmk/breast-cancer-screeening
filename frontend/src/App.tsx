@@ -11,9 +11,13 @@ import {
 } from 'lucide-react';
 
 import {
+  HealthResponse,
+  ModelReadinessResponse,
   SystemStatus,
   ModelStatus,
   AnalysisResponse,
+  fetchHealthCheck,
+  fetchModelReadiness,
   fetchSystemStatus,
   fetchModelStatus
 } from './services/api';
@@ -50,6 +54,8 @@ export function App() {
   const getInitialView = () => normalizeView(window.location.hash);
 
   const [currentView, setCurrentView] = useState<string>(getInitialView);
+  const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [modelReadiness, setModelReadiness] = useState<ModelReadinessResponse | null>(null);
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [modelStatus, setModelStatus] = useState<ModelStatus | null>(null);
   const [latestAnalysis, setLatestAnalysis] = useState<AnalysisResponse | null>(null);
@@ -68,10 +74,14 @@ export function App() {
   const syncBackendData = async () => {
     setIsSyncing(true);
     try {
-      const [sys, mdl] = await Promise.all([
+      const [hlth, readi, sys, mdl] = await Promise.all([
+        fetchHealthCheck().catch(() => null),
+        fetchModelReadiness().catch(() => null),
         fetchSystemStatus().catch(() => null),
         fetchModelStatus().catch(() => null)
       ]);
+      if (hlth) setHealth(hlth);
+      if (readi) setModelReadiness(readi);
       if (sys) setStatus(sys);
       if (mdl) setModelStatus(mdl);
     } catch (e) {
@@ -103,7 +113,7 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const isBackendConnected = Boolean(status);
+  const isBackendConnected = Boolean(health?.status === 'healthy' || status);
 
   return (
     <div className="layout-root">
@@ -276,7 +286,8 @@ export function App() {
         <main className="content-container">
           {currentView === 'home' && (
             <HomePage
-              modelStatus={modelStatus}
+              health={health}
+              modelReadiness={modelReadiness}
               onNavigate={handleNavigate}
             />
           )}
@@ -284,7 +295,7 @@ export function App() {
           {currentView === 'analyze' && (
             <AnalysisPage
               initialModality={activeModality}
-              modelStatus={modelStatus}
+              modelReadiness={modelReadiness}
               onNavigate={handleNavigate}
               onAnalysisComplete={(res) => setLatestAnalysis(res)}
             />

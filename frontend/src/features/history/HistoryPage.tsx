@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, ArrowRight, Eye, Flame, RefreshCw } from 'lucide-react';
-import { fetchRecentAnalyses, AnalysisResponse } from '../../services/api';
+import { Clock, ArrowRight, Eye, Flame, RefreshCw, Trash2 } from 'lucide-react';
+import { fetchRecentAnalyses, clearRecentAnalyses, AnalysisResponse } from '../../services/api';
 
 interface HistoryPageProps {
   onNavigate: (view: string) => void;
@@ -10,6 +10,8 @@ interface HistoryPageProps {
 export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectResult }) => {
   const [history, setHistory] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isClearing, setIsClearing] = useState<boolean>(false);
+  const [showClearConfirm, setShowClearConfirm] = useState<boolean>(false);
 
   const loadHistory = async () => {
     setIsLoading(true);
@@ -21,6 +23,19 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
       setHistory([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleClearHistory = async () => {
+    setIsClearing(true);
+    try {
+      await clearRecentAnalyses();
+      setHistory([]);
+      setShowClearConfirm(false);
+    } catch (e) {
+      console.error('Failed to clear history:', e);
+    } finally {
+      setIsClearing(false);
     }
   };
 
@@ -41,16 +56,56 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
           </p>
         </div>
 
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={loadHistory}
-          disabled={isLoading}
-          style={{ fontSize: '12px', padding: '6px 12px' }}
-        >
-          <RefreshCw size={12} className={isLoading ? 'spinning' : ''} />
-          <span>Refresh</span>
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {history.length > 0 && (
+            <>
+              {showClearConfirm ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button
+                    type="button"
+                    className="btn-danger"
+                    onClick={handleClearHistory}
+                    disabled={isClearing}
+                    style={{ fontSize: '12px', padding: '6px 12px' }}
+                  >
+                    <span>{isClearing ? 'Clearing...' : 'Confirm Clear'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => setShowClearConfirm(false)}
+                    disabled={isClearing}
+                    style={{ fontSize: '12px', padding: '6px 10px' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setShowClearConfirm(true)}
+                  style={{ fontSize: '12px', padding: '6px 12px', color: 'var(--status-malignant)' }}
+                  title="Clear saved analysis records"
+                >
+                  <Trash2 size={13} />
+                  <span>Clear History</span>
+                </button>
+              )}
+            </>
+          )}
+
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={loadHistory}
+            disabled={isLoading}
+            style={{ fontSize: '12px', padding: '6px 12px' }}
+          >
+            <RefreshCw size={12} className={isLoading ? 'spinning' : ''} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
       {/* History List or Empty State */}
@@ -106,6 +161,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
 
                       <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
                         {record.dimensions?.width} × {record.dimensions?.height} • {record.format || 'Image'}
+                        {record.timestamp ? ` • ${new Date(record.timestamp).toLocaleTimeString()}` : ''}
                       </div>
                     </div>
                   </div>
@@ -121,20 +177,19 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
                         background: predictedClass === 'malignant'
                           ? 'var(--status-malignant-bg)'
                           : predictedClass === 'benign'
-                          ? 'var(--status-benign-bg)'
-                          : 'var(--status-normal-bg)',
+                            ? 'var(--status-benign-bg)'
+                            : 'var(--status-normal-bg)',
                         color: predictedClass === 'malignant'
                           ? 'var(--status-malignant)'
                           : predictedClass === 'benign'
-                          ? 'var(--status-benign)'
-                          : 'var(--status-normal)',
-                        border: `1px solid ${
-                          predictedClass === 'malignant'
+                            ? 'var(--status-benign)'
+                            : 'var(--status-normal)',
+                        border: `1px solid ${predictedClass === 'malignant'
                             ? 'var(--status-malignant-border)'
                             : predictedClass === 'benign'
-                            ? 'var(--status-benign-border)'
-                            : 'var(--status-normal-border)'
-                        }`
+                              ? 'var(--status-benign-border)'
+                              : 'var(--status-normal-border)'
+                          }`
                       }}>
                         {predictedClass} ({record.confidence ? `${(record.confidence * 100).toFixed(0)}%` : 'Ready'})
                       </span>

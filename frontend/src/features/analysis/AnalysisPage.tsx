@@ -9,11 +9,12 @@ import {
   Eye,
   Flame,
   ArrowRight,
+  ShieldCheck,
   ShieldAlert
 } from 'lucide-react';
 import {
   AnalysisResponse,
-  ModelStatus,
+  ModelReadinessResponse,
   SampleItem,
   fetchSamples,
   getSampleImageUrl,
@@ -22,14 +23,14 @@ import {
 
 interface AnalysisPageProps {
   initialModality?: 'mammogram' | 'thermal';
-  modelStatus: ModelStatus | null;
+  modelReadiness: ModelReadinessResponse | null;
   onNavigate: (view: string) => void;
   onAnalysisComplete: (result: AnalysisResponse) => void;
 }
 
 export const AnalysisPage: React.FC<AnalysisPageProps> = ({
   initialModality = 'mammogram',
-  modelStatus,
+  modelReadiness,
   onNavigate,
   onAnalysisComplete
 }) => {
@@ -49,11 +50,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check if model weights are loaded
-  const isModelReady = Boolean(
-    modelStatus?.is_ready_for_inference &&
-    (modelStatus?.models_available?.length ?? 0) > 0
-  );
+  // Check if model weights for currently selected modality are loaded
+  const isCurrentModalityReady = Boolean(modelReadiness?.[modality]?.ready);
 
   // Load samples
   useEffect(() => {
@@ -85,14 +83,14 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
     const isAllowed = allowed.some((ext) => lowerName.endsWith(ext));
 
     if (!isAllowed) {
-      setErrorMsg('Invalid file format. Please upload a .png, .jpg, .jpeg, or .pgm image.');
+      setErrorMsg('This file type is not supported. Please upload a .png, .jpg, .jpeg, or .pgm image.');
       return;
     }
 
     // Validate size (25 MB max)
     const MAX_SIZE = 25 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
-      setErrorMsg(`File size (${(file.size / (1024 * 1024)).toFixed(1)} MB) exceeds 25 MB limit.`);
+      setErrorMsg(`The file exceeds the 25 MB limit (${(file.size / (1024 * 1024)).toFixed(1)} MB).`);
       return;
     }
 
@@ -101,15 +99,36 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       URL.revokeObjectURL(previewUrl);
     }
 
-    setUploadedFile(file);
-    setSelectedSample(null);
     setErrorMsg(null);
 
-    if (lowerName.endsWith('.pgm')) {
-      // PGM cannot be displayed natively as an <img> source in browsers
-      setPreviewUrl(null);
+    // Dimension check for standard browser images
+    if (!lowerName.endsWith('.pgm')) {
+      const objUrl = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        if (img.naturalWidth < 32 || img.naturalHeight < 32) {
+          setErrorMsg(`Image dimensions (${img.naturalWidth}×${img.naturalHeight}) are too small. Minimum required dimension is 32×32 pixels.`);
+          URL.revokeObjectURL(objUrl);
+          setUploadedFile(null);
+          setPreviewUrl(null);
+          return;
+        }
+        setUploadedFile(file);
+        setSelectedSample(null);
+        setPreviewUrl(objUrl);
+      };
+      img.onerror = () => {
+        setErrorMsg('The image could not be opened. Try another file.');
+        URL.revokeObjectURL(objUrl);
+        setUploadedFile(null);
+        setPreviewUrl(null);
+      };
+      img.src = objUrl;
     } else {
-      setPreviewUrl(URL.createObjectURL(file));
+      // PGM cannot be natively rendered by browser <img> tag
+      setUploadedFile(file);
+      setSelectedSample(null);
+      setPreviewUrl(null);
     }
   };
 
@@ -152,7 +171,6 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       if (uploadedFile) {
         fileToUpload = uploadedFile;
       } else if (selectedSample) {
-        // Fetch sample image as blob to submit to backend
         const sampleUrl = getSampleImageUrl(selectedSample.modality, selectedSample.filename);
         const res = await fetch(sampleUrl);
         if (!res.ok) throw new Error('Could not retrieve sample image from server.');
@@ -164,11 +182,10 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
 
       const result = await submitImageAnalysis(fileToUpload, modality);
       onAnalysisComplete(result);
-      // Seamlessly navigate to the Results view
       onNavigate('results');
     } catch (err: any) {
       console.error('Analysis error:', err);
-      setErrorMsg(err.message || 'Analysis failed. Please check your connection to the server.');
+      setErrorMsg(err.message || 'The analysis service is unavailable. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -195,10 +212,34 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       </div>
 
       {/* Step 1: Modality Selection Toggle */}
-      <div className="card" style={{ padding: '16px 20px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '10px' }}>
-          Step 1: Choose Modality
+      <div className="card" style={{ padding: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
+            Step 1: Choose Modality
+          </div>
+
+          {/* Modality Model Readiness Pill */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '4px 10px',
+            borderRadius: 'var(--radius-sm)',
+            background: isCurrentModalityReady ? 'var(--status-normal-bg)' : 'var(--bg-muted)',
+            border: `1px solid ${isCurrentModalityReady ? 'var(--status-normal-border)' : 'var(--border-light)'}`,
+            fontSize: '11px',
+            color: isCurrentModalityReady ? 'var(--status-normal)' : 'var(--text-muted)',
+            fontWeight: 600
+          }}>
+            {isCurrentModalityReady ? <ShieldCheck size={13} /> : <AlertCircle size={13} />}
+            <span>
+              {isCurrentModalityReady
+                ? `${modality.toUpperCase()} Model: ResNet-50 Ready (Grad-CAM active)`
+                : `${modality.toUpperCase()} Model: Standby`}
+            </span>
+          </div>
         </div>
+
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button
             type="button"
@@ -360,30 +401,74 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
               <UploadCloud size={28} />
             </div>
 
-            <div>
-              <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                Drag and drop your scan here, or <span style={{ color: 'var(--primary-rose)', textDecoration: 'underline' }}>Browse files</span>
-              </p>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                Supports PNG, JPG, JPEG, or PGM (up to 25 MB)
-              </p>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                Drag and drop your scan here, or click to browse
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                Supports standard PNG, JPEG, and MIAS PGM images (up to 25 MB)
+              </div>
             </div>
           </div>
         )}
 
-        {/* Image Preview & Management (shown when image is selected) */}
+        {/* Image Preview & Controls (shown when image is selected) */}
         {hasImage && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '10px 14px',
+              background: 'var(--bg-blush-subtle)',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-rose)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileImage size={18} color="var(--primary-rose)" />
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {activeFilename}
+                </span>
+                {uploadedFile && (
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    ({(uploadedFile.size / 1024).toFixed(1)} KB)
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{ fontSize: '12px', padding: '5px 10px' }}
+                >
+                  <RefreshCw size={12} />
+                  <span>Replace</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={handleRemoveImage}
+                  style={{ fontSize: '12px', padding: '5px 10px', color: 'var(--status-malignant)' }}
+                >
+                  <Trash2 size={12} />
+                  <span>Remove</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Visual Canvas Display */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
               background: '#0F080C',
               borderRadius: 'var(--radius-md)',
-              minHeight: '320px',
-              maxHeight: '440px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-              position: 'relative'
+              padding: '16px',
+              minHeight: '260px',
+              maxHeight: '420px',
+              overflow: 'hidden'
             }}>
               {previewUrl ? (
                 <img
@@ -391,180 +476,124 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                   alt="Scan preview"
                   style={{
                     maxWidth: '100%',
-                    maxHeight: '420px',
+                    maxHeight: '380px',
                     objectFit: 'contain',
+                    borderRadius: 'var(--radius-sm)',
+                    transition: 'filter 0.2s ease',
                     ...previewFilterStyle
                   }}
                 />
               ) : (
-                <div style={{ color: '#FAF7F2', textAlign: 'center', padding: '24px' }}>
-                  <FileImage size={42} color="var(--dusty-rose)" style={{ margin: '0 auto 12px' }} />
-                  <p style={{ fontSize: '14px', fontWeight: 600 }}>Uncompressed PGM Format Detected</p>
-                  <p style={{ fontSize: '12px', color: '#A68D9A', maxWidth: '320px', marginTop: '4px' }}>
-                    {activeFilename} will be decoded directly on the server during analysis.
-                  </p>
+                <div style={{ textAlign: 'center', color: '#E2D9DC', padding: '20px' }}>
+                  <FileImage size={36} style={{ margin: '0 auto 8px', opacity: 0.7 }} />
+                  <div style={{ fontSize: '13px', fontWeight: 600 }}>MIAS PGM Raw Grayscale Image</div>
+                  <div style={{ fontSize: '11px', opacity: 0.6, marginTop: '4px' }}>
+                    Standard browser canvas cannot render 8-bit PGM directly. Image will be converted safely by the neural network on upload.
+                  </div>
                 </div>
               )}
-
-              {/* Viewport Badge */}
-              <div style={{
-                position: 'absolute',
-                top: '12px',
-                right: '12px',
-                background: 'rgba(20, 8, 14, 0.75)',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                fontSize: '11px',
-                color: '#FAF7F2',
-                fontFamily: 'monospace'
-              }}>
-                {modality.toUpperCase()}
-              </div>
             </div>
 
-            {/* Image Details & View Controls Bar */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '10px',
-              padding: '10px 14px',
-              background: 'var(--bg-muted)',
-              borderRadius: 'var(--radius-sm)'
-            }}>
-              <div>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  {activeFilename}
-                </span>
-                {uploadedFile && (
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '8px' }}>
-                    ({(uploadedFile.size / (1024 * 1024)).toFixed(2)} MB)
-                  </span>
-                )}
-                {selectedSample && (
-                  <span style={{ fontSize: '11px', color: 'var(--primary-rose)', marginLeft: '8px', fontWeight: 600 }}>
-                    [Reference Sample]
-                  </span>
-                )}
-              </div>
-
-              {/* Action Buttons: Replace / Remove / Viewing Tools */}
+            {/* Quick Diagnostic Toggles */}
+            {previewUrl && (
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                  Viewer Filter:
+                </span>
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className={`btn-secondary ${isInverted ? 'active' : ''}`}
                   onClick={() => setIsInverted(!isInverted)}
-                  style={{
-                    fontSize: '11px',
-                    padding: '5px 10px',
-                    backgroundColor: isInverted ? 'var(--bg-blush)' : 'var(--bg-surface)'
-                  }}
-                  title="Invert color polarity"
+                  style={{ fontSize: '11px', padding: '4px 10px' }}
                 >
                   <Sliders size={12} />
-                  <span>Invert</span>
+                  <span>Invert Grayscale</span>
                 </button>
-
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className={`btn-secondary ${contrastBoost ? 'active' : ''}`}
                   onClick={() => setContrastBoost(!contrastBoost)}
-                  style={{
-                    fontSize: '11px',
-                    padding: '5px 10px',
-                    backgroundColor: contrastBoost ? 'var(--bg-blush)' : 'var(--bg-surface)'
-                  }}
-                  title="Enhance tissue contrast"
+                  style={{ fontSize: '11px', padding: '4px 10px' }}
                 >
                   <Sliders size={12} />
-                  <span>Contrast</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => fileInputRef.current?.click()}
-                  style={{ fontSize: '11px', padding: '5px 10px' }}
-                >
-                  <RefreshCw size={12} />
-                  <span>Replace</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={handleRemoveImage}
-                  style={{ fontSize: '11px', padding: '5px 10px', color: 'var(--status-malignant)' }}
-                >
-                  <Trash2 size={12} />
-                  <span>Remove</span>
+                  <span>High Contrast</span>
                 </button>
               </div>
-            </div>
+            )}
+          </div>
+        )}
+
+        {/* Inline Error Banner */}
+        {errorMsg && (
+          <div style={{
+            marginTop: '16px',
+            padding: '12px 16px',
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--status-malignant-bg)',
+            border: '1px solid var(--status-malignant-border)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '12px',
+            color: 'var(--status-malignant)'
+          }}>
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+            <span>{errorMsg}</span>
           </div>
         )}
       </div>
 
-      {/* Error Message Alert */}
-      {errorMsg && (
-        <div style={{
-          padding: '12px 16px',
-          background: 'var(--status-malignant-bg)',
-          border: '1px solid var(--status-malignant-border)',
-          borderRadius: 'var(--radius-md)',
-          display: 'flex',
-          gap: '10px',
-          alignItems: 'center',
-          fontSize: '13px',
-          color: 'var(--status-malignant)'
-        }}>
-          <AlertCircle size={18} style={{ flexShrink: 0 }} />
-          <div style={{ flex: 1 }}>{errorMsg}</div>
-        </div>
-      )}
+      {/* Step 3: Run Analysis CTA */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '14px' }}>
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={handleRemoveImage}
+          disabled={!hasImage || isSubmitting}
+          style={{ padding: '12px 18px', fontSize: '13px' }}
+        >
+          Cancel
+        </button>
 
-      {/* Primary Action Button */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <button
           type="button"
           className="btn-primary"
           onClick={handleRunAnalysis}
-          disabled={!hasImage || isSubmitting || !isModelReady}
-          style={{
-            width: '100%',
-            justifyContent: 'center',
-            padding: '14px 24px',
-            fontSize: '15px'
-          }}
+          disabled={!hasImage || isSubmitting}
+          style={{ padding: '12px 24px', fontSize: '14px', minWidth: '180px', justifyContent: 'center' }}
         >
           {isSubmitting ? (
             <>
-              <RefreshCw size={18} className="spinning" />
-              <span>Running Neural Network Inspection...</span>
+              <RefreshCw size={16} className="spinning" />
+              <span>Running Analysis...</span>
             </>
           ) : (
             <>
-              <span>Run Analysis</span>
-              <ArrowRight size={18} />
+              <span>Run Neural Analysis</span>
+              <ArrowRight size={16} />
             </>
           )}
         </button>
+      </div>
 
-        {!isModelReady && (
-          <div style={{
-            fontSize: '12px',
-            color: 'var(--status-benign)',
-            textAlign: 'center',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px'
-          }}>
-            <ShieldAlert size={14} />
-            <span>Analysis is not available yet because a trained model has not been connected.</span>
-          </div>
-        )}
+      {/* Mandatory Medical Disclaimer */}
+      <div style={{
+        padding: '16px 20px',
+        borderRadius: 'var(--radius-md)',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-subtle)',
+        fontSize: '12px',
+        color: 'var(--text-muted)',
+        lineHeight: 1.6,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px'
+      }}>
+        <ShieldAlert size={18} color="var(--primary-rose)" style={{ flexShrink: 0 }} />
+        <div>
+          <strong style={{ color: 'var(--text-secondary)' }}>Medical Disclaimer: </strong>
+          This research prototype is not a medical diagnosis and must not be used to make healthcare decisions. Consult a qualified healthcare professional.
+        </div>
       </div>
     </div>
   );

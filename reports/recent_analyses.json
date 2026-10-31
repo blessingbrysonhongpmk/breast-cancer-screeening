@@ -1,97 +1,40 @@
 [
   {
-    "timestamp": "2026-10-31T15:51:36Z",
-    "modality": "mammogram",
-    "filename": "IIR0160_oblder.jpg",
+    "timestamp": "2026-10-31T16:22:23Z",
+    "modality": "thermal",
+    "filename": "test_thermal.jpg",
     "dimensions": {
-      "width": 320,
-      "height": 240
+      "width": 224,
+      "height": 224
     },
     "status": "classified",
     "inference_ready": true,
     "predicted_class": "normal",
-    "confidence": 0.4233,
+    "confidence": 0.5027,
     "probabilities": {
-      "normal": 0.4233,
-      "benign": 0.2949,
-      "malignant": 0.2819
+      "normal": 0.5027,
+      "benign": 0.2099,
+      "malignant": 0.2874
     },
-    "gradcam_url": "/api/gradcam-image/cam_1793442095967.jpg"
+    "gradcam_url": "/api/gradcam-image/cam_d8c6dedc186a.jpg"
   },
   {
-    "timestamp": "2026-10-31T15:10:01Z",
+    "timestamp": "2026-10-31T16:22:21Z",
     "modality": "mammogram",
-    "filename": "mdb001lm.pgm",
+    "filename": "test_mammo.png",
     "dimensions": {
-      "width": 1024,
-      "height": 485
+      "width": 224,
+      "height": 224
     },
     "status": "classified",
     "inference_ready": true,
     "predicted_class": "normal",
-    "confidence": 0.443,
+    "confidence": 0.4519,
     "probabilities": {
-      "normal": 0.443,
-      "benign": 0.2795,
-      "malignant": 0.2775
+      "normal": 0.4519,
+      "benign": 0.2929,
+      "malignant": 0.2552
     },
-    "gradcam_url": "/api/gradcam-image/cam_1793439601604.jpg"
-  },
-  {
-    "timestamp": "2026-10-31T15:09:22Z",
-    "modality": "mammogram",
-    "filename": "mdb003ll.pgm",
-    "dimensions": {
-      "width": 1024,
-      "height": 616
-    },
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "normal",
-    "confidence": 0.431,
-    "probabilities": {
-      "normal": 0.431,
-      "benign": 0.3232,
-      "malignant": 0.2458
-    },
-    "gradcam_url": "/api/gradcam-image/cam_1793439562537.jpg"
-  },
-  {
-    "timestamp": "2026-10-31T14:08:14Z",
-    "modality": "mammogram",
-    "filename": "IIR0160_anterior.jpg",
-    "dimensions": {
-      "width": 320,
-      "height": 240
-    },
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "normal",
-    "confidence": 0.4517,
-    "probabilities": {
-      "normal": 0.4517,
-      "benign": 0.2973,
-      "malignant": 0.251
-    },
-    "gradcam_url": "/api/gradcam-image/cam_1793435894651.jpg"
-  },
-  {
-    "timestamp": "2026-10-31T14:02:00Z",
-    "modality": "mammogram",
-    "filename": "mdb001lm.pgm",
-    "dimensions": {
-      "width": 4320,
-      "height": 2048
-    },
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "normal",
-    "confidence": 0.4586,
-    "probabilities": {
-      "normal": 0.4586,
-      "benign": 0.2809,
-      "malignant": 0.2606
-    },
-    "gradcam_url": "/api/gradcam-image/cam_1793435519957.jpg"
+    "gradcam_url": "/api/gradcam-image/cam_c79d79add435.jpg"
   }
 ]

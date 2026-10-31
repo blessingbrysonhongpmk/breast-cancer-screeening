@@ -1,17 +1,17 @@
 import React from 'react';
-import { Eye, Flame, ArrowRight, ShieldCheck, AlertCircle, Sparkles } from 'lucide-react';
-import { ModelStatus } from '../../services/api';
+import { Eye, Flame, ArrowRight, ShieldCheck, AlertCircle, Sparkles, CheckCircle2 } from 'lucide-react';
+import { HealthResponse, ModelReadinessResponse } from '../../services/api';
 
 interface HomePageProps {
-  modelStatus: ModelStatus | null;
+  health: HealthResponse | null;
+  modelReadiness: ModelReadinessResponse | null;
   onNavigate: (view: string, modality?: 'mammogram' | 'thermal') => void;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ modelStatus, onNavigate }) => {
-  const isModelReady = Boolean(
-    modelStatus?.is_ready_for_inference &&
-    (modelStatus?.models_available?.length ?? 0) > 0
-  );
+export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNavigate }) => {
+  const isBackendHealthy = Boolean(health?.status === 'healthy');
+  const mammoReady = Boolean(isBackendHealthy && modelReadiness?.mammogram?.ready);
+  const thermalReady = Boolean(isBackendHealthy && modelReadiness?.thermal?.ready);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', maxWidth: '960px', margin: '0 auto', width: '100%' }}>
@@ -33,7 +33,7 @@ export const HomePage: React.FC<HomePageProps> = ({ modelStatus, onNavigate }) =
           <Sparkles size={14} />
           <span>Research Prototype</span>
         </div>
-        
+
         <h1 style={{
           fontFamily: "'Playfair Display', Georgia, serif",
           fontSize: '36px',
@@ -57,41 +57,65 @@ export const HomePage: React.FC<HomePageProps> = ({ modelStatus, onNavigate }) =
           Upload a digital mammogram or thermal scan to inspect tissue patterns and view visual explainability maps.
         </p>
 
-        {/* System Model Status Note */}
-        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
-          {isModelReady ? (
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 14px',
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--status-normal-bg)',
-              border: '1px solid var(--status-normal-border)',
-              fontSize: '12px',
-              color: 'var(--status-normal)',
-              fontWeight: 500
-            }}>
-              <ShieldCheck size={15} />
-              <span>AI models connected and ready for analysis</span>
-            </div>
-          ) : (
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 14px',
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--status-benign-bg)',
-              border: '1px solid var(--status-benign-border)',
-              fontSize: '12px',
-              color: 'var(--status-benign)',
-              fontWeight: 500
-            }}>
-              <AlertCircle size={15} />
-              <span>Model weights pending connection (analysis standby)</span>
-            </div>
-          )}
+        {/* Separated Backend Health & Per-Modality Model Readiness Bar */}
+        <div style={{
+          marginTop: '24px',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '12px',
+          flexWrap: 'wrap'
+        }}>
+          {/* Backend Status */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 12px',
+            borderRadius: 'var(--radius-sm)',
+            background: isBackendHealthy ? 'var(--status-normal-bg)' : 'var(--status-benign-bg)',
+            border: `1px solid ${isBackendHealthy ? 'var(--status-normal-border)' : 'var(--status-benign-border)'}`,
+            fontSize: '12px',
+            color: isBackendHealthy ? 'var(--status-normal)' : 'var(--status-benign)',
+            fontWeight: 500
+          }}>
+            {isBackendHealthy ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+            <span>Backend: {isBackendHealthy ? 'Healthy & Connected' : 'Connecting...'}</span>
+          </div>
+
+          {/* Mammogram Model Readiness */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 12px',
+            borderRadius: 'var(--radius-sm)',
+            background: mammoReady ? 'var(--status-normal-bg)' : 'var(--bg-muted)',
+            border: `1px solid ${mammoReady ? 'var(--status-normal-border)' : 'var(--border-light)'}`,
+            fontSize: '12px',
+            color: mammoReady ? 'var(--status-normal)' : 'var(--text-muted)',
+            fontWeight: 500
+          }}>
+            {mammoReady ? <ShieldCheck size={14} /> : <AlertCircle size={14} />}
+            <span>Mammogram ResNet-50: {mammoReady ? 'Loaded & Ready' : 'Standby'}</span>
+          </div>
+
+          {/* Thermal Model Readiness */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 12px',
+            borderRadius: 'var(--radius-sm)',
+            background: thermalReady ? 'var(--status-normal-bg)' : 'var(--bg-muted)',
+            border: `1px solid ${thermalReady ? 'var(--status-normal-border)' : 'var(--border-light)'}`,
+            fontSize: '12px',
+            color: thermalReady ? 'var(--status-normal)' : 'var(--text-muted)',
+            fontWeight: 500
+          }}>
+            {thermalReady ? <ShieldCheck size={14} /> : <AlertCircle size={14} />}
+            <span>Thermal ResNet-50: {thermalReady ? 'Loaded & Ready' : 'Standby'}</span>
+          </div>
         </div>
       </div>
 
@@ -115,19 +139,32 @@ export const HomePage: React.FC<HomePageProps> = ({ modelStatus, onNavigate }) =
           onClick={() => onNavigate('analyze', 'mammogram')}
         >
           <div>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: 'var(--bg-blush)',
-              border: '1px solid var(--border-rose)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--primary-rose)',
-              marginBottom: '20px'
-            }}>
-              <Eye size={24} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: 'var(--bg-blush)',
+                border: '1px solid var(--border-rose)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--primary-rose)'
+              }}>
+                <Eye size={24} />
+              </div>
+
+              <span style={{
+                fontSize: '11px',
+                padding: '4px 8px',
+                borderRadius: '9999px',
+                fontWeight: 600,
+                background: mammoReady ? 'var(--status-normal-bg)' : 'var(--bg-muted)',
+                color: mammoReady ? 'var(--status-normal)' : 'var(--text-muted)',
+                border: `1px solid ${mammoReady ? 'var(--status-normal-border)' : 'var(--border-light)'}`
+              }}>
+                {mammoReady ? 'Model Ready' : 'Standby'}
+              </span>
             </div>
 
             <h3 style={{ fontSize: '20px', marginBottom: '8px', color: 'var(--text-primary)' }}>
@@ -166,19 +203,32 @@ export const HomePage: React.FC<HomePageProps> = ({ modelStatus, onNavigate }) =
           onClick={() => onNavigate('analyze', 'thermal')}
         >
           <div>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: 'var(--bg-blush)',
-              border: '1px solid var(--border-rose)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--primary-rose)',
-              marginBottom: '20px'
-            }}>
-              <Flame size={24} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: 'var(--bg-blush)',
+                border: '1px solid var(--border-rose)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--primary-rose)'
+              }}>
+                <Flame size={24} />
+              </div>
+
+              <span style={{
+                fontSize: '11px',
+                padding: '4px 8px',
+                borderRadius: '9999px',
+                fontWeight: 600,
+                background: thermalReady ? 'var(--status-normal-bg)' : 'var(--bg-muted)',
+                color: thermalReady ? 'var(--status-normal)' : 'var(--text-muted)',
+                border: `1px solid ${thermalReady ? 'var(--status-normal-border)' : 'var(--border-light)'}`
+              }}>
+                {thermalReady ? 'Model Ready' : 'Standby'}
+              </span>
             </div>
 
             <h3 style={{ fontSize: '20px', marginBottom: '8px', color: 'var(--text-primary)' }}>
@@ -216,7 +266,7 @@ export const HomePage: React.FC<HomePageProps> = ({ modelStatus, onNavigate }) =
         textAlign: 'center'
       }}>
         <strong style={{ color: 'var(--text-secondary)' }}>Medical Disclaimer: </strong>
-        This research prototype is not a medical diagnosis. It must not be used to make healthcare decisions. Please consult a qualified healthcare professional.
+        This research prototype is not a medical diagnosis and must not be used to make healthcare decisions. Consult a qualified healthcare professional.
       </div>
     </div>
   );

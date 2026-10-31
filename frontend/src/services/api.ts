@@ -3,6 +3,29 @@
  * Connects exclusively to real FastAPI backend endpoints.
  */
 
+export interface HealthResponse {
+  status: string;
+  service: string;
+  version: string;
+  environment: string;
+}
+
+export interface ModalityReadinessDetail {
+  ready: boolean;
+  model_architecture: string;
+  checkpoint: string | null;
+  target_layer: string | null;
+  num_classes: number;
+  classes: string[];
+  device: string;
+}
+
+export interface ModelReadinessResponse {
+  mammogram: ModalityReadinessDetail;
+  thermal: ModalityReadinessDetail;
+  all_ready: boolean;
+}
+
 export interface SystemStatus {
   project: string;
   milestones: {
@@ -108,6 +131,11 @@ export interface AnalysisResponse {
   recommendation: string;
 }
 
+export interface ClearHistoryResponse {
+  message: string;
+  cleared_count: number;
+}
+
 export interface EvaluationBenchmark {
   status?: string;
   mammogram?: {
@@ -141,6 +169,18 @@ export interface EvaluationBenchmark {
 }
 
 const API_BASE = '';
+
+export async function fetchHealthCheck(): Promise<HealthResponse> {
+  const res = await fetch(`${API_BASE}/api/health`);
+  if (!res.ok) throw new Error(`Health HTTP error: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchModelReadiness(): Promise<ModelReadinessResponse> {
+  const res = await fetch(`${API_BASE}/api/models/readiness`);
+  if (!res.ok) throw new Error(`Model readiness HTTP error: ${res.status}`);
+  return res.json();
+}
 
 export async function fetchSystemStatus(): Promise<SystemStatus> {
   const res = await fetch(`${API_BASE}/api/status`);
@@ -193,13 +233,32 @@ export async function submitImageAnalysis(
     method: 'POST',
     body: formData
   });
-  if (!res.ok) throw new Error(`Analysis submission failed: ${res.status}`);
+  if (!res.ok) {
+    let errorDetail = `Analysis submission failed: ${res.status}`;
+    try {
+      const errorJson = await res.json();
+      if (errorJson.detail) {
+        errorDetail = errorJson.detail;
+      }
+    } catch (_) {
+      // Use fallback
+    }
+    throw new Error(errorDetail);
+  }
   return res.json();
 }
 
 export async function fetchRecentAnalyses(): Promise<any[]> {
   const res = await fetch(`${API_BASE}/api/recent-analyses`);
   if (!res.ok) return [];
+  return res.json();
+}
+
+export async function clearRecentAnalyses(): Promise<ClearHistoryResponse> {
+  const res = await fetch(`${API_BASE}/api/recent-analyses`, {
+    method: 'DELETE'
+  });
+  if (!res.ok) throw new Error(`Failed to clear analyses: ${res.status}`);
   return res.json();
 }
 
@@ -212,4 +271,3 @@ export async function fetchEvaluationBenchmark(): Promise<EvaluationBenchmark | 
   if (!res.ok) return null;
   return res.json();
 }
-
