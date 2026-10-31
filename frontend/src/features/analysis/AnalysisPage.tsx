@@ -207,7 +207,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
           New Image Analysis
         </h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-          Select an imaging modality, upload a breast scan, and run the neural network inspection.
+          Select an imaging modality, upload a breast scan, and run deep learning research inspection.
         </p>
       </div>
 
@@ -235,7 +235,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
             <span>
               {isCurrentModalityReady
                 ? `${modality.toUpperCase()} Model: ResNet-50 Ready (Grad-CAM active)`
-                : `${modality.toUpperCase()} Model: Standby`}
+                : `${modality.toUpperCase()} Model: Model not available`}
             </span>
           </div>
         </div>
@@ -569,7 +569,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
             </>
           ) : (
             <>
-              <span>Run Neural Analysis</span>
+              <span>Run Research Analysis</span>
               <ArrowRight size={16} />
             </>
           )}
@@ -592,7 +592,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
         <ShieldAlert size={18} color="var(--primary-rose)" style={{ flexShrink: 0 }} />
         <div>
           <strong style={{ color: 'var(--text-secondary)' }}>Medical Disclaimer: </strong>
-          This real-time AI screening platform is an assistive diagnostic support system and does not replace evaluation by a licensed healthcare professional. Always consult a qualified medical professional for health decisions.
+          This research platform is an educational tool for medical imaging research and must not be used for clinical diagnosis or healthcare decisions. Always consult a qualified medical professional.
         </div>
       </div>
     </div>

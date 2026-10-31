@@ -108,7 +108,7 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ latestResult, onNaviga
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
           <div>
             <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
-              Model Prediction
+              Model Prediction (Research Output — Not a Clinical Diagnosis)
             </div>
             <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>
               Target: <span className="mono" style={{ fontWeight: 600 }}>{latestResult.filename}</span>
@@ -211,7 +211,7 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ latestResult, onNaviga
             </div>
 
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '10px' }}>
-              * Probabilities reflect softmax activation distribution of the deep learning model.
+              * Softmax activation scores represent model output distributions across research training categories and are not clinical probabilities.
             </div>
           </div>
         )}
@@ -333,7 +333,7 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ latestResult, onNaviga
         <ShieldAlert size={18} color="var(--primary-rose)" style={{ flexShrink: 0 }} />
         <div>
           <strong style={{ color: 'var(--text-secondary)' }}>Medical Disclaimer: </strong>
-          This real-time AI screening platform is an assistive diagnostic support system and does not replace evaluation by a licensed healthcare professional. Always consult a qualified medical professional for health decisions.
+          This research platform is an educational tool for medical imaging research and must not be used for clinical diagnosis or healthcare decisions. Always consult a qualified medical professional.
         </div>
       </div>
     </div>

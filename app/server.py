@@ -58,13 +58,14 @@ LOADED_MODELS: Dict[str, Any] = {}
 
 class HealthResponse(BaseModel):
     status: str = "healthy"
-    service: str = "MammoFusion-XAI Real-Time Screening Platform"
+    service: str = "MammoFusion-XAI Breast Imaging Research Platform"
     version: str = "1.0.0"
     environment: str = "development"
 
 
 class ModalityReadinessDetail(BaseModel):
     ready: bool
+    status_text: str = "Model not available"
     model_architecture: str
     checkpoint: Optional[str] = None
     target_layer: Optional[str] = None
@@ -125,7 +126,9 @@ def get_checkpoint_path_for_modality(modality: str) -> Optional[Path]:
 
 
 def get_modality_model(modality: str):
-    """Loads and caches verified PyTorch ResNet-50 weights for inference."""
+    """Loads and caches verified PyTorch ResNet-50 weights for inference.
+    Executes a verification forward pass to ensure checkpoint compatibility before caching.
+    """
     if modality in LOADED_MODELS:
         return LOADED_MODELS[modality]
 
@@ -146,11 +149,19 @@ def get_modality_model(modality: str):
 
         model.load_state_dict(checkpoint["model_state_dict"])
         model.eval()
+
+        # Strict execution verification: verify forward pass before confirming readiness
+        with torch.no_grad():
+            dummy_input = torch.zeros((1, 3, 224, 224))
+            out = model(dummy_input)
+            if out.shape != (1, 3):
+                raise ValueError(f"Incompatible output shape {out.shape}, expected (1, 3)")
+
         LOADED_MODELS[modality] = model
-        logger.info(f"Successfully loaded PyTorch {modality} model from {ckpt_path.name}")
+        logger.info(f"Verified & loaded PyTorch {modality} model from {ckpt_path.name}")
         return model
     except Exception as ex:
-        logger.error(f"Failed to load model from {ckpt_path}: {ex}")
+        logger.error(f"Failed to load/verify model from {ckpt_path}: {ex}")
         return None
 
 
@@ -188,8 +199,8 @@ def _append_recent_analysis(record: Dict[str, Any]):
 # ============================================================================
 
 app = FastAPI(
-    title="MammoFusion-XAI Real-Time Screening Platform",
-    description="Real-Time Multimodal Explainable AI Platform for Breast Cancer Screening",
+    title="MammoFusion-XAI Breast Imaging Research Platform",
+    description="Explainable Deep Learning Research Platform for Breast Cancer Imaging Analysis",
     version="1.0.0"
 )
 
@@ -218,7 +229,7 @@ def get_health() -> HealthResponse:
     """Health check endpoint to verify backend service availability."""
     return HealthResponse(
         status="healthy",
-        service="MammoFusion-XAI Real-Time Screening Platform",
+        service="MammoFusion-XAI Breast Imaging Research Platform",
         version="1.0.0",
         environment=os.environ.get("ENV", "development")
     )
@@ -227,15 +238,17 @@ def get_health() -> HealthResponse:
 @app.get("/api/models/readiness", response_model=ModelReadinessResponse)
 def get_models_readiness() -> ModelReadinessResponse:
     """Per-modality model readiness endpoint.
-    Distinguishes whether mammogram and thermal weights are loaded and ready for inference.
+    Performs verified model checks to distinguish whether mammogram and thermal weights are loaded and ready.
     """
     mammo_model = get_modality_model("mammogram")
     mammo_ckpt = get_checkpoint_path_for_modality("mammogram")
+    mammo_ready = mammo_model is not None
     mammo_detail = ModalityReadinessDetail(
-        ready=mammo_model is not None,
+        ready=mammo_ready,
+        status_text="Model Ready" if mammo_ready else "Model not available",
         model_architecture="ResNet-50",
-        checkpoint=mammo_ckpt.name if mammo_ckpt else None,
-        target_layer="layer4" if mammo_model is not None else None,
+        checkpoint=mammo_ckpt.name if (mammo_ready and mammo_ckpt) else None,
+        target_layer="layer4" if mammo_ready else None,
         num_classes=3,
         classes=["normal", "benign", "malignant"],
         device="cpu"
@@ -243,11 +256,13 @@ def get_models_readiness() -> ModelReadinessResponse:
 
     thermal_model = get_modality_model("thermal")
     thermal_ckpt = get_checkpoint_path_for_modality("thermal")
+    thermal_ready = thermal_model is not None
     thermal_detail = ModalityReadinessDetail(
-        ready=thermal_model is not None,
+        ready=thermal_ready,
+        status_text="Model Ready" if thermal_ready else "Model not available",
         model_architecture="ResNet-50",
-        checkpoint=thermal_ckpt.name if thermal_ckpt else None,
-        target_layer="layer4" if thermal_model is not None else None,
+        checkpoint=thermal_ckpt.name if (thermal_ready and thermal_ckpt) else None,
+        target_layer="layer4" if thermal_ready else None,
         num_classes=3,
         classes=["normal", "benign", "malignant"],
         device="cpu"
@@ -256,7 +271,7 @@ def get_models_readiness() -> ModelReadinessResponse:
     return ModelReadinessResponse(
         mammogram=mammo_detail,
         thermal=thermal_detail,
-        all_ready=bool(mammo_model is not None and thermal_model is not None)
+        all_ready=bool(mammo_ready and thermal_ready)
     )
 
 
@@ -645,6 +660,8 @@ async def analyze_uploaded_image(
             "modality": norm_modality,
             "filename": safe_name,
             "dimensions": {"width": width, "height": height},
+            "color_mode": mode,
+            "format": format_name,
             "status": "classified",
             "inference_ready": True,
             "predicted_class": pred_label,
@@ -654,7 +671,10 @@ async def analyze_uploaded_image(
                 "benign": round(float(probs[1]), 4),
                 "malignant": round(float(probs[2]), 4)
             },
-            "gradcam_url": f"/api/gradcam-image/{cam_filename}"
+            "gradcam_url": f"/api/gradcam-image/{cam_filename}",
+            "model_architecture": "ResNet-50 Deep ConvNet",
+            "message": f"ResNet-50 inference complete. Classified as {pred_label.upper()} with {conf*100:.1f}% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
+            "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
         }
         _append_recent_analysis(record_entry)
 

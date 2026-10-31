@@ -31,7 +31,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
           marginBottom: '16px'
         }}>
           <Sparkles size={14} />
-          <span>Real-Time Clinical Screening System</span>
+          <span>Breast Imaging Research Platform</span>
         </div>
 
         <h1 style={{
@@ -43,7 +43,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
           lineHeight: 1.25,
           marginBottom: '14px'
         }}>
-          Real-Time AI Breast Cancer Screening
+          Explainable AI for Breast Imaging Research
         </h1>
 
         <p style={{
@@ -53,8 +53,8 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
           maxWidth: '680px',
           margin: '0 auto'
         }}>
-          MammoFusion-XAI delivers real-time explainable deep learning analysis for breast oncology imaging.
-          Upload a digital mammogram or thermal scan to inspect tissue patterns and generate instant visual explainability maps.
+          MammoFusion-XAI evaluates explainable deep learning methods on breast mammography and infrared thermography research datasets.
+          Upload an image to inspect tissue features and generate Grad-CAM visual attribution maps.
         </p>
 
         {/* Separated Backend Health & Per-Modality Model Readiness Bar */}
@@ -80,7 +80,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
             fontWeight: 500
           }}>
             {isBackendHealthy ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
-            <span>Backend: {isBackendHealthy ? 'Healthy & Connected' : 'Connecting...'}</span>
+            <span>Backend: {isBackendHealthy ? 'Connected & Verified' : 'Connecting...'}</span>
           </div>
 
           {/* Mammogram Model Readiness */}
@@ -97,7 +97,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
             fontWeight: 500
           }}>
             {mammoReady ? <ShieldCheck size={14} /> : <AlertCircle size={14} />}
-            <span>Mammogram ResNet-50: {mammoReady ? 'Loaded & Ready' : 'Standby'}</span>
+            <span>Mammogram ResNet-50: {mammoReady ? 'Model Ready' : 'Model not available'}</span>
           </div>
 
           {/* Thermal Model Readiness */}
@@ -114,7 +114,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
             fontWeight: 500
           }}>
             {thermalReady ? <ShieldCheck size={14} /> : <AlertCircle size={14} />}
-            <span>Thermal ResNet-50: {thermalReady ? 'Loaded & Ready' : 'Standby'}</span>
+            <span>Thermal ResNet-50: {thermalReady ? 'Model Ready' : 'Model not available'}</span>
           </div>
         </div>
       </div>
@@ -163,7 +163,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
                 color: mammoReady ? 'var(--status-normal)' : 'var(--text-muted)',
                 border: `1px solid ${mammoReady ? 'var(--status-normal-border)' : 'var(--border-light)'}`
               }}>
-                {mammoReady ? 'Model Ready' : 'Standby'}
+                {mammoReady ? 'Model Ready' : 'Model not available'}
               </span>
             </div>
 
@@ -227,7 +227,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
                 color: thermalReady ? 'var(--status-normal)' : 'var(--text-muted)',
                 border: `1px solid ${thermalReady ? 'var(--status-normal-border)' : 'var(--border-light)'}`
               }}>
-                {thermalReady ? 'Model Ready' : 'Standby'}
+                {thermalReady ? 'Model Ready' : 'Model not available'}
               </span>
             </div>
 
@@ -266,7 +266,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
         textAlign: 'center'
       }}>
         <strong style={{ color: 'var(--text-secondary)' }}>Medical Disclaimer: </strong>
-        This real-time AI screening platform is an assistive diagnostic support system and does not replace evaluation by a licensed healthcare professional. Always consult a qualified medical professional for health decisions.
+        This research platform is an educational tool for medical imaging research and must not be used for clinical diagnosis or healthcare decisions. Always consult a qualified medical professional.
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ export interface HealthResponse {
 
 export interface ModalityReadinessDetail {
   ready: boolean;
+  status_text?: string;
   model_architecture: string;
   checkpoint: string | null;
   target_layer: string | null;

@@ -49,10 +49,10 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h2 style={{ fontSize: '24px', marginBottom: '4px', color: 'var(--text-primary)' }}>
-            Analysis History
+            Session Analysis History
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
-            Recent scans processed during this session.
+            Genuine scans analyzed during your current session. Stored locally for active review.
           </p>
         </div>
 

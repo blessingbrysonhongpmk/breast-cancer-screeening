@@ -31,7 +31,7 @@ export const AboutPage: React.FC = () => {
           About MammoFusion-XAI
         </h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1.5 }}>
-          A real-time explainable deep learning platform for multimodal breast cancer screening and clinical risk inspection.
+          A research platform evaluating explainable deep learning in multimodal breast oncology imaging.
         </p>
       </div>
 
@@ -108,7 +108,7 @@ export const AboutPage: React.FC = () => {
         <ShieldAlert size={22} color="var(--primary-rose)" style={{ flexShrink: 0 }} />
         <div>
           <strong style={{ color: 'var(--text-primary)' }}>Important Medical Disclaimer: </strong>
-          This real-time AI screening platform is an assistive diagnostic support system and does not replace evaluation by a licensed healthcare professional. Always consult a qualified medical professional for health decisions.
+          This research platform is an educational tool for medical imaging research and must not be used for clinical diagnosis or healthcare decisions. Always consult a qualified medical professional.
         </div>
       </div>
 

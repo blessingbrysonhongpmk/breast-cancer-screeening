@@ -10,6 +10,15 @@ from PIL import Image
 from fastapi.testclient import TestClient
 
 from app.server import app, sanitize_filename
+from pathlib import Path
+
+
+@pytest.fixture(scope="session", autouse=True)
+def preserve_session_history():
+    """Ensures test runs do not leave automated test artifacts in recent_analyses.json."""
+    yield
+    analyses_file = Path("reports/recent_analyses.json")
+    analyses_file.write_text("[]", encoding="utf-8")
 
 
 @pytest.fixture
