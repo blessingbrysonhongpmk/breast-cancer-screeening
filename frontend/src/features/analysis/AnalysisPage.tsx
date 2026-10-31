@@ -592,7 +592,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
         <ShieldAlert size={18} color="var(--primary-rose)" style={{ flexShrink: 0 }} />
         <div>
           <strong style={{ color: 'var(--text-secondary)' }}>Medical Disclaimer: </strong>
-          This research prototype is not a medical diagnosis and must not be used to make healthcare decisions. Consult a qualified healthcare professional.
+          This real-time AI screening platform is an assistive diagnostic support system and does not replace evaluation by a licensed healthcare professional. Always consult a qualified medical professional for health decisions.
         </div>
       </div>
     </div>

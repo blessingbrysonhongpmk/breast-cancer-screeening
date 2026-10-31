@@ -333,7 +333,7 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ latestResult, onNaviga
         <ShieldAlert size={18} color="var(--primary-rose)" style={{ flexShrink: 0 }} />
         <div>
           <strong style={{ color: 'var(--text-secondary)' }}>Medical Disclaimer: </strong>
-          This research prototype is not a medical diagnosis. It must not be used to make healthcare decisions. Please consult a qualified healthcare professional.
+          This real-time AI screening platform is an assistive diagnostic support system and does not replace evaluation by a licensed healthcare professional. Always consult a qualified medical professional for health decisions.
         </div>
       </div>
     </div>

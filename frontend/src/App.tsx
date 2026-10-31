@@ -166,7 +166,7 @@ export function App() {
                 fontWeight: 600,
                 marginTop: '2px'
               }}>
-                Research Prototype
+                Real-Time AI Platform
               </div>
             </div>
           </div>

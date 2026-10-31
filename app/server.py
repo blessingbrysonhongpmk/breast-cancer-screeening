@@ -58,7 +58,7 @@ LOADED_MODELS: Dict[str, Any] = {}
 
 class HealthResponse(BaseModel):
     status: str = "healthy"
-    service: str = "MammoFusion-XAI Risk Platform"
+    service: str = "MammoFusion-XAI Real-Time Screening Platform"
     version: str = "1.0.0"
     environment: str = "development"
 
@@ -188,8 +188,8 @@ def _append_recent_analysis(record: Dict[str, Any]):
 # ============================================================================
 
 app = FastAPI(
-    title="MammoFusion-XAI Risk Platform",
-    description="Multimodal Explainable AI for Breast Cancer Screening & Risk Research",
+    title="MammoFusion-XAI Real-Time Screening Platform",
+    description="Real-Time Multimodal Explainable AI Platform for Breast Cancer Screening",
     version="1.0.0"
 )
 

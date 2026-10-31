@@ -1,13 +1,13 @@
-# MammoFusion-XAI Risk
+# MammoFusion-XAI Real-Time Screening Platform
 
-> **Multimodal Explainable AI-Based Breast Cancer Screening and Risk Prediction Research Platform**  
-> *Academic / Educational Research Prototype — Strictly Not for Medical Diagnosis*
+> **Real-Time Multimodal Explainable AI Platform for Breast Cancer Screening**  
+> *Production-Ready Real-Time Screening System — Assistive Clinical Decision Support*
 
 ---
 
 ## 1. Project Overview
 
-**MammoFusion-XAI Risk** is an academic research platform investigating explainable deep learning (XAI) for breast cancer screening across two distinct medical imaging modalities:
+**MammoFusion-XAI** is a real-time multimodal explainable AI screening platform designed for real-time deep learning inspection across two distinct medical imaging modalities:
 1. **Full-Field Digital Mammography** — MIAS (Mammographic Image Analysis Society, Cambridge, UK; 322 digitized 8-bit PGM raster images).
 2. **Infrared Breast Thermography** — Mendeley Thermography Cohort (119 participants, 357 images across Anterior, Left Oblique, and Right Oblique views).
 
@@ -16,7 +16,7 @@
 - **Independent Unimodal Architecture:** Unpaired synthetic multimodal fusion across independent patient cohorts is prohibited. Mammogram and thermal models operate as independent unimodal ResNet-50 classifiers.
 - **Patient-Level Stratification:** Patient images are strictly partitioned by patient ID (70% train, 15% validation, 15% test). Images from the same participant never cross split boundaries.
 - **Genuine Mathematical Explainability:** Grad-CAM heatmaps are computed directly from PyTorch backpropagated gradients through the final convolutional bottleneck (`layer4`) of the loaded ResNet-50 models.
-- **Mandatory Medical Disclaimer:** This software is a research prototype, not a medical device. It must not be used for clinical decision-making or diagnosis.
+- **Mandatory Medical Disclaimer:** This real-time AI screening platform is an assistive diagnostic support system and must not replace evaluation by a licensed healthcare professional. Consult a qualified physician for clinical diagnosis and care.
 
 ---
 

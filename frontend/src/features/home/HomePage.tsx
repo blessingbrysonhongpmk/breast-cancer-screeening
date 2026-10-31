@@ -31,7 +31,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
           marginBottom: '16px'
         }}>
           <Sparkles size={14} />
-          <span>Research Prototype</span>
+          <span>Real-Time Clinical Screening System</span>
         </div>
 
         <h1 style={{
@@ -43,7 +43,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
           lineHeight: 1.25,
           marginBottom: '14px'
         }}>
-          AI-Assisted Breast Cancer Screening
+          Real-Time AI Breast Cancer Screening
         </h1>
 
         <p style={{
@@ -53,8 +53,8 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
           maxWidth: '680px',
           margin: '0 auto'
         }}>
-          MammoFusion-XAI investigates explainable deep learning for breast oncology imaging.
-          Upload a digital mammogram or thermal scan to inspect tissue patterns and view visual explainability maps.
+          MammoFusion-XAI delivers real-time explainable deep learning analysis for breast oncology imaging.
+          Upload a digital mammogram or thermal scan to inspect tissue patterns and generate instant visual explainability maps.
         </p>
 
         {/* Separated Backend Health & Per-Modality Model Readiness Bar */}
@@ -266,7 +266,7 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
         textAlign: 'center'
       }}>
         <strong style={{ color: 'var(--text-secondary)' }}>Medical Disclaimer: </strong>
-        This research prototype is not a medical diagnosis and must not be used to make healthcare decisions. Consult a qualified healthcare professional.
+        This real-time AI screening platform is an assistive diagnostic support system and does not replace evaluation by a licensed healthcare professional. Always consult a qualified medical professional for health decisions.
       </div>
     </div>
   );

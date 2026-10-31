@@ -245,3 +245,4 @@ def test_real_thermal_inference_and_gradcam(client, sample_valid_thermal_bytes):
         assert cam_res.headers["content-type"] == "image/jpeg"
     else:
         assert data["status"] == "awaiting_model_training"
+

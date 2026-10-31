@@ -149,7 +149,7 @@ The full automated test suite was executed via `py -3.10 -m pytest tests/`:
 
 1. **Cohort Disconnect:** MIAS (UK, 1994) and Mendeley Thermography (Mexico, 2017) are independent datasets. Cross-modal concatenation without paired clinical acquisitions would introduce spurious correlations.
 2. **Sample Size & Class Distribution:** Ingested datasets exhibit natural class imbalance; evaluation relies on macro-averaged F1 and per-class sensitivity rather than raw accuracy.
-3. **Medical Disclaimer:** MammoFusion-XAI is an educational research prototype. It is not approved by regulatory bodies (e.g., FDA, CE-IVD) and cannot be used for clinical diagnosis or treatment planning.
+3. **Medical Disclaimer:** MammoFusion-XAI is a real-time assistive screening platform. It does not replace clinical evaluation by a licensed healthcare professional and must be interpreted alongside clinical examinations.
 
 ---
 
@@ -162,3 +162,4 @@ The full automated test suite was executed via `py -3.10 -m pytest tests/`:
 1. **Paired Clinical Acquisition:** Partner with a clinical imaging center to collect paired mammogram and thermography scans from the same patient cohort with informed consent.
 2. **Test-Time Augmentation (TTA):** Introduce test-time augmentation (multi-crop / horizontal flip averaging) to further stabilize classification probabilities on borderline cases.
 3. **Model Quantization:** Quantize ResNet-50 models to INT8 / ONNX format to reduce memory usage and accelerate inference latency on constrained hardware.
+

@@ -185,10 +185,10 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
                             ? 'var(--status-benign)'
                             : 'var(--status-normal)',
                         border: `1px solid ${predictedClass === 'malignant'
-                            ? 'var(--status-malignant-border)'
-                            : predictedClass === 'benign'
-                              ? 'var(--status-benign-border)'
-                              : 'var(--status-normal-border)'
+                          ? 'var(--status-malignant-border)'
+                          : predictedClass === 'benign'
+                            ? 'var(--status-benign-border)'
+                            : 'var(--status-normal-border)'
                           }`
                       }}>
                         {predictedClass} ({record.confidence ? `${(record.confidence * 100).toFixed(0)}%` : 'Ready'})
