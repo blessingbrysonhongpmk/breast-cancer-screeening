@@ -70,7 +70,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
     if (!initialSampleFilename || samples.length === 0) return;
     const match = samples.find(
       (s) => s.filename.toLowerCase() === initialSampleFilename.toLowerCase() ||
-             s.filename.toLowerCase().startsWith(initialSampleFilename.toLowerCase().split('.')[0])
+        s.filename.toLowerCase().startsWith(initialSampleFilename.toLowerCase().split('.')[0])
     );
     if (!match) return;
 

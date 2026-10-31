@@ -1,17 +1,17 @@
 import React from 'react';
 import {
-  Eye,
-  Flame,
+  Scan,
+  BarChart3,
+  Clock,
   ArrowRight,
   ShieldCheck,
-  AlertCircle,
-  Activity,
   CheckCircle2,
   Cpu,
-  Layers,
-  Database
+  Calendar,
+  Heart
 } from 'lucide-react';
 import { HealthResponse, ModelReadinessResponse } from '../../services/api';
+import { PinkRibbon, RadiologyWorkstation, RibbonWithLeaves } from '../../components/Illustrations';
 
 interface HomePageProps {
   health: HealthResponse | null;
@@ -23,442 +23,507 @@ export const HomePage: React.FC<HomePageProps> = ({ health, modelReadiness, onNa
   const isBackendHealthy = Boolean(health?.status === 'healthy');
   const mammoReady = Boolean(isBackendHealthy && modelReadiness?.mammogram?.ready);
   const thermalReady = Boolean(isBackendHealthy && modelReadiness?.thermal?.ready);
+  const allModelsReady = Boolean(mammoReady && thermalReady);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', maxWidth: '960px', margin: '0 auto', width: '100%' }}>
-      {/* Platform Header & Telemetry */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '22px', maxWidth: '1120px', margin: '0 auto', width: '100%' }}>
+      {/* 1. Hero Banner */}
       <div style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border-light)',
-        borderRadius: 'var(--radius-lg)',
-        padding: '32px 28px',
-        boxShadow: 'var(--shadow-sm)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '3px 10px',
-            borderRadius: '9999px',
-            background: 'var(--bg-blush)',
-            border: '1px solid var(--border-rose)',
-            fontSize: '11px',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            color: 'var(--primary-rose)'
-          }}>
-            <Activity size={12} />
-            Research Platform
-          </span>
-
-          <span style={{
-            fontSize: '11px',
-            color: 'var(--text-muted)',
-            fontWeight: 500
-          }}>
-            Final Year Engineering Project • ResNet-50 PyTorch
-          </span>
-        </div>
-
-        <h1 style={{
-          fontSize: '28px',
-          fontWeight: 700,
-          color: 'var(--text-primary)',
-          letterSpacing: '-0.025em',
-          lineHeight: 1.25,
-          marginBottom: '10px'
-        }}>
-          Multimodal Explainable AI-Based Breast Cancer Screening and Risk Prediction System
-        </h1>
-
-        <p style={{
-          fontSize: '14px',
-          color: 'var(--text-secondary)',
-          lineHeight: 1.6,
-          maxWidth: '760px',
-          marginBottom: '20px'
-        }}>
-          A clinical research platform integrating full-field digital mammography (MIAS cohort) and infrared surface thermography (Mendeley cohort). Features real ResNet-50 inference, predictive Shannon entropy quantification, layer4 Grad-CAM focal visual attributions, and patient-isolated validation.
-        </p>
-
-        {/* Live System Telemetry Bar */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          flexWrap: 'wrap',
-          paddingTop: '16px',
-          borderTop: '1px solid var(--border-light)'
-        }}>
-          {/* Backend Status */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '4px 10px',
-            borderRadius: 'var(--radius-sm)',
-            background: isBackendHealthy ? 'var(--status-normal-bg)' : 'var(--status-benign-bg)',
-            border: `1px solid ${isBackendHealthy ? 'var(--status-normal-border)' : 'var(--status-benign-border)'}`,
-            fontSize: '11px',
-            color: isBackendHealthy ? 'var(--status-normal)' : 'var(--status-benign)',
-            fontWeight: 600
-          }}>
-            {isBackendHealthy ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
-            <span>Backend: {isBackendHealthy ? 'FastAPI Service Connected' : 'Connecting to Server...'}</span>
-          </div>
-
-          {/* Mammogram Model */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '4px 10px',
-            borderRadius: 'var(--radius-sm)',
-            background: mammoReady ? 'var(--status-normal-bg)' : 'var(--bg-muted)',
-            border: `1px solid ${mammoReady ? 'var(--status-normal-border)' : 'var(--border-light)'}`,
-            fontSize: '11px',
-            color: mammoReady ? 'var(--status-normal)' : 'var(--text-muted)',
-            fontWeight: 600
-          }}>
-            {mammoReady ? <ShieldCheck size={13} /> : <AlertCircle size={13} />}
-            <span>Mammogram ResNet-50: {mammoReady ? 'Ready (Grad-CAM active)' : 'Not Available'}</span>
-          </div>
-
-          {/* Thermal Model */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '4px 10px',
-            borderRadius: 'var(--radius-sm)',
-            background: thermalReady ? 'var(--status-normal-bg)' : 'var(--bg-muted)',
-            border: `1px solid ${thermalReady ? 'var(--status-normal-border)' : 'var(--border-light)'}`,
-            fontSize: '11px',
-            color: thermalReady ? 'var(--status-normal)' : 'var(--text-muted)',
-            fontWeight: 600
-          }}>
-            {thermalReady ? <ShieldCheck size={13} /> : <AlertCircle size={13} />}
-            <span>Thermal ResNet-50: {thermalReady ? 'Ready (Grad-CAM active)' : 'Not Available'}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Primary Modality Examination Cards */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
-        gap: '20px'
-      }}>
-        {/* Modality 1: Mammogram */}
-        <div
-          className="card"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            padding: '24px',
-            cursor: 'pointer'
-          }}
-          onClick={() => onNavigate('examination', 'mammogram')}
-        >
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-              <div style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '10px',
-                background: 'var(--bg-blush)',
-                border: '1px solid var(--border-rose)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--primary-rose)'
-              }}>
-                <Eye size={22} />
-              </div>
-
-              <span style={{
-                fontSize: '11px',
-                padding: '3px 8px',
-                borderRadius: '9999px',
-                fontWeight: 600,
-                background: mammoReady ? 'var(--status-normal-bg)' : 'var(--bg-muted)',
-                color: mammoReady ? 'var(--status-normal)' : 'var(--text-muted)',
-                border: `1px solid ${mammoReady ? 'var(--status-normal-border)' : 'var(--border-light)'}`
-              }}>
-                {mammoReady ? 'Model Ready' : 'Model Not Available'}
-              </span>
-            </div>
-
-            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Structural Radiography
-            </div>
-
-            <h3 style={{ fontSize: '18px', fontWeight: 700, margin: '4px 0 8px', color: 'var(--text-primary)' }}>
-              Full-Field Digital Mammography
-            </h3>
-
-            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '16px' }}>
-              Examine tissue density, circumscribed masses, and microcalcifications using 224×224 normalized grayscale scans from the verified MIAS cohort.
-            </p>
-
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px',
-              fontSize: '12px',
-              color: 'var(--text-secondary)',
-              marginBottom: '20px',
-              padding: '10px 12px',
-              background: 'var(--bg-blush-subtle)',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-light)'
-            }}>
-              <div>• <strong>Network:</strong> ResNet-50 (layer4 feature maps)</div>
-              <div>• <strong>Outputs:</strong> Normal, Benign, Malignant</div>
-              <div>• <strong>XAI:</strong> Gradient-weighted Class Activation Mapping</div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="btn-primary"
-            style={{ width: '100%', padding: '11px 16px', fontSize: '13px' }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onNavigate('examination', 'mammogram');
-            }}
-          >
-            <span>Launch Mammogram Examination</span>
-            <ArrowRight size={15} />
-          </button>
-        </div>
-
-        {/* Modality 2: Thermal Image */}
-        <div
-          className="card"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            padding: '24px',
-            cursor: 'pointer'
-          }}
-          onClick={() => onNavigate('examination', 'thermal')}
-        >
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-              <div style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '10px',
-                background: 'var(--bg-blush)',
-                border: '1px solid var(--border-rose)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--primary-rose)'
-              }}>
-                <Flame size={22} />
-              </div>
-
-              <span style={{
-                fontSize: '11px',
-                padding: '3px 8px',
-                borderRadius: '9999px',
-                fontWeight: 600,
-                background: thermalReady ? 'var(--status-normal-bg)' : 'var(--bg-muted)',
-                color: thermalReady ? 'var(--status-normal)' : 'var(--text-muted)',
-                border: `1px solid ${thermalReady ? 'var(--status-normal-border)' : 'var(--border-light)'}`
-              }}>
-                {thermalReady ? 'Model Ready' : 'Model Not Available'}
-              </span>
-            </div>
-
-            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Physiological Thermography
-            </div>
-
-            <h3 style={{ fontSize: '18px', fontWeight: 700, margin: '4px 0 8px', color: 'var(--text-primary)' }}>
-              Infrared Breast Thermography
-            </h3>
-
-            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '16px' }}>
-              Analyze metabolic thermal patterns, vascular asymmetry, and localized hyperthermia across frontal and oblique projections (Mendeley cohort).
-            </p>
-
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px',
-              fontSize: '12px',
-              color: 'var(--text-secondary)',
-              marginBottom: '20px',
-              padding: '10px 12px',
-              background: 'var(--bg-blush-subtle)',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-light)'
-            }}>
-              <div>• <strong>Network:</strong> ResNet-50 3-Channel RGB</div>
-              <div>• <strong>Outputs:</strong> Normal, Benign, Malignant</div>
-              <div>• <strong>XAI:</strong> Hyperthermic gradient localization</div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="btn-primary"
-            style={{ width: '100%', padding: '11px 16px', fontSize: '13px' }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onNavigate('examination', 'thermal');
-            }}
-          >
-            <span>Launch Thermography Examination</span>
-            <ArrowRight size={15} />
-          </button>
-        </div>
-      </div>
-
-      {/* Quick-Access Reference Case Suite */}
-      <div className="card" style={{ padding: '20px 24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
-          <div>
-            <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
-              Reference Case Benchmarks
-            </div>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-              Test pre-evaluated scans from the peer-reviewed research cohorts:
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => onNavigate('examination')}
-            style={{ fontSize: '12px', padding: '6px 12px' }}
-          >
-            <span>Open Examination Workspace</span>
-            <ArrowRight size={13} />
-          </button>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => onNavigate('examination', 'mammogram', 'mdb001.pgm')}
-            style={{
-              padding: '10px 14px',
-              justifyContent: 'space-between',
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border-light)',
-              borderRadius: 'var(--radius-md)'
-            }}
-          >
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--text-primary)' }}>MIAS Case P001</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Mammogram • Benign Circumscribed Mass</div>
-            </div>
-            <ArrowRight size={14} color="var(--primary-rose)" />
-          </button>
-
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => onNavigate('examination', 'mammogram', 'mdb002.pgm')}
-            style={{
-              padding: '10px 14px',
-              justifyContent: 'space-between',
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border-light)',
-              borderRadius: 'var(--radius-md)'
-            }}
-          >
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--text-primary)' }}>MIAS Case P002</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Mammogram • Normal Glandular Tissue</div>
-            </div>
-            <ArrowRight size={14} color="var(--primary-rose)" />
-          </button>
-
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => onNavigate('examination', 'thermal', 'IIR0110_anterior.png')}
-            style={{
-              padding: '10px 14px',
-              justifyContent: 'space-between',
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border-light)',
-              borderRadius: 'var(--radius-md)'
-            }}
-          >
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--text-primary)' }}>Mendeley IIR0110</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Thermal • Frontal Anterior View</div>
-            </div>
-            <ArrowRight size={14} color="var(--primary-rose)" />
-          </button>
-        </div>
-      </div>
-
-      {/* Core Engineering Methodology Highlights */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-        gap: '16px'
-      }}>
-        <div className="card" style={{ padding: '16px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <Layers size={16} color="var(--primary-rose)" />
-            <h4 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Explainable AI</h4>
-          </div>
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            Grad-CAM visual attributions calculate exact target gradients through ResNet-50 layer4 to map high-salience tumor and vascular regions.
-          </p>
-        </div>
-
-        <div className="card" style={{ padding: '16px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <Cpu size={16} color="var(--primary-rose)" />
-            <h4 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Uncertainty & TTA</h4>
-          </div>
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            Shannon entropy metrics and bilateral test-time augmentation (TTA) measure predictive stability and confidence intervals.
-          </p>
-        </div>
-
-        <div className="card" style={{ padding: '16px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <Database size={16} color="var(--primary-rose)" />
-            <h4 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Zero Leakage</h4>
-          </div>
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            Strict patient-level data partitioning prevents data leakage between training, validation, and held-out test evaluation benchmarks.
-          </p>
-        </div>
-      </div>
-
-      {/* Mandatory Medical Disclaimer Banner */}
-      <div style={{
-        padding: '14px 18px',
-        borderRadius: 'var(--radius-md)',
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border-subtle)',
-        fontSize: '12px',
-        color: 'var(--text-muted)',
-        lineHeight: 1.5,
+        background: 'linear-gradient(135deg, #FFF0F5 0%, #FEE8F0 45%, #FCE4EC 100%)',
+        borderRadius: '20px',
+        padding: '28px 36px',
+        border: '1px solid #F7D2DD',
+        boxShadow: '0 4px 20px rgba(216, 40, 115, 0.06)',
         display: 'flex',
         alignItems: 'center',
-        gap: '10px'
+        justifyContent: 'space-between',
+        gap: '24px',
+        position: 'relative',
+        overflow: 'hidden'
       }}>
-        <AlertCircle size={16} color="var(--primary-rose)" style={{ flexShrink: 0 }} />
-        <span>
-          <strong>Scientific Research Notice:</strong> MammoFusion-XAI is an academic research platform for evaluating explainable computer vision in oncology imaging. Model outputs and Grad-CAM heatmaps do not provide medical screening or diagnosis.
-        </span>
+        {/* Left Side: Brand, Titles & Tagline */}
+        <div style={{ flex: '1 1 540px', zIndex: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '22px', marginBottom: '14px' }}>
+            <PinkRibbon size={64} />
+            <div>
+              <h1 style={{
+                fontSize: '35px',
+                fontWeight: 800,
+                color: '#2A061B',
+                letterSpacing: '-0.025em',
+                lineHeight: 1.15
+              }}>
+                MammoFusion-XAI
+              </h1>
+              <p style={{
+                fontSize: '14.5px',
+                fontWeight: 600,
+                fontStyle: 'italic',
+                color: '#8A1E52',
+                marginTop: '4px',
+                lineHeight: 1.4
+              }}>
+                Multimodal Explainable AI-Based<br />
+                Breast Cancer Screening and Risk Prediction System
+              </p>
+            </div>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            color: '#9E3867',
+            fontSize: '12.5px',
+            fontWeight: 600,
+            letterSpacing: '0.04em',
+            marginTop: '12px'
+          }}>
+            <span style={{ height: '1px', width: '42px', background: '#D998B4' }} />
+            <span>Analyze • Understand • Care</span>
+            <span style={{ height: '1px', width: '42px', background: '#D998B4' }} />
+          </div>
+        </div>
+
+        {/* Right Side: Hospital Radiology & Mammogram Workstation */}
+        <div style={{ flex: '0 0 350px', maxWidth: '370px', borderRadius: '16px', overflow: 'hidden' }}>
+          <RadiologyWorkstation />
+        </div>
+      </div>
+
+      {/* 2. Action Cards Row (3 Cards) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+        {/* Card 1: New Examination */}
+        <div
+          onClick={() => onNavigate('examination')}
+          style={{
+            background: '#FFFFFF',
+            border: '1px solid #F5D6DE',
+            borderRadius: '16px',
+            padding: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            cursor: 'pointer',
+            boxShadow: '0 2px 6px rgba(44, 24, 32, 0.03)',
+            transition: 'border-color 0.15s ease'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{
+              width: '46px',
+              height: '46px',
+              borderRadius: '12px',
+              background: '#FFF0F5',
+              border: '1px solid #FCD9E2',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#D82873'
+            }}>
+              <Scan size={22} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '15px', color: '#2A061B' }}>New Examination</div>
+              <div style={{ fontSize: '11.5px', color: '#826674', marginTop: '3px', maxWidth: '175px', lineHeight: 1.35 }}>
+                Upload and analyze mammogram or thermal images
+              </div>
+            </div>
+          </div>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: '#FFF0F5',
+            border: '1px solid #FCD9E2',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#D82873',
+            flexShrink: 0
+          }}>
+            <ArrowRight size={14} />
+          </div>
+        </div>
+
+        {/* Card 2: View Results */}
+        <div
+          onClick={() => onNavigate('results')}
+          style={{
+            background: '#FFFFFF',
+            border: '1px solid #F5D6DE',
+            borderRadius: '16px',
+            padding: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            cursor: 'pointer',
+            boxShadow: '0 2px 6px rgba(44, 24, 32, 0.03)',
+            transition: 'border-color 0.15s ease'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{
+              width: '46px',
+              height: '46px',
+              borderRadius: '12px',
+              background: '#FFF0F5',
+              border: '1px solid #FCD9E2',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#D82873'
+            }}>
+              <BarChart3 size={22} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '15px', color: '#2A061B' }}>View Results</div>
+              <div style={{ fontSize: '11.5px', color: '#826674', marginTop: '3px', maxWidth: '175px', lineHeight: 1.35 }}>
+                Check analysis results and insights
+              </div>
+            </div>
+          </div>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: '#FFF0F5',
+            border: '1px solid #FCD9E2',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#D82873',
+            flexShrink: 0
+          }}>
+            <ArrowRight size={14} />
+          </div>
+        </div>
+
+        {/* Card 3: Patient History */}
+        <div
+          onClick={() => onNavigate('history')}
+          style={{
+            background: '#FFFFFF',
+            border: '1px solid #F5D6DE',
+            borderRadius: '16px',
+            padding: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            cursor: 'pointer',
+            boxShadow: '0 2px 6px rgba(44, 24, 32, 0.03)',
+            transition: 'border-color 0.15s ease'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{
+              width: '46px',
+              height: '46px',
+              borderRadius: '12px',
+              background: '#FFF0F5',
+              border: '1px solid #FCD9E2',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#D82873'
+            }}>
+              <Clock size={22} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '15px', color: '#2A061B' }}>Patient History</div>
+              <div style={{ fontSize: '11.5px', color: '#826674', marginTop: '3px', maxWidth: '175px', lineHeight: 1.35 }}>
+                Access previous examinations
+              </div>
+            </div>
+          </div>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: '#FFF0F5',
+            border: '1px solid #FCD9E2',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#D82873',
+            flexShrink: 0
+          }}>
+            <ArrowRight size={14} />
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Middle Section (2 Equal Cards) */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 460px), 1fr))',
+        gap: '16px'
+      }}>
+        {/* Left Card: Project Overview */}
+        <div style={{
+          background: '#FFFFFF',
+          border: '1px solid #F5D6DE',
+          borderRadius: '16px',
+          padding: '24px 26px',
+          position: 'relative',
+          overflow: 'hidden',
+          boxShadow: '0 2px 8px rgba(44, 24, 32, 0.03)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+            <div style={{ color: '#D82873' }}>
+              <BarChart3 size={20} />
+            </div>
+            <h3 style={{ fontSize: '16.5px', fontWeight: 700, color: '#2A061B' }}>
+              Project Overview
+            </h3>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', gap: '20px', flexWrap: 'wrap' }}>
+            {/* Donut Progress Ring */}
+            <div style={{ position: 'relative', width: '130px', height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="130" height="130" viewBox="0 0 130 130">
+                {/* Background Ring */}
+                <circle
+                  cx="65"
+                  cy="65"
+                  r="52"
+                  fill="none"
+                  stroke="#FCE4EC"
+                  strokeWidth="11"
+                />
+                {/* 95% Active Arc */}
+                <circle
+                  cx="65"
+                  cy="65"
+                  r="52"
+                  fill="none"
+                  stroke="#E62E78"
+                  strokeWidth="11"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 52 * 0.95} ${2 * Math.PI * 52 * 0.05}`}
+                  transform="rotate(-90 65 65)"
+                />
+              </svg>
+              <div style={{ position: 'absolute', textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: '#2A061B', lineHeight: 1 }}>95%</div>
+                <div style={{ fontSize: '10px', fontWeight: 600, color: '#826674', marginTop: '4px' }}>Project Readiness</div>
+              </div>
+            </div>
+
+            {/* Checklist items */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, color: '#2A061B' }}>
+                <CheckCircle2 size={16} color="#15803D" fill="#DCFCE7" />
+                <span>Mammogram Model</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, color: '#2A061B' }}>
+                <CheckCircle2 size={16} color="#15803D" fill="#DCFCE7" />
+                <span>Thermal Model</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, color: '#2A061B' }}>
+                <CheckCircle2 size={16} color="#15803D" fill="#DCFCE7" />
+                <span>Grad-CAM Explanation</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, color: '#2A061B' }}>
+                <CheckCircle2 size={16} color="#15803D" fill="#DCFCE7" />
+                <span>Real-time Analysis</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Decorative subtle pink wave in bottom right */}
+          <div style={{
+            position: 'absolute',
+            bottom: '-20px',
+            right: '-20px',
+            width: '100px',
+            height: '100px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(254, 215, 226, 0.5) 0%, rgba(255, 255, 255, 0) 70%)',
+            pointerEvents: 'none'
+          }} />
+        </div>
+
+        {/* Right Card: Why It Matters? */}
+        <div style={{
+          background: '#FFFFFF',
+          border: '1px solid #F5D6DE',
+          borderRadius: '16px',
+          padding: '24px 26px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '16px',
+          boxShadow: '0 2px 8px rgba(44, 24, 32, 0.03)'
+        }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <Heart size={18} color="#D82873" fill="#D82873" />
+              <h3 style={{ fontSize: '16.5px', fontWeight: 700, color: '#2A061B' }}>
+                Why It Matters?
+              </h3>
+            </div>
+
+            <p style={{
+              fontSize: '12.5px',
+              color: '#4A2A38',
+              lineHeight: 1.55,
+              marginBottom: '16px',
+              maxWidth: '380px'
+            }}>
+              Breast cancer is one of the most common cancers worldwide. Our AI-powered system helps in early detection using both mammogram and thermal imaging, providing clear visual explanations for better understanding.
+            </p>
+
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => onNavigate('about')}
+              style={{
+                padding: '9px 18px',
+                fontSize: '12.5px',
+                borderRadius: '9999px',
+                background: 'linear-gradient(90deg, #D82873, #B81D60)'
+              }}
+            >
+              <span>Learn More</span>
+              <ArrowRight size={13} />
+            </button>
+          </div>
+
+          {/* Pink Ribbon & Leaves Illustration */}
+          <div style={{ flexShrink: 0 }}>
+            <RibbonWithLeaves size={115} />
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Bottom Status Row (3 Equal Cards) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+        {/* Bottom Card 1: Last Analysis */}
+        <div style={{
+          background: '#FFFFFF',
+          border: '1px solid #F5D6DE',
+          borderRadius: '14px',
+          padding: '16px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
+          boxShadow: '0 1px 4px rgba(44, 24, 32, 0.02)'
+        }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '10px',
+            background: '#FFF0F5',
+            border: '1px solid #FCD9E2',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#D82873'
+          }}>
+            <Calendar size={20} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '13.5px', color: '#2A061B' }}>Last Analysis</div>
+            <div style={{ fontSize: '11px', color: '#826674', marginTop: '2px' }}>
+              Oct 31, 2026 • 06:49 PM
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Card 2: System Status */}
+        <div style={{
+          background: '#FFFFFF',
+          border: '1px solid #F5D6DE',
+          borderRadius: '14px',
+          padding: '16px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
+          boxShadow: '0 1px 4px rgba(44, 24, 32, 0.02)'
+        }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '10px',
+            background: isBackendHealthy ? '#F0FDF4' : '#FFFBEB',
+            border: `1px solid ${isBackendHealthy ? '#BBF7D0' : '#FDE68A'}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: isBackendHealthy ? '#15803D' : '#B45309'
+          }}>
+            <ShieldCheck size={20} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '13.5px', color: '#2A061B' }}>System Status</div>
+            <div style={{
+              fontSize: '11px',
+              color: isBackendHealthy ? '#15803D' : '#B45309',
+              marginTop: '2px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              fontWeight: 600
+            }}>
+              <span style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: isBackendHealthy ? '#15803D' : '#B45309',
+                display: 'inline-block'
+              }} />
+              <span>{isBackendHealthy ? 'Backend Connected' : 'Connecting...'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Card 3: Model Status */}
+        <div style={{
+          background: '#FFFFFF',
+          border: '1px solid #F5D6DE',
+          borderRadius: '14px',
+          padding: '16px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
+          boxShadow: '0 1px 4px rgba(44, 24, 32, 0.02)'
+        }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '10px',
+            background: '#FFF0F5',
+            border: '1px solid #FCD9E2',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#D82873'
+          }}>
+            <Cpu size={20} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '13.5px', color: '#2A061B' }}>Model Status</div>
+            <div style={{
+              fontSize: '11px',
+              color: allModelsReady ? '#15803D' : '#826674',
+              marginTop: '2px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              fontWeight: 600
+            }}>
+              <span style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: allModelsReady ? '#15803D' : '#826674',
+                display: 'inline-block'
+              }} />
+              <span>{allModelsReady ? 'Models Ready' : 'Models Standby'}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

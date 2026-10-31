@@ -248,10 +248,10 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ latestResult, onNaviga
                           ? 'var(--status-benign)'
                           : 'var(--status-normal)',
                       border: `1px solid ${latestResult.predicted_class.toLowerCase() === 'malignant'
-                          ? 'var(--status-malignant-border)'
-                          : latestResult.predicted_class.toLowerCase() === 'benign'
-                            ? 'var(--status-benign-border)'
-                            : 'var(--status-normal-border)'
+                        ? 'var(--status-malignant-border)'
+                        : latestResult.predicted_class.toLowerCase() === 'benign'
+                          ? 'var(--status-benign-border)'
+                          : 'var(--status-normal-border)'
                         }`
                     }}>
                       {latestResult.predicted_class}

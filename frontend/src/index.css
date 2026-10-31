@@ -5,28 +5,28 @@
 
 :root {
   /* Surfaces & Backgrounds */
-  --bg-primary: #FAF7F2;
+  --bg-primary: #FFF6F9;
   --bg-surface: #FFFFFF;
-  --bg-surface-elevated: #FDFBF9;
-  --bg-blush: #FFF2F5;
-  --bg-blush-subtle: #FFF7F9;
-  --bg-muted: #F5EFEB;
+  --bg-surface-elevated: #FFF9FB;
+  --bg-blush: #FFF0F5;
+  --bg-blush-subtle: #FFF7FA;
+  --bg-muted: #F8EDF1;
 
   /* Typography Colors */
-  --text-primary: #2C1820;
-  --text-secondary: #5A3D4C;
+  --text-primary: #2A061B;
+  --text-secondary: #5A2A42;
   --text-muted: #826674;
   --text-faint: #A68D9A;
 
   /* Brand Accents & States */
-  --primary-rose: #B23B55;
-  --primary-rose-hover: #9E2D45;
-  --primary-rose-active: #842036;
-  --dusty-rose: #C86D80;
-  --soft-rose: #D98293;
+  --primary-rose: #D82873;
+  --primary-rose-hover: #C01D62;
+  --primary-rose-active: #A01550;
+  --dusty-rose: #E63988;
+  --soft-rose: #F48FB1;
   --rosegold-accent: #D4A373;
 
-  /* Functional Status Colors (Always paired with text / icons) */
+  /* Functional Status Colors */
   --status-normal: #15803D;
   --status-normal-bg: #F0FDF4;
   --status-normal-border: #BBF7D0;
@@ -44,15 +44,15 @@
   --status-standby-border: #E5E7EB;
 
   /* Borders & Dividers */
-  --border-light: #EFE6E4;
-  --border-subtle: #E8DCDA;
-  --border-rose: #F2D2D8;
-  --border-dashed: #D98293;
+  --border-light: #F7D8E2;
+  --border-subtle: #F2CCD7;
+  --border-rose: #F2BED0;
+  --border-dashed: #E63988;
 
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(44, 24, 32, 0.04);
-  --shadow-md: 0 4px 12px -2px rgba(44, 24, 32, 0.06), 0 2px 6px -1px rgba(178, 59, 85, 0.04);
-  --shadow-elevated: 0 12px 28px -6px rgba(44, 24, 32, 0.08), 0 4px 12px -2px rgba(178, 59, 85, 0.05);
+  --shadow-md: 0 4px 14px -2px rgba(216, 40, 115, 0.08), 0 2px 6px -1px rgba(44, 24, 32, 0.04);
+  --shadow-elevated: 0 12px 28px -6px rgba(44, 24, 32, 0.08), 0 4px 12px -2px rgba(216, 40, 115, 0.06);
 
   /* Radii */
   --radius-sm: 6px;
@@ -146,14 +146,15 @@ h6 {
   pointer-events: auto;
 }
 
+/* Deep Plum Wine Sidebar */
 .sidebar {
-  width: 260px;
-  background-color: var(--bg-surface);
-  border-right: 1px solid var(--border-subtle);
+  width: 250px;
+  background: linear-gradient(180deg, #3D0B24 0%, #2A0518 60%, #1F0312 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 24px 16px;
+  padding: 24px 16px 20px;
   position: fixed;
   top: 0;
   bottom: 0;
@@ -164,22 +165,22 @@ h6 {
 }
 
 .main-content-wrapper {
-  margin-left: 260px;
+  margin-left: 250px;
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   background-color: var(--bg-primary);
-  width: calc(100% - 260px);
+  width: calc(100% - 250px);
   position: relative;
 }
 
 .topbar {
-  height: 64px;
-  background-color: rgba(250, 247, 242, 0.94);
+  height: 56px;
+  background-color: rgba(255, 246, 249, 0.94);
   backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid rgba(242, 204, 215, 0.5);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -191,7 +192,7 @@ h6 {
 }
 
 .content-container {
-  padding: 32px;
+  padding: 28px 32px;
   max-width: 1400px;
   margin: 0;
   width: 100%;
@@ -202,7 +203,7 @@ h6 {
 /* Surface Cards */
 .card {
   background-color: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
   padding: 24px;
   box-shadow: var(--shadow-sm);
@@ -224,34 +225,33 @@ h6 {
   align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
-  font-size: 13px;
+  padding: 11px 16px;
+  border-radius: 12px;
+  font-size: 13.5px;
   font-weight: 500;
   font-family: inherit;
-  color: var(--text-secondary);
+  color: #E2CAD7;
   background: transparent;
   border: 1px solid transparent;
   cursor: pointer;
   text-align: left;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
   outline: none;
   user-select: none;
   line-height: 1.2;
 }
 
 .sidebar-nav-item:hover {
-  background-color: var(--bg-blush);
-  color: var(--primary-rose);
-  border-color: var(--border-rose);
+  background-color: rgba(255, 255, 255, 0.09);
+  color: #FFFFFF;
 }
 
 .sidebar-nav-item.active {
-  background-color: var(--primary-rose);
+  background: linear-gradient(90deg, #D82873, #B81D60);
   color: #FFFFFF;
   font-weight: 600;
-  border-color: var(--primary-rose);
-  box-shadow: 0 2px 6px rgba(178, 59, 85, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 14px rgba(216, 40, 115, 0.38);
 }
 
 .sidebar-nav-item.active svg {
@@ -265,9 +265,9 @@ h6 {
 
 /* Form & Input styles */
 .btn-primary {
-  background-color: var(--primary-rose);
+  background: linear-gradient(90deg, #D82873, #B81D60);
   color: #FFFFFF;
-  border: 1px solid rgba(132, 32, 54, 0.4);
+  border: 1px solid rgba(132, 32, 54, 0.3);
   padding: 10px 20px;
   border-radius: var(--radius-md);
   font-size: 13px;
@@ -277,8 +277,8 @@ h6 {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 1px 2px rgba(44, 24, 32, 0.08);
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  box-shadow: 0 2px 8px rgba(216, 40, 115, 0.28);
+  transition: opacity 0.15s ease, filter 0.15s ease;
   letter-spacing: 0.01em;
   text-decoration: none;
   user-select: none;
@@ -286,12 +286,11 @@ h6 {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--primary-rose-hover);
-  border-color: var(--primary-rose-active);
+  filter: brightness(1.06);
 }
 
 .btn-primary:active:not(:disabled) {
-  background-color: var(--primary-rose-active);
+  filter: brightness(0.95);
 }
 
 .btn-primary:focus-visible {
@@ -337,10 +336,10 @@ h6 {
 }
 
 .btn-secondary.active {
-  background-color: var(--primary-rose) !important;
+  background: linear-gradient(90deg, #D82873, #B81D60) !important;
   color: #FFFFFF !important;
-  border-color: var(--primary-rose) !important;
-  box-shadow: 0 1px 4px rgba(178, 59, 85, 0.22);
+  border-color: #B81D60 !important;
+  box-shadow: 0 2px 8px rgba(216, 40, 115, 0.3) !important;
   font-weight: 600;
 }
 
@@ -434,12 +433,6 @@ h6 {
   border: 1px solid var(--status-standby-border);
 }
 
-.badge-rosegold {
-  background-color: #FBF4EE;
-  color: #8C5532;
-  border: 1px solid #EEDBCF;
-}
-
 /* Upload dropzone */
 .dropzone {
   border: 2px dashed var(--border-dashed);
@@ -455,42 +448,6 @@ h6 {
 .dropzone.dragover {
   border-color: var(--primary-rose);
   background-color: var(--bg-blush);
-}
-
-/* Image inspection filters */
-.img-invert {
-  filter: invert(1) contrast(1.15) brightness(1.05);
-}
-
-.img-contrast {
-  filter: contrast(1.4) brightness(1.05);
-}
-
-/* Table styles */
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-  text-align: left;
-}
-
-.data-table th {
-  background-color: var(--bg-blush);
-  color: var(--text-primary);
-  font-weight: 600;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border-rose);
-  white-space: nowrap;
-}
-
-.data-table td {
-  padding: 11px 14px;
-  border-bottom: 1px solid var(--border-light);
-  color: var(--text-secondary);
-}
-
-.data-table tr:hover td {
-  background-color: var(--bg-blush-subtle);
 }
 
 /* Mobile navigation trigger styles */
@@ -513,14 +470,17 @@ h6 {
   cursor: pointer;
   padding: 6px;
   border-radius: var(--radius-sm);
-  color: var(--text-primary);
+  color: #FFFFFF;
   align-items: center;
   justify-content: center;
 }
 
-.mobile-menu-trigger:hover,
-.mobile-close-btn:hover {
+.mobile-menu-trigger:hover {
   background-color: var(--bg-blush);
+}
+
+.mobile-close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 /* Responsive Viewports */
@@ -528,7 +488,7 @@ h6 {
   .sidebar {
     transform: translateX(-100%);
     box-shadow: var(--shadow-elevated);
-    width: 270px;
+    width: 260px;
   }
 
   .sidebar.open {
@@ -560,22 +520,22 @@ h6 {
 @media (max-width: 768px) {
   .topbar {
     padding: 0 16px;
-    height: 60px;
+    height: 54px;
   }
 
   .content-container {
-    padding: 20px 16px;
+    padding: 18px 14px;
   }
 }
 
 @media (max-width: 480px) {
   .topbar {
-    height: 56px;
+    height: 50px;
     padding: 0 12px;
   }
 
   .content-container {
-    padding: 16px 12px;
+    padding: 14px 10px;
   }
 }
 

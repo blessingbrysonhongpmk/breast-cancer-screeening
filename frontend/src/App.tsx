@@ -1,25 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import {
-  LayoutDashboard,
-  PlusCircle,
-  FileCheck2,
-  History,
+  Home,
+  Scan,
+  BarChart3,
+  Clock,
   Info,
   RefreshCw,
   Menu,
-  X
+  X,
+  Bell,
+  ChevronDown,
+  Heart
 } from 'lucide-react';
 
 import {
   HealthResponse,
   ModelReadinessResponse,
-  SystemStatus,
-  ModelStatus,
   AnalysisResponse,
   fetchHealthCheck,
-  fetchModelReadiness,
-  fetchSystemStatus,
-  fetchModelStatus
+  fetchModelReadiness
 } from './services/api';
 
 import { HomePage } from './features/home/HomePage';
@@ -27,6 +26,7 @@ import { AnalysisPage } from './features/analysis/AnalysisPage';
 import { ResultsPage } from './features/results/ResultsPage';
 import { HistoryPage } from './features/history/HistoryPage';
 import { AboutPage } from './features/about/AboutPage';
+import { PinkRibbon, WomanSilhouette } from './components/Illustrations';
 
 export function App() {
   const [activeModality, setActiveModality] = useState<'mammogram' | 'thermal'>('mammogram');
@@ -57,8 +57,6 @@ export function App() {
   const [currentView, setCurrentView] = useState<string>(getInitialView);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [modelReadiness, setModelReadiness] = useState<ModelReadinessResponse | null>(null);
-  const [status, setStatus] = useState<SystemStatus | null>(null);
-  const [modelStatus, setModelStatus] = useState<ModelStatus | null>(null);
   const [latestAnalysis, setLatestAnalysis] = useState<AnalysisResponse | null>(null);
   const [targetSample, setTargetSample] = useState<string | null>(null);
 
@@ -76,16 +74,12 @@ export function App() {
   const syncBackendData = async () => {
     setIsSyncing(true);
     try {
-      const [hlth, readi, sys, mdl] = await Promise.all([
+      const [hlth, readi] = await Promise.all([
         fetchHealthCheck().catch(() => null),
-        fetchModelReadiness().catch(() => null),
-        fetchSystemStatus().catch(() => null),
-        fetchModelStatus().catch(() => null)
+        fetchModelReadiness().catch(() => null)
       ]);
       if (hlth) setHealth(hlth);
       if (readi) setModelReadiness(readi);
-      if (sys) setStatus(sys);
-      if (mdl) setModelStatus(mdl);
     } catch (e) {
       console.error('Failed to sync backend:', e);
     } finally {
@@ -97,16 +91,12 @@ export function App() {
     let active = true;
     Promise.all([
       fetchHealthCheck().catch(() => null),
-      fetchModelReadiness().catch(() => null),
-      fetchSystemStatus().catch(() => null),
-      fetchModelStatus().catch(() => null)
+      fetchModelReadiness().catch(() => null)
     ])
-      .then(([hlth, readi, sys, mdl]) => {
+      .then(([hlth, readi]) => {
         if (!active) return;
         if (hlth) setHealth(hlth);
         if (readi) setModelReadiness(readi);
-        if (sys) setStatus(sys);
-        if (mdl) setModelStatus(mdl);
       })
       .catch((e) => {
         console.error('Failed to sync backend:', e);
@@ -116,12 +106,12 @@ export function App() {
     };
   }, []);
 
-  // Exactly the 5 items required by the user
+  // Exactly the 5 items matching user design
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'examination', label: 'New Examination', icon: PlusCircle },
-    { id: 'results', label: 'Results', icon: FileCheck2 },
-    { id: 'history', label: 'Patient History', icon: History },
+    { id: 'dashboard', label: 'Dashboard', icon: Home },
+    { id: 'examination', label: 'New Examination', icon: Scan },
+    { id: 'results', label: 'Results', icon: BarChart3 },
+    { id: 'history', label: 'Patient History', icon: Clock },
     { id: 'about', label: 'About', icon: Info }
   ];
 
@@ -139,8 +129,6 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const isBackendConnected = Boolean(health?.status === 'healthy' || status || modelStatus);
-
   return (
     <div className="layout-root">
       {/* Mobile backdrop overlay */}
@@ -150,60 +138,45 @@ export function App() {
         aria-hidden="true"
       />
 
-      {/* Sidebar Navigation */}
+      {/* Deep Plum Sidebar */}
       <aside className={`sidebar ${mobileMenuOpen ? 'open' : ''}`}>
-        {/* Brand Wordmark */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
-          <div
-            onClick={() => handleNavigate('dashboard')}
-            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
-          >
-            <div style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              background: 'linear-gradient(135deg, var(--primary-rose), var(--dusty-rose))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#FFFFFF',
-              fontWeight: 700,
-              fontSize: '15px',
-              boxShadow: '0 2px 6px rgba(178, 59, 85, 0.28)'
-            }}>
-              M
-            </div>
-            <div>
-              <div style={{
-                fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
-                fontSize: '17px',
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                letterSpacing: '-0.02em',
-                lineHeight: 1.1
-              }}>
-                MammoFusion
-              </div>
-              <div style={{
-                fontSize: '10px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                color: 'var(--text-muted)',
-                fontWeight: 600,
-                marginTop: '2px'
-              }}>
-                Research Platform
-              </div>
-            </div>
-          </div>
-
+        {/* Brand Wordmark with Pink Ribbon */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '28px', position: 'relative' }}>
           <button
             className="mobile-close-btn"
             onClick={() => setMobileMenuOpen(false)}
             aria-label="Close navigation"
+            style={{ position: 'absolute', right: '-4px', top: '0' }}
           >
-            <X size={20} color="var(--text-primary)" />
+            <X size={20} color="#FFFFFF" />
           </button>
+
+          <div
+            onClick={() => handleNavigate('dashboard')}
+            style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
+          >
+            <PinkRibbon size={34} />
+            <div>
+              <div style={{
+                fontSize: '18px',
+                fontWeight: 800,
+                color: '#FFFFFF',
+                letterSpacing: '-0.02em',
+                lineHeight: 1.15
+              }}>
+                MammoFusion-XAI
+              </div>
+              <div style={{
+                fontSize: '10px',
+                color: '#E0B8CB',
+                fontWeight: 500,
+                marginTop: '4px',
+                letterSpacing: '0.02em'
+              }}>
+                Breast Imaging Research Platform
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Navigation Menu (5 exact items) */}
@@ -217,35 +190,25 @@ export function App() {
                 onClick={() => handleNavigate(item.id)}
                 className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
               >
-                <Icon size={18} color={isActive ? '#FFFFFF' : 'var(--text-muted)'} />
+                <Icon size={19} color={isActive ? '#FFFFFF' : '#E2CAD7'} />
                 <span>{item.label}</span>
               </button>
             );
           })}
         </nav>
 
-        {/* Sidebar Footer */}
-        <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
-          <div style={{
-            padding: '14px',
-            background: 'var(--bg-blush-subtle)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-rose)',
-            fontSize: '11px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>System Status</span>
-              <span style={{
-                width: '7px',
-                height: '7px',
-                borderRadius: '50%',
-                background: isBackendConnected ? 'var(--status-normal)' : 'var(--status-benign)',
-                boxShadow: isBackendConnected ? '0 0 6px rgba(21, 128, 61, 0.4)' : 'none',
-                display: 'inline-block'
-              }} />
+        {/* Sidebar Footer: Woman Silhouette & "Early Detection Saves Lives" */}
+        <div style={{ marginTop: 'auto', paddingTop: '16px', textAlign: 'center' }}>
+          <WomanSilhouette width={140} height={120} />
+          <div style={{ marginTop: '6px' }}>
+            <div style={{ fontSize: '12px', fontStyle: 'italic', fontWeight: 600, color: '#FFD4E5', letterSpacing: '0.02em' }}>
+              Early Detection
             </div>
-            <div style={{ color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-              {isBackendConnected ? 'Backend Service Active' : 'Connecting to Server...'}
+            <div style={{ fontSize: '12px', fontStyle: 'italic', fontWeight: 600, color: '#FFD4E5', letterSpacing: '0.02em' }}>
+              Saves Lives
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '4px' }}>
+              <Heart size={14} color="#FF70A6" fill="#FF70A6" opacity={0.8} />
             </div>
           </div>
         </div>
@@ -263,49 +226,74 @@ export function App() {
             >
               <Menu size={22} color="var(--text-primary)" />
             </button>
-
-            <div>
-              <h1 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                {navItems.find((n) => n.id === currentView)?.label}
-              </h1>
-            </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* Connection Indicator */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '4px 10px',
-              borderRadius: 'var(--radius-sm)',
-              background: isBackendConnected ? 'var(--status-normal-bg)' : 'var(--status-benign-bg)',
-              border: `1px solid ${isBackendConnected ? 'var(--status-normal-border)' : 'var(--status-benign-border)'}`,
-              fontSize: '11px',
-              color: isBackendConnected ? 'var(--status-normal)' : 'var(--status-benign)',
-              fontWeight: 600
-            }}>
-              <span style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                background: isBackendConnected ? 'var(--status-normal)' : 'var(--status-benign)'
-              }} />
-              <span>{isBackendConnected ? 'Backend Connected' : 'Disconnected'}</span>
-            </div>
-
-            {/* Sync Button */}
+          {/* User Profile & Notifications */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            {/* Sync Refresh Button */}
             <button
               type="button"
               onClick={syncBackendData}
               disabled={isSyncing}
               className="btn-secondary"
-              style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+              style={{ padding: '5px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px', borderRadius: '9999px' }}
               title="Refresh connection status"
             >
-              <RefreshCw size={12} className={isSyncing ? 'spinning' : ''} />
-              <span>{isSyncing ? 'Refreshing...' : 'Refresh'}</span>
+              <RefreshCw size={11} className={isSyncing ? 'spinning' : ''} />
+              <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
             </button>
+
+            {/* Notification Bell with Badge */}
+            <div style={{ position: 'relative', cursor: 'pointer', padding: '4px' }}>
+              <Bell size={18} color="#4A0E2E" />
+              <span style={{
+                position: 'absolute',
+                top: '0',
+                right: '0',
+                width: '14px',
+                height: '14px',
+                borderRadius: '50%',
+                backgroundColor: '#D82873',
+                color: '#FFFFFF',
+                fontSize: '9px',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                1
+              </span>
+            </div>
+
+            {/* User Avatar Capsule */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '4px 10px 4px 6px',
+              borderRadius: '9999px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #F2CCD7',
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(44, 24, 32, 0.04)'
+            }}>
+              <div style={{
+                width: '26px',
+                height: '26px',
+                borderRadius: '50%',
+                backgroundColor: '#3D0B24',
+                color: '#FFFFFF',
+                fontSize: '12px',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                B
+              </div>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#2A061B' }}>Blessing</span>
+              <ChevronDown size={14} color="#826674" />
+            </div>
           </div>
         </header>
 
