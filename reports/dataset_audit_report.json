@@ -1,0 +1,59 @@
+{
+  "project": "MammoFusion-XAI Risk",
+  "milestone": "Milestone 1: Safe Dataset Ingestion & Audit",
+  "total_images_across_modalities": 679,
+  "total_storage_used_bytes": 3478134840,
+  "total_storage_used_mb": 3317.01,
+  "total_storage_used_gb": 3.239,
+  "mammogram": {
+    "modality": "mammogram",
+    "total_images": 322,
+    "readable_images": 322,
+    "corrupt_images": 0,
+    "unique_patients_identified": 161,
+    "label_distribution": {
+      "benign": 61,
+      "normal": 205,
+      "malignant": 51,
+      "unannotated": 5
+    },
+    "missing_labels": 5,
+    "total_storage_bytes": 3398132834,
+    "total_storage_mb": 3240.71,
+    "total_storage_gb": 3.165,
+    "potential_duplicates_by_filename": [],
+    "resolution_distribution": {
+      "4320x2048": 101,
+      "4320x2600": 149,
+      "4320x1600": 48,
+      "5200x4000": 24
+    }
+  },
+  "thermal": {
+    "modality": "thermal",
+    "total_images": 357,
+    "readable_images": 357,
+    "corrupt_images": 0,
+    "unique_patients_identified": 119,
+    "label_distribution": {
+      "benign": 158,
+      "normal": 110,
+      "malignant": 68,
+      "unannotated": 21
+    },
+    "missing_labels": 21,
+    "total_storage_bytes": 80002006,
+    "total_storage_mb": 76.3,
+    "total_storage_gb": 0.075,
+    "potential_duplicates_by_filename": [],
+    "resolution_distribution": {
+      "320x240": 357
+    }
+  },
+  "scientific_notices": [
+    "MIAS mammography and Mendeley breast thermography datasets originate from distinct patient cohorts.",
+    "Synthetic or simulated cross-cohort multimodal fusion without matched clinical subjects is prohibited.",
+    "MIAS benign/malignant annotations represent historical research consensus and have documented provenance limitations.",
+    "Mendeley Thermography dataset is governed by CC BY-NC 3.0 license (strictly non-commercial with attribution)."
+  ]
+}

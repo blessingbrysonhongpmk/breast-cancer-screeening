@@ -1,0 +1,148 @@
+{
+  "status": "pending",
+  "target_size": 224,
+  "dry_run": false,
+  "mammogram": {
+    "modality": "mammogram",
+    "source_manifest": "E:\\my projects\\breast cancer screening\\data\\manifests\\mammogram_manifest.csv",
+    "output_dir": "E:\\my projects\\breast cancer screening\\data\\processed\\mammogram",
+    "target_size": 224,
+    "total_source_images": 322,
+    "preprocessed_count": 322,
+    "skipped_unannotated": 0,
+    "skipped_corrupt": 0,
+    "already_existed": 0,
+    "errors": [],
+    "dry_run": false,
+    "elapsed_seconds": 123.3
+  },
+  "thermal": {
+    "modality": "thermal",
+    "source_manifest": "E:\\my projects\\breast cancer screening\\data\\manifests\\thermal_manifest.csv",
+    "output_dir": "E:\\my projects\\breast cancer screening\\data\\processed\\thermal",
+    "target_size": 224,
+    "total_source_images": 357,
+    "preprocessed_count": 357,
+    "skipped_unannotated": 0,
+    "skipped_corrupt": 0,
+    "already_existed": 0,
+    "errors": [],
+    "dry_run": false,
+    "elapsed_seconds": 28.9
+  },
+  "splits": {
+    "mammogram": {
+      "manifest_source": "E:\\my projects\\breast cancer screening\\data\\manifests\\mammogram_manifest.csv",
+      "random_seed": 42,
+      "ratios": {
+        "train": 0.7,
+        "val": 0.15,
+        "test": 0.15
+      },
+      "total_patients": 161,
+      "total_images": 322,
+      "splits": {
+        "train": {
+          "patients": 113,
+          "images": 226,
+          "label_distribution": {
+            "benign": 43,
+            "normal": 142,
+            "malignant": 36,
+            "unannotated": 5
+          },
+          "output_path": "E:\\my projects\\breast cancer screening\\data\\manifests\\mammogram_manifest_train.csv"
+        },
+        "val": {
+          "patients": 24,
+          "images": 48,
+          "label_distribution": {
+            "normal": 31,
+            "benign": 9,
+            "malignant": 8
+          },
+          "output_path": "E:\\my projects\\breast cancer screening\\data\\manifests\\mammogram_manifest_val.csv"
+        },
+        "test": {
+          "patients": 24,
+          "images": 48,
+          "label_distribution": {
+            "benign": 9,
+            "normal": 32,
+            "malignant": 7
+          },
+          "output_path": "E:\\my projects\\breast cancer screening\\data\\manifests\\mammogram_manifest_test.csv"
+        }
+      },
+      "patient_class_distribution": {
+        "benign": 54,
+        "normal": 56,
+        "malignant": 51
+      },
+      "leakage_check": {
+        "train_val_overlap": 0,
+        "train_test_overlap": 0,
+        "val_test_overlap": 0,
+        "all_clean": true
+      }
+    },
+    "thermal": {
+      "manifest_source": "E:\\my projects\\breast cancer screening\\data\\manifests\\thermal_manifest.csv",
+      "random_seed": 42,
+      "ratios": {
+        "train": 0.7,
+        "val": 0.15,
+        "test": 0.15
+      },
+      "total_patients": 119,
+      "total_images": 357,
+      "splits": {
+        "train": {
+          "patients": 84,
+          "images": 252,
+          "label_distribution": {
+            "benign": 111,
+            "normal": 78,
+            "malignant": 48,
+            "unannotated": 15
+          },
+          "output_path": "E:\\my projects\\breast cancer screening\\data\\manifests\\thermal_manifest_train.csv"
+        },
+        "val": {
+          "patients": 18,
+          "images": 54,
+          "label_distribution": {
+            "benign": 25,
+            "normal": 16,
+            "malignant": 10,
+            "unannotated": 3
+          },
+          "output_path": "E:\\my projects\\breast cancer screening\\data\\manifests\\thermal_manifest_val.csv"
+        },
+        "test": {
+          "patients": 17,
+          "images": 51,
+          "label_distribution": {
+            "benign": 22,
+            "normal": 16,
+            "malignant": 10,
+            "unannotated": 3
+          },
+          "output_path": "E:\\my projects\\breast cancer screening\\data\\manifests\\thermal_manifest_test.csv"
+        }
+      },
+      "patient_class_distribution": {
+        "benign": 78,
+        "malignant": 34,
+        "unannotated": 7
+      },
+      "leakage_check": {
+        "train_val_overlap": 0,
+        "train_test_overlap": 0,
+        "val_test_overlap": 0,
+        "all_clean": true
+      }
+    }
+  },
+  "errors": []
+}

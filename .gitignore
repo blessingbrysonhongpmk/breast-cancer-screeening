@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+.vite/
+
+# Data and large dataset files (raw archives)
+data/raw/
+data/processed/
+data/cache_heatmaps/
+data/cache_thumbnails/
+dataset_dropbox/
+Breast Thermography/
+miasdbv1.21/
+!dataset_dropbox/README.md
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/manifests/.gitkeep
+
+# Models and checkpoints
+models/*.pt
+models/*.pth
+models/*.onnx
+models/*.h5
+
+# Reports and temporary artifacts
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini

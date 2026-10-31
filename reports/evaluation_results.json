@@ -1,0 +1,134 @@
+{
+  "mammogram": {
+    "modality": "mammogram",
+    "checkpoint": "mammogram_resnet50.pt",
+    "test_metrics": {
+      "overall_accuracy": 0.6667,
+      "macro_sensitivity_recall": 0.36,
+      "macro_specificity": 0.679,
+      "macro_precision": 0.3913,
+      "macro_f1": 0.3256,
+      "macro_roc_auc": 0.5916,
+      "per_class": {
+        "normal": {
+          "tp": 31,
+          "tn": 1,
+          "fp": 15,
+          "fn": 1,
+          "sensitivity_recall": 0.9688,
+          "specificity": 0.0625,
+          "precision": 0.6739,
+          "f1_score": 0.7949
+        },
+        "benign": {
+          "tp": 1,
+          "tn": 38,
+          "fp": 1,
+          "fn": 8,
+          "sensitivity_recall": 0.1111,
+          "specificity": 0.9744,
+          "precision": 0.5,
+          "f1_score": 0.1818
+        },
+        "malignant": {
+          "tp": 0,
+          "tn": 41,
+          "fp": 0,
+          "fn": 7,
+          "sensitivity_recall": 0.0,
+          "specificity": 1.0,
+          "precision": 0.0,
+          "f1_score": 0.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          31,
+          1,
+          0
+        ],
+        [
+          8,
+          1,
+          0
+        ],
+        [
+          7,
+          0,
+          0
+        ]
+      ],
+      "loss": 0.9775
+    },
+    "test_loss": 0.9775310953458151,
+    "train_samples": 221,
+    "val_samples": 48,
+    "test_samples": 48
+  },
+  "thermal": {
+    "modality": "thermal",
+    "checkpoint": "thermal_resnet50.pt",
+    "test_metrics": {
+      "overall_accuracy": 0.25,
+      "macro_sensitivity_recall": 0.2511,
+      "macro_specificity": 0.6423,
+      "macro_precision": 0.3416,
+      "macro_f1": 0.2073,
+      "macro_roc_auc": 0.5733,
+      "per_class": {
+        "normal": {
+          "tp": 9,
+          "tn": 9,
+          "fp": 23,
+          "fn": 7,
+          "sensitivity_recall": 0.5625,
+          "specificity": 0.2812,
+          "precision": 0.2812,
+          "f1_score": 0.375
+        },
+        "benign": {
+          "tp": 2,
+          "tn": 25,
+          "fp": 1,
+          "fn": 20,
+          "sensitivity_recall": 0.0909,
+          "specificity": 0.9615,
+          "precision": 0.6667,
+          "f1_score": 0.16
+        },
+        "malignant": {
+          "tp": 1,
+          "tn": 26,
+          "fp": 12,
+          "fn": 9,
+          "sensitivity_recall": 0.1,
+          "specificity": 0.6842,
+          "precision": 0.0769,
+          "f1_score": 0.087
+        }
+      },
+      "confusion_matrix": [
+        [
+          9,
+          1,
+          6
+        ],
+        [
+          14,
+          2,
+          6
+        ],
+        [
+          9,
+          0,
+          1
+        ]
+      ],
+      "loss": 1.1244
+    },
+    "test_loss": 1.1243954102198284,
+    "train_samples": 237,
+    "val_samples": 51,
+    "test_samples": 48
+  }
+}
