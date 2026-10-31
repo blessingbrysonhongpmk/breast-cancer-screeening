@@ -42,6 +42,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isInverted, setIsInverted] = useState<boolean>(false);
   const [contrastBoost, setContrastBoost] = useState<boolean>(false);
+  const [useTta, setUseTta] = useState<boolean>(false);
 
   // Samples for one-click testing
   const [samples, setSamples] = useState<SampleItem[]>([]);
@@ -180,7 +181,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
         throw new Error('No image loaded.');
       }
 
-      const result = await submitImageAnalysis(fileToUpload, modality);
+      const result = await submitImageAnalysis(fileToUpload, modality, useTta);
       onAnalysisComplete(result);
       onNavigate('results');
     } catch (err: any) {
@@ -215,7 +216,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       <div className="card" style={{ padding: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
           <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
-            Step 1: Choose Modality
+            Imaging Modality Selection
           </div>
 
           {/* Modality Model Readiness Pill */}
@@ -293,7 +294,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       <div className="card" style={{ padding: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
           <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
-            Step 2: Upload or Select Scan
+            Scan Ingestion & Inspection
           </div>
 
           {/* Quick Sample Selector Trigger */}
@@ -543,37 +544,67 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
         )}
       </div>
 
-      {/* Step 3: Run Analysis CTA */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '14px' }}>
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={handleRemoveImage}
-          disabled={!hasImage || isSubmitting}
-          style={{ padding: '12px 18px', fontSize: '13px' }}
-        >
-          Cancel
-        </button>
+      {/* Analysis Action Bar */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '14px',
+        padding: '16px 20px',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-light)',
+        borderRadius: 'var(--radius-md)'
+      }}>
+        <label style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '12px',
+          color: 'var(--text-secondary)',
+          cursor: 'pointer',
+          userSelect: 'none'
+        }}>
+          <input
+            type="checkbox"
+            checked={useTta}
+            onChange={(e) => setUseTta(e.target.checked)}
+            style={{ accentColor: 'var(--primary-rose)', width: '15px', height: '15px', cursor: 'pointer' }}
+          />
+          <span>Test-Time Augmentation (Dual-view ensemble)</span>
+        </label>
 
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={handleRunAnalysis}
-          disabled={!hasImage || isSubmitting}
-          style={{ padding: '12px 24px', fontSize: '14px', minWidth: '180px', justifyContent: 'center' }}
-        >
-          {isSubmitting ? (
-            <>
-              <RefreshCw size={16} className="spinning" />
-              <span>Running Analysis...</span>
-            </>
-          ) : (
-            <>
-              <span>Run Research Analysis</span>
-              <ArrowRight size={16} />
-            </>
-          )}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={handleRemoveImage}
+            disabled={!hasImage || isSubmitting}
+            style={{ padding: '10px 18px', fontSize: '13px' }}
+          >
+            Reset
+          </button>
+
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={handleRunAnalysis}
+            disabled={!hasImage || isSubmitting}
+            style={{ padding: '10px 22px', fontSize: '13px', minWidth: '180px', justifyContent: 'center' }}
+          >
+            {isSubmitting ? (
+              <>
+                <RefreshCw size={15} className="spinning" />
+                <span>Processing Model...</span>
+              </>
+            ) : (
+              <>
+                <span>Run Deep Learning Analysis</span>
+                <ArrowRight size={15} />
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Mandatory Medical Disclaimer */}

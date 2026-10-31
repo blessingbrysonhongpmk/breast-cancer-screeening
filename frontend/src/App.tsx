@@ -168,11 +168,11 @@ export function App() {
             </div>
             <div>
               <div style={{
-                fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: '18px',
-                fontWeight: 600,
+                fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+                fontSize: '17px',
+                fontWeight: 700,
                 color: 'var(--text-primary)',
-                letterSpacing: '-0.01em',
+                letterSpacing: '-0.02em',
                 lineHeight: 1.1
               }}>
                 MammoFusion
@@ -238,7 +238,7 @@ export function App() {
               }} />
             </div>
             <div style={{ color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-              {isBackendConnected ? 'Connected to AI Engine' : 'Reconnecting to Server...'}
+              {isBackendConnected ? 'Backend Service Active' : 'Reconnecting to Server...'}
             </div>
           </div>
         </div>

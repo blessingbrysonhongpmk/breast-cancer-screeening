@@ -117,3 +117,4 @@ def test_analyze_with_advanced_metrics(client):
     assert data["roi_bounding_box"] is not None
     assert data["attention_coverage_percent"] is not None
     assert data["peak_activation_coords"] is not None
+

@@ -163,20 +163,19 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ latestResult, onNaviga
               background: predictedClass === 'malignant'
                 ? 'var(--status-malignant-bg)'
                 : predictedClass === 'benign'
-                ? 'var(--status-benign-bg)'
-                : 'var(--status-normal-bg)',
+                  ? 'var(--status-benign-bg)'
+                  : 'var(--status-normal-bg)',
               color: predictedClass === 'malignant'
                 ? 'var(--status-malignant)'
                 : predictedClass === 'benign'
-                ? 'var(--status-benign)'
-                : 'var(--status-normal)',
-              border: `1px solid ${
-                predictedClass === 'malignant'
+                  ? 'var(--status-benign)'
+                  : 'var(--status-normal)',
+              border: `1px solid ${predictedClass === 'malignant'
                   ? 'var(--status-malignant-border)'
                   : predictedClass === 'benign'
-                  ? 'var(--status-benign-border)'
-                  : 'var(--status-normal-border)'
-              }`
+                    ? 'var(--status-benign-border)'
+                    : 'var(--status-normal-border)'
+                }`
             }}>
               {predictedClass}
             </span>
@@ -194,17 +193,17 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ latestResult, onNaviga
           <p style={{ fontSize: '14px', color: 'var(--text-primary)', lineHeight: 1.6 }}>
             {confidencePercent ? (
               <>
-                The neural network model classified this scan as{' '}
+                Deep learning classification indicates{' '}
                 <strong style={{
                   color: predictedClass === 'malignant'
                     ? 'var(--status-malignant)'
                     : predictedClass === 'benign'
-                    ? 'var(--status-benign)'
-                    : 'var(--status-normal)'
+                      ? 'var(--status-benign)'
+                      : 'var(--status-normal)'
                 }}>
                   {predictedClass?.toUpperCase()}
                 </strong>{' '}
-                with <strong>{confidencePercent}%</strong> confidence.
+                features (model confidence score: <strong>{confidencePercent}%</strong>).
               </>
             ) : (
               latestResult.message || 'Analysis completed.'

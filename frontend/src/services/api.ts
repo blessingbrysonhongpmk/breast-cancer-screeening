@@ -231,11 +231,15 @@ export async function fetchManifestRecords(
 
 export async function submitImageAnalysis(
   file: File,
-  modality: 'mammogram' | 'thermal'
+  modality: 'mammogram' | 'thermal',
+  tta: boolean = false
 ): Promise<AnalysisResponse> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('modality', modality);
+  if (tta) {
+    formData.append('tta', 'true');
+  }
 
   const res = await fetch(`${API_BASE}/api/analyze`, {
     method: 'POST',
