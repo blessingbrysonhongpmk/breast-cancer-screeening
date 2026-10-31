@@ -218,7 +218,7 @@ def get_health() -> HealthResponse:
     """Health check endpoint to verify backend service availability."""
     return HealthResponse(
         status="healthy",
-        service="MammoFusion-XAI Risk Platform",
+        service="MammoFusion-XAI Real-Time Screening Platform",
         version="1.0.0",
         environment=os.environ.get("ENV", "development")
     )
