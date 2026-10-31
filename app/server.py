@@ -106,6 +106,13 @@ class AnalysisResponse(BaseModel):
     model_architecture: Optional[str] = None
     message: str
     recommendation: str
+    predictive_entropy: Optional[float] = None
+    uncertainty_score: Optional[float] = None
+    confidence_margin: Optional[float] = None
+    roi_bounding_box: Optional[List[int]] = None
+    attention_coverage_percent: Optional[float] = None
+    peak_activation_coords: Optional[List[int]] = None
+    tta_applied: Optional[bool] = False
 
 
 class ClearHistoryResponse(BaseModel):
@@ -541,7 +548,8 @@ def stream_sample_image(modality: str, filename: str):
 @app.post("/api/analyze", response_model=AnalysisResponse)
 async def analyze_uploaded_image(
     file: UploadFile = File(...),
-    modality: str = Form("mammogram")
+    modality: str = Form("mammogram"),
+    tta: bool = Form(False)
 ) -> AnalysisResponse:
     """Strictly validates uploaded breast image, runs PyTorch inference and generates Grad-CAM explainability."""
     # 1. Modality Validation
@@ -634,9 +642,15 @@ async def analyze_uploaded_image(
             transform = get_thermal_eval_transforms()
             input_tensor = transform(pil_img.convert("RGB")).unsqueeze(0)
 
-        # Forward pass for class probabilities
+        from src.evaluation.metrics import compute_prediction_uncertainty, predict_with_tta
+        from src.explainability.gradcam import GradCAM, apply_colormap_to_cam, extract_cam_roi
+
+        # Forward pass for class probabilities (supports optional Test-Time Augmentation)
         with torch.no_grad():
-            logits = model(input_tensor)
+            if tta:
+                logits = predict_with_tta(model, input_tensor)
+            else:
+                logits = model(input_tensor)
             probs = torch.softmax(logits, dim=1)[0].cpu().numpy()
 
         classes = ["normal", "benign", "malignant"]
@@ -644,11 +658,16 @@ async def analyze_uploaded_image(
         pred_label = classes[pred_idx]
         conf = float(probs[pred_idx])
 
+        # Advanced predictive entropy & uncertainty quantification
+        uncertainty_info = compute_prediction_uncertainty(probs)
+
         # Genuine Grad-CAM visual attribution from actual network gradients
-        from src.explainability.gradcam import GradCAM, apply_colormap_to_cam
         target_layer = model.get_target_layer()
         gradcam = GradCAM(model, target_layer)
         cam_np, _, _ = gradcam.generate(input_tensor, target_class=pred_idx)
+
+        # Quantitative ROI bounding box & attention focus localization
+        roi_info = extract_cam_roi(cam_np, original_size=(width, height), threshold_ratio=0.60)
 
         # Save blended heatmap
         blended = apply_colormap_to_cam(cam_np, pil_img, alpha=0.45)
@@ -673,6 +692,13 @@ async def analyze_uploaded_image(
             },
             "gradcam_url": f"/api/gradcam-image/{cam_filename}",
             "model_architecture": "ResNet-50 Deep ConvNet",
+            "predictive_entropy": uncertainty_info["entropy"],
+            "uncertainty_score": uncertainty_info["uncertainty_score"],
+            "confidence_margin": uncertainty_info["confidence_margin"],
+            "roi_bounding_box": roi_info["roi_box"],
+            "attention_coverage_percent": roi_info["coverage_percent"],
+            "peak_activation_coords": roi_info["peak_coords"],
+            "tta_applied": tta,
             "message": f"ResNet-50 inference complete. Classified as {pred_label.upper()} with {conf*100:.1f}% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
             "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
         }
@@ -695,6 +721,13 @@ async def analyze_uploaded_image(
             },
             gradcam_url=f"/api/gradcam-image/{cam_filename}",
             model_architecture="ResNet-50 Deep ConvNet",
+            predictive_entropy=uncertainty_info["entropy"],
+            uncertainty_score=uncertainty_info["uncertainty_score"],
+            confidence_margin=uncertainty_info["confidence_margin"],
+            roi_bounding_box=roi_info["roi_box"],
+            attention_coverage_percent=roi_info["coverage_percent"],
+            peak_activation_coords=roi_info["peak_coords"],
+            tta_applied=tta,
             message=f"ResNet-50 inference complete. Classified as {pred_label.upper()} with {conf*100:.1f}% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
             recommendation="Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
         )
@@ -717,6 +750,69 @@ def get_gradcam_image(filename: str):
             detail="Grad-CAM heatmap image not found."
         )
     return FileResponse(str(file_path), media_type="image/jpeg")
+
+
+@app.post("/api/reports/export-markdown")
+def export_research_report(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Generates a downloadable, peer-review-formatted Markdown report for an analysis."""
+    import time
+    filename = payload.get("filename", "scan_analysis")
+    modality = str(payload.get("modality", "unspecified")).upper()
+    predicted_class = str(payload.get("predicted_class", "UNKNOWN")).upper()
+    confidence = payload.get("confidence") or 0.0
+    probabilities = payload.get("probabilities") or {}
+    dimensions = payload.get("dimensions") or {}
+    dim_str = f"{dimensions.get('width', 'N/A')} × {dimensions.get('height', 'N/A')}" if isinstance(dimensions, dict) else "N/A"
+    entropy = payload.get("predictive_entropy", "N/A")
+    uncertainty = payload.get("uncertainty_score", "N/A")
+    margin = payload.get("confidence_margin", "N/A")
+    coverage = payload.get("attention_coverage_percent", "N/A")
+    peak_coords = payload.get("peak_activation_coords", "N/A")
+    timestamp = payload.get("timestamp") or time.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    report_md = f"""# MammoFusion-XAI — Research Study Analysis Report
+**Generated:** {timestamp}  
+**Platform:** MammoFusion-XAI Breast Imaging Research Platform (v1.0.0)  
+**Modality:** {modality}  
+**Target Scan:** `{filename}`  
+**Scan Dimensions:** {dim_str} ({payload.get('color_mode', 'N/A')})  
+
+---
+
+## 1. Deep Learning Inference Findings
+- **Model Architecture:** ResNet-50 Deep Convolutional Neural Network
+- **Classification Result:** **{predicted_class}**
+- **Model Confidence:** {float(confidence)*100:.1f}%
+- **Softmax Activation Distribution:**
+  - Normal: {float(probabilities.get('normal', 0.0))*100:.2f}%
+  - Benign: {float(probabilities.get('benign', 0.0))*100:.2f}%
+  - Malignant: {float(probabilities.get('malignant', 0.0))*100:.2f}%
+
+## 2. Advanced Uncertainty Quantification
+- **Predictive Shannon Entropy:** {entropy}
+- **Normalized Uncertainty Score:** {uncertainty} (Scale: 0.0 - 1.0)
+- **Top-2 Decision Margin:** {margin}
+- **Test-Time Augmentation (TTA):** {'Active (Dual-view ensemble)' if payload.get('tta_applied') else 'Standard single-pass'}
+
+## 3. Explainability & Spatial Attention Attribution (Grad-CAM)
+- **Target Convolutional Layer:** `resnet.layer4` (Bottleneck Residual Blocks)
+- **Attention Peak Coordinates:** {peak_coords}
+- **Focal Attention Coverage:** {coverage}% of total image field
+- **Heatmap Generation:** Positive gradient backpropagation with Turbo colormap overlay
+
+---
+
+## 4. Scientific & Ethical Governance Policy
+* **Notice:** This document is generated for machine learning research and educational benchmarking.
+* **Disclaimer:** Model predictions and Grad-CAM attention visualizations do not constitute clinical diagnoses or medical screening recommendations. Any clinical decisions must be guided by board-certified radiologists and histological validation.
+"""
+    clean_stem = Path(filename).stem
+    return {
+        "status": "success",
+        "filename": f"MammoFusion_Report_{clean_stem}.md",
+        "markdown": report_md
+    }
+
 
 
 # ============================================================================

@@ -116,3 +116,58 @@ def apply_colormap_to_cam(
     # Blend images
     blended = Image.blend(orig_rgb, cam_pil, alpha=alpha)
     return blended
+
+
+def extract_cam_roi(
+    heatmap: np.ndarray,
+    original_size: Tuple[int, int],
+    threshold_ratio: float = 0.60
+) -> dict:
+    """Extracts region-of-interest (ROI) bounding box and focal attention metrics from Grad-CAM.
+
+    Args:
+        heatmap: 2D numpy array [H, W] normalized to [0.0, 1.0].
+        original_size: (width, height) of the original unscaled image.
+        threshold_ratio: Threshold fraction of peak activation to define focal ROI.
+
+    Returns:
+        dict with roi_box [xmin, ymin, xmax, ymax], peak_coords [x, y], coverage_percent, mean_focal_intensity.
+    """
+    orig_w, orig_h = original_size
+    h, w = heatmap.shape
+    peak_idx = np.unravel_index(np.argmax(heatmap), (h, w))
+    peak_y, peak_x = int(peak_idx[0]), int(peak_idx[1])
+    peak_scaled = [
+        int(round((peak_x / max(1, w - 1)) * orig_w)),
+        int(round((peak_y / max(1, h - 1)) * orig_h))
+    ]
+
+    peak_val = float(heatmap[peak_y, peak_x])
+    if peak_val > 0.05:
+        threshold = threshold_ratio * peak_val
+        mask = heatmap >= threshold
+        y_indices, x_indices = np.where(mask)
+        if len(y_indices) > 0:
+            ymin = int(round((np.min(y_indices) / max(1, h - 1)) * orig_h))
+            ymax = int(round((np.max(y_indices) / max(1, h - 1)) * orig_h))
+            xmin = int(round((np.min(x_indices) / max(1, w - 1)) * orig_w))
+            xmax = int(round((np.max(x_indices) / max(1, w - 1)) * orig_w))
+            coverage = round(float(np.mean(mask)) * 100.0, 2)
+            focal_intensity = round(float(np.mean(heatmap[mask])), 4)
+            roi_box = [max(0, xmin), max(0, ymin), min(orig_w, xmax), min(orig_h, ymax)]
+        else:
+            roi_box = [0, 0, orig_w, orig_h]
+            coverage = 100.0
+            focal_intensity = round(float(np.mean(heatmap)), 4)
+    else:
+        roi_box = [0, 0, orig_w, orig_h]
+        coverage = 100.0
+        focal_intensity = round(float(np.mean(heatmap)), 4)
+
+    return {
+        "roi_box": roi_box,
+        "peak_coords": peak_scaled,
+        "coverage_percent": coverage,
+        "mean_focal_intensity": focal_intensity
+    }
+

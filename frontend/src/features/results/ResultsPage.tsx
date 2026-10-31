@@ -7,9 +7,10 @@ import {
   ChevronDown,
   ChevronUp,
   ShieldAlert,
-  Info
+  Info,
+  Download
 } from 'lucide-react';
-import { AnalysisResponse } from '../../services/api';
+import { AnalysisResponse, exportResearchReportMarkdown } from '../../services/api';
 
 interface ResultsPageProps {
   latestResult: AnalysisResponse | null;
@@ -18,6 +19,26 @@ interface ResultsPageProps {
 
 export const ResultsPage: React.FC<ResultsPageProps> = ({ latestResult, onNavigate }) => {
   const [showTechnicalDetails, setShowTechnicalDetails] = useState<boolean>(false);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+
+  const handleDownloadReport = async () => {
+    if (!latestResult) return;
+    setIsExporting(true);
+    try {
+      const data = await exportResearchReportMarkdown(latestResult);
+      const blob = new Blob([data.markdown], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = data.filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download report:', err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   if (!latestResult) {
     return (
@@ -93,14 +114,29 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ latestResult, onNaviga
           </h2>
         </div>
 
-        <button
-          className="btn-primary"
-          onClick={() => onNavigate('analyze')}
-          style={{ padding: '9px 16px', fontSize: '13px' }}
-        >
-          <span>Start Another Analysis</span>
-          <ArrowRight size={14} />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={handleDownloadReport}
+            disabled={isExporting}
+            style={{ fontSize: '13px', padding: '9px 16px' }}
+            title="Download formatted research report"
+          >
+            <Download size={14} />
+            <span>{isExporting ? 'Generating...' : 'Download Report'}</span>
+          </button>
+
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => onNavigate('analyze')}
+            style={{ padding: '9px 16px', fontSize: '13px' }}
+          >
+            <span>Start Another Analysis</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
       </div>
 
       {/* Model Output Summary Card */}
@@ -313,6 +349,34 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ latestResult, onNaviga
               <span style={{ color: 'var(--text-muted)' }}>Architecture: </span>
               <strong>ResNet-50 Unimodal</strong>
             </div>
+
+            {latestResult.predictive_entropy !== undefined && (
+              <div style={{ fontSize: '12px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Predictive Entropy: </span>
+                <strong className="mono">{latestResult.predictive_entropy} nats</strong>
+              </div>
+            )}
+
+            {latestResult.uncertainty_score !== undefined && (
+              <div style={{ fontSize: '12px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Uncertainty Index: </span>
+                <strong className="mono">{(latestResult.uncertainty_score * 100).toFixed(1)}%</strong>
+              </div>
+            )}
+
+            {latestResult.attention_coverage_percent !== undefined && (
+              <div style={{ fontSize: '12px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Focal Coverage: </span>
+                <strong className="mono">{latestResult.attention_coverage_percent}%</strong>
+              </div>
+            )}
+
+            {latestResult.peak_activation_coords && (
+              <div style={{ fontSize: '12px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Focal Peak (X, Y): </span>
+                <strong className="mono">({latestResult.peak_activation_coords[0]}, {latestResult.peak_activation_coords[1]})</strong>
+              </div>
+            )}
           </div>
         )}
       </div>

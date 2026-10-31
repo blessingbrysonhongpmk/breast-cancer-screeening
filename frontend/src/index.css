@@ -252,25 +252,45 @@ h6 {
 .btn-primary {
   background-color: var(--primary-rose);
   color: #FFFFFF;
-  border: none;
-  padding: 9px 18px;
+  border: 1px solid rgba(132, 32, 54, 0.4);
+  padding: 10px 20px;
   border-radius: var(--radius-md);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  transition: background-color 0.15s ease;
+  box-shadow: 0 2px 4px rgba(178, 59, 85, 0.2), 0 1px 2px rgba(44, 24, 32, 0.05);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  user-select: none;
 }
 
 .btn-primary:hover:not(:disabled) {
   background-color: var(--primary-rose-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(178, 59, 85, 0.3), 0 2px 4px rgba(44, 24, 32, 0.08);
+}
+
+.btn-primary:active:not(:disabled) {
+  background-color: var(--primary-rose-active);
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(178, 59, 85, 0.2);
+}
+
+.btn-primary:focus-visible {
+  outline: 2px solid var(--primary-rose);
+  outline-offset: 2px;
 }
 
 .btn-primary:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
 
 .btn-secondary {
@@ -284,14 +304,76 @@ h6 {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(44, 24, 32, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  user-select: none;
 }
 
 .btn-secondary:hover:not(:disabled) {
   background-color: var(--bg-blush);
   border-color: var(--border-rose);
   color: var(--primary-rose);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(178, 59, 85, 0.08);
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(44, 24, 32, 0.04);
+}
+
+.btn-secondary:focus-visible {
+  outline: 2px solid var(--primary-rose);
+  outline-offset: 2px;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-danger {
+  background-color: var(--status-malignant-bg);
+  color: var(--status-malignant);
+  border: 1px solid var(--status-malignant-border);
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #FFE4E6;
+  border-color: #FDA4AF;
+  color: #9F1239;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(190, 18, 60, 0.15);
+}
+
+.btn-danger:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-danger:focus-visible {
+  outline: 2px solid var(--status-malignant);
+  outline-offset: 2px;
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* Status Badges */

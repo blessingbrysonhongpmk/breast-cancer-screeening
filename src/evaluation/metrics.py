@@ -72,3 +72,50 @@ def compute_clinical_metrics(y_true: List[int], y_pred: List[int], y_prob: np.nd
         "confusion_matrix": cm.tolist()
     }
 
+
+def compute_prediction_uncertainty(probabilities: np.ndarray) -> Dict[str, float]:
+    """Computes Shannon predictive entropy and normalized uncertainty metrics.
+
+    Args:
+        probabilities: 1D array of class probabilities summing to 1.0.
+
+    Returns:
+        dict with:
+            - entropy: Shannon entropy H(p) = -sum(p * ln(p))
+            - uncertainty_score: Normalized entropy in [0.0, 1.0] relative to uniform distribution
+            - confidence_margin: Difference between highest and second-highest class probability
+    """
+    eps = 1e-12
+    p = np.clip(np.asarray(probabilities, dtype=float), eps, 1.0)
+    p = p / np.sum(p)
+    entropy = -float(np.sum(p * np.log(p)))
+    max_entropy = float(np.log(len(p))) if len(p) > 1 else 1.0
+    normalized_uncertainty = float(entropy / max_entropy) if max_entropy > 0 else 0.0
+    sorted_p = np.sort(p)[::-1]
+    margin = float(sorted_p[0] - sorted_p[1]) if len(sorted_p) > 1 else float(sorted_p[0])
+
+    return {
+        "entropy": round(entropy, 4),
+        "uncertainty_score": round(normalized_uncertainty, 4),
+        "confidence_margin": round(margin, 4)
+    }
+
+
+def predict_with_tta(model, input_tensor):
+    """Executes Test-Time Augmentation (TTA) via horizontal flip ensemble averaging.
+
+    Args:
+        model: PyTorch classifier module in eval mode.
+        input_tensor: 4D tensor (1, C, H, W).
+
+    Returns:
+        torch.Tensor of averaged logits (1, num_classes).
+    """
+    import torch
+    with torch.no_grad():
+        logits_orig = model(input_tensor)
+        flipped = torch.flip(input_tensor, dims=[3])
+        logits_flipped = model(flipped)
+        return (logits_orig + logits_flipped) / 2.0
+
+

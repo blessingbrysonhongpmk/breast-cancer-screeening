@@ -130,6 +130,13 @@ export interface AnalysisResponse {
   model_architecture?: string;
   message: string;
   recommendation: string;
+  predictive_entropy?: number;
+  uncertainty_score?: number;
+  confidence_margin?: number;
+  roi_bounding_box?: number[];
+  attention_coverage_percent?: number;
+  peak_activation_coords?: number[];
+  tta_applied?: boolean;
 }
 
 export interface ClearHistoryResponse {
@@ -272,3 +279,14 @@ export async function fetchEvaluationBenchmark(): Promise<EvaluationBenchmark | 
   if (!res.ok) return null;
   return res.json();
 }
+
+export async function exportResearchReportMarkdown(payload: AnalysisResponse): Promise<{ markdown: string; filename: string }> {
+  const res = await fetch(`${API_BASE}/api/reports/export-markdown`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error('Failed to generate research report');
+  return res.json();
+}
+
