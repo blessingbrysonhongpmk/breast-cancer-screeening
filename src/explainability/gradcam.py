@@ -20,6 +20,7 @@ class GradCAM:
         self.target_layer = target_layer
         self.activations: Optional[torch.Tensor] = None
         self.gradients: Optional[torch.Tensor] = None
+        self.handles = []
 
         self._register_hooks()
 
@@ -30,8 +31,18 @@ class GradCAM:
         def backward_hook(module, grad_input, grad_output):
             self.gradients = grad_output[0].detach()
 
-        self.target_layer.register_forward_hook(forward_hook)
-        self.target_layer.register_full_backward_hook(backward_hook)
+        h_fwd = self.target_layer.register_forward_hook(forward_hook)
+        h_bwd = self.target_layer.register_full_backward_hook(backward_hook)
+        self.handles = [h_fwd, h_bwd]
+
+    def remove_hooks(self):
+        """Cleanly removes registered hooks to avoid memory accumulation."""
+        for h in self.handles:
+            try:
+                h.remove()
+            except Exception:
+                pass
+        self.handles = []
 
     def generate(
         self,
@@ -61,35 +72,39 @@ class GradCAM:
 
         confidence = float(probabilities[0, target_class].item())
 
-        # Target class score
-        score = logits[0, target_class]
-        score.backward(retain_graph=True)
+        try:
+            # Target class score
+            score = logits[0, target_class]
+            score.backward()
 
-        if self.gradients is None or self.activations is None:
-            raise RuntimeError("Gradients or activations were not captured. Check target_layer registration.")
+            if self.gradients is None or self.activations is None:
+                raise RuntimeError("Gradients or activations were not captured. Check target_layer registration.")
 
-        # Global average pooling of gradients: weights alpha_k = (1/Z) * sum(grad)
-        weights = torch.mean(self.gradients, dim=(2, 3), keepdim=True)  # (1, C, 1, 1)
+            # Global average pooling of gradients: weights alpha_k = (1/Z) * sum(grad)
+            weights = torch.mean(self.gradients, dim=(2, 3), keepdim=True)  # (1, C, 1, 1)
 
-        # Weighted combination of forward activation maps
-        cam = torch.sum(weights * self.activations, dim=1, keepdim=True)  # (1, 1, H_feat, W_feat)
+            # Weighted combination of forward activation maps
+            cam = torch.sum(weights * self.activations, dim=1, keepdim=True)  # (1, 1, H_feat, W_feat)
 
-        # Apply ReLU to retain only positive influences
-        cam = F.relu(cam)
+            # Apply ReLU to retain only positive influences
+            cam = F.relu(cam)
 
-        # Upsample to match original input tensor height & width
-        h, w = input_tensor.shape[2], input_tensor.shape[3]
-        cam = F.interpolate(cam, size=(h, w), mode="bilinear", align_corners=False)
+            # Upsample to match original input tensor height & width
+            h, w = input_tensor.shape[2], input_tensor.shape[3]
+            cam = F.interpolate(cam, size=(h, w), mode="bilinear", align_corners=False)
 
-        # Normalize to [0.0, 1.0]
-        cam_np = cam.squeeze().cpu().numpy()
-        cam_min, cam_max = cam_np.min(), cam_np.max()
-        if cam_max > cam_min:
-            cam_np = (cam_np - cam_min) / (cam_max - cam_min)
-        else:
-            cam_np = np.zeros_like(cam_np)
+            # Normalize to [0.0, 1.0]
+            cam_np = cam.squeeze().cpu().numpy()
+            cam_min, cam_max = cam_np.min(), cam_np.max()
+            if cam_max > cam_min:
+                cam_np = (cam_np - cam_min) / (cam_max - cam_min)
+            else:
+                cam_np = np.zeros_like(cam_np)
 
-        return cam_np, target_class, confidence
+            return cam_np, target_class, confidence
+        finally:
+            self.remove_hooks()
+            self.model.zero_grad(set_to_none=True)
 
 
 def apply_colormap_to_cam(

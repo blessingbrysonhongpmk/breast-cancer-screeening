@@ -24,6 +24,9 @@ export interface ModalityReadinessDetail {
 export interface ModelReadinessResponse {
   mammogram: ModalityReadinessDetail;
   thermal: ModalityReadinessDetail;
+  combined?: ModalityReadinessDetail;
+  gradcam_ready?: boolean;
+  realtime_inference_ready?: boolean;
   all_ready: boolean;
 }
 
@@ -226,6 +229,95 @@ export async function fetchManifestRecords(
   });
   const res = await fetch(`${API_BASE}/api/manifests/records?${params.toString()}`);
   if (!res.ok) throw new Error(`Manifest records HTTP error: ${res.status}`);
+  return res.json();
+}
+
+export async function submitMammogramAnalysis(
+  file: File,
+  tta: boolean = false
+): Promise<AnalysisResponse> {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (tta) {
+    formData.append('tta', 'true');
+  }
+
+  const res = await fetch(`${API_BASE}/api/analyze/mammogram`, {
+    method: 'POST',
+    body: formData
+  });
+  if (!res.ok) {
+    let errorDetail = 'Invalid image. Please upload a mammogram image.';
+    try {
+      const errorJson = await res.json();
+      if (errorJson.detail) {
+        errorDetail = errorJson.detail;
+      }
+    } catch {
+      // Fallback
+    }
+    throw new Error(errorDetail);
+  }
+  return res.json();
+}
+
+export async function submitThermalAnalysis(
+  file: File,
+  tta: boolean = false
+): Promise<AnalysisResponse> {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (tta) {
+    formData.append('tta', 'true');
+  }
+
+  const res = await fetch(`${API_BASE}/api/analyze/thermal`, {
+    method: 'POST',
+    body: formData
+  });
+  if (!res.ok) {
+    let errorDetail = 'Invalid image. Please upload a thermal image.';
+    try {
+      const errorJson = await res.json();
+      if (errorJson.detail) {
+        errorDetail = errorJson.detail;
+      }
+    } catch {
+      // Fallback
+    }
+    throw new Error(errorDetail);
+  }
+  return res.json();
+}
+
+export async function submitCombinedAnalysis(
+  mammogramFile: File,
+  thermalFile: File,
+  caseId?: string
+): Promise<AnalysisResponse> {
+  const formData = new FormData();
+  formData.append('mammogram_file', mammogramFile);
+  formData.append('thermal_file', thermalFile);
+  if (caseId) {
+    formData.append('case_id', caseId);
+  }
+
+  const res = await fetch(`${API_BASE}/api/analyze/combined`, {
+    method: 'POST',
+    body: formData
+  });
+  if (!res.ok) {
+    let errorDetail = 'Combined analysis model is not yet available.';
+    try {
+      const errorJson = await res.json();
+      if (errorJson.detail) {
+        errorDetail = errorJson.detail;
+      }
+    } catch {
+      // Fallback
+    }
+    throw new Error(errorDetail);
+  }
   return res.json();
 }
 

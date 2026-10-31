@@ -30,7 +30,10 @@ def client():
 @pytest.fixture
 def sample_valid_mammogram_bytes():
     """Generates valid 224x224 grayscale PNG image bytes for mammogram testing."""
-    img = Image.new("L", (224, 224), color=128)
+    img = Image.new("L", (224, 224), color=0)
+    for y in range(40, 180):
+        for x in range(40, 180):
+            img.putpixel((x, y), 150)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()
@@ -39,7 +42,10 @@ def sample_valid_mammogram_bytes():
 @pytest.fixture
 def sample_valid_thermal_bytes():
     """Generates valid 224x224 RGB JPEG image bytes for thermal testing."""
-    img = Image.new("RGB", (224, 224), color=(200, 50, 50))
+    img = Image.new("RGB", (224, 224), color=(220, 40, 10))
+    for y in range(40, 180):
+        for x in range(40, 180):
+            img.putpixel((x, y), (10, 210, 240))
     buf = io.BytesIO()
     img.save(buf, format="JPEG")
     return buf.getvalue()

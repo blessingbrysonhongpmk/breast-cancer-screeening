@@ -20,6 +20,13 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from PIL import Image
 
+from src.validation.modality_detector import (
+    validate_mammogram_image,
+    validate_thermal_image,
+    MAMMOGRAM_ERROR_MSG,
+    THERMAL_ERROR_MSG,
+)
+
 # Setup sanitized logging without patient or credential leaks
 logging.basicConfig(
     level=logging.INFO,
@@ -77,6 +84,9 @@ class ModalityReadinessDetail(BaseModel):
 class ModelReadinessResponse(BaseModel):
     mammogram: ModalityReadinessDetail
     thermal: ModalityReadinessDetail
+    combined: Optional[ModalityReadinessDetail] = None
+    gradcam_ready: bool = False
+    realtime_inference_ready: bool = False
     all_ready: bool
 
 
@@ -275,9 +285,43 @@ def get_models_readiness() -> ModelReadinessResponse:
         device="cpu"
     )
 
+    fusion_ckpt = (
+        get_checkpoint_path_for_modality("multimodal")
+        or get_checkpoint_path_for_modality("fusion")
+        or get_checkpoint_path_for_modality("combined")
+    )
+    # Combined screening strictly requires a genuine trained multimodal fusion model
+    fusion_ready = False
+    combined_detail = ModalityReadinessDetail(
+        ready=False,
+        status_text="Combined analysis model is not yet available.",
+        model_architecture="Multimodal Fusion Network (Pending Training)",
+        checkpoint=fusion_ckpt.name if fusion_ckpt else None,
+        target_layer=None,
+        num_classes=3,
+        classes=["normal", "benign", "malignant"],
+        device="cpu"
+    )
+
+    # Verify Grad-CAM functionality on verified loaded model
+    gradcam_ready = False
+    if mammo_ready or thermal_ready:
+        try:
+            from src.explainability.gradcam import GradCAM
+            active_model = mammo_model if mammo_ready else thermal_model
+            gc = GradCAM(active_model, active_model.get_target_layer())
+            gradcam_ready = True
+        except Exception:
+            gradcam_ready = False
+
+    realtime_inference_ready = bool(mammo_ready or thermal_ready)
+
     return ModelReadinessResponse(
         mammogram=mammo_detail,
         thermal=thermal_detail,
+        combined=combined_detail,
+        gradcam_ready=gradcam_ready,
+        realtime_inference_ready=realtime_inference_ready,
         all_ready=bool(mammo_ready and thermal_ready)
     )
 
@@ -545,13 +589,14 @@ def stream_sample_image(modality: str, filename: str):
 # Image Analysis & Inference API
 # ============================================================================
 
-@app.post("/api/analyze", response_model=AnalysisResponse)
-async def analyze_uploaded_image(
-    file: UploadFile = File(...),
-    modality: str = Form("mammogram"),
-    tta: bool = Form(False)
+async def _process_modality_inference(
+    file: UploadFile,
+    modality: str,
+    tta: bool = False
 ) -> AnalysisResponse:
-    """Strictly validates uploaded breast image, runs PyTorch inference and generates Grad-CAM explainability."""
+    """Strictly validates uploaded breast image, enforces modality boundaries,
+    runs genuine PyTorch inference, and generates Grad-CAM explainability.
+    """
     # 1. Modality Validation
     norm_modality = modality.lower().strip()
     if norm_modality not in VALID_MODALITIES:
@@ -563,11 +608,20 @@ async def analyze_uploaded_image(
     # 2. Filename Sanitization & Extension Validation
     safe_name = sanitize_filename(file.filename)
     suffix = Path(safe_name).suffix.lower()
-    if suffix not in ALLOWED_IMAGE_EXTENSIONS:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported file format '{suffix}'. Allowed formats: {', '.join(sorted(ALLOWED_IMAGE_EXTENSIONS))}"
-        )
+
+    if norm_modality == "mammogram":
+        if suffix not in ALLOWED_IMAGE_EXTENSIONS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unsupported file format '{suffix}'. Allowed formats: {', '.join(sorted(ALLOWED_IMAGE_EXTENSIONS))}"
+            )
+    else:
+        # Thermal imaging does not support PGM formats
+        if suffix not in {".png", ".jpg", ".jpeg"}:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=THERMAL_ERROR_MSG
+            )
 
     # 3. Size Validation (read safely)
     contents = await file.read()
@@ -603,7 +657,23 @@ async def analyze_uploaded_image(
             detail=f"Image dimensions ({width}x{height}) are too small. Minimum required dimension is {MIN_IMAGE_DIMENSION}x{MIN_IMAGE_DIMENSION} pixels."
         )
 
-    # 5. Check Modality Model Readiness
+    # 5. Strict Modality Boundary Verification
+    if norm_modality == "mammogram":
+        is_valid_mammo, mammo_err = validate_mammogram_image(pil_img, safe_name)
+        if not is_valid_mammo:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=mammo_err or MAMMOGRAM_ERROR_MSG
+            )
+    elif norm_modality == "thermal":
+        is_valid_thermal, thermal_err = validate_thermal_image(pil_img, safe_name)
+        if not is_valid_thermal:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=thermal_err or THERMAL_ERROR_MSG
+            )
+
+    # 6. Check Modality Model Readiness
     model = get_modality_model(norm_modality)
     if model is None:
         logger.info(f"Analysis requested for {norm_modality} but model weights are not loaded.")
@@ -627,7 +697,7 @@ async def analyze_uploaded_image(
             recommendation="Connect trained PyTorch checkpoint in models/ directory to enable inference."
         )
 
-    # 6. Genuine Deep Learning Forward Pass & Grad-CAM attribution
+    # 7. Genuine Deep Learning Forward Pass & Grad-CAM attribution
     try:
         import torch
         import numpy as np
@@ -737,6 +807,152 @@ async def analyze_uploaded_image(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Inference execution encountered an unexpected processing error."
         )
+
+
+@app.post("/api/analyze/mammogram", response_model=AnalysisResponse)
+async def analyze_mammogram_image(
+    file: UploadFile = File(...),
+    tta: bool = Form(False)
+) -> AnalysisResponse:
+    """Dedicated endpoint for Mode 1: Mammogram Screening."""
+    return await _process_modality_inference(file, modality="mammogram", tta=tta)
+
+
+@app.post("/api/analyze/thermal", response_model=AnalysisResponse)
+async def analyze_thermal_image(
+    file: UploadFile = File(...),
+    tta: bool = Form(False)
+) -> AnalysisResponse:
+    """Dedicated endpoint for Mode 2: Thermal Screening."""
+    return await _process_modality_inference(file, modality="thermal", tta=tta)
+
+
+@app.post("/api/analyze", response_model=AnalysisResponse)
+async def analyze_uploaded_image(
+    file: UploadFile = File(...),
+    modality: str = Form("mammogram"),
+    tta: bool = Form(False)
+) -> AnalysisResponse:
+    """General analysis endpoint delegating to modality verification."""
+    return await _process_modality_inference(file, modality=modality, tta=tta)
+
+
+@app.post("/api/analyze/combined")
+async def analyze_combined_images(
+    mammogram_file: UploadFile = File(...),
+    thermal_file: UploadFile = File(...),
+    case_id: Optional[str] = Form(None)
+):
+    """Dedicated endpoint for Mode 3: Combined Multimodal Screening.
+    Validates both mammogram and thermal scans independently.
+    Rejects thermal in mammogram field and mammogram in thermal field.
+    Returns a result only if a genuine trained multimodal fusion model exists.
+    """
+    # 1. Validate Mammogram Upload
+    mammo_name = sanitize_filename(mammogram_file.filename)
+    mammo_suffix = Path(mammo_name).suffix.lower()
+    if mammo_suffix not in ALLOWED_IMAGE_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=MAMMOGRAM_ERROR_MSG
+        )
+    mammo_bytes = await mammogram_file.read()
+    if not mammo_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Mammogram upload is empty. Please provide a valid mammogram image."
+        )
+    if len(mammo_bytes) > MAX_UPLOAD_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail=f"Mammogram file exceeds {MAX_UPLOAD_SIZE_MB}MB limit."
+        )
+    try:
+        mammo_img = Image.open(io.BytesIO(mammo_bytes))
+        mammo_img.load()
+        if mammo_img.width < MIN_IMAGE_DIMENSION or mammo_img.height < MIN_IMAGE_DIMENSION:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"Mammogram dimensions ({mammo_img.width}x{mammo_img.height}) are too small."
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=MAMMOGRAM_ERROR_MSG
+        )
+
+    is_mammo_valid, mammo_err = validate_mammogram_image(mammo_img, mammo_name)
+    if not is_mammo_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=mammo_err or MAMMOGRAM_ERROR_MSG
+        )
+
+    # 2. Validate Thermal Upload
+    thermal_name = sanitize_filename(thermal_file.filename)
+    thermal_suffix = Path(thermal_name).suffix.lower()
+    if thermal_suffix not in {".png", ".jpg", ".jpeg"}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=THERMAL_ERROR_MSG
+        )
+    thermal_bytes = await thermal_file.read()
+    if not thermal_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Thermal upload is empty. Please provide a valid thermal image."
+        )
+    if len(thermal_bytes) > MAX_UPLOAD_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail=f"Thermal file exceeds {MAX_UPLOAD_SIZE_MB}MB limit."
+        )
+    try:
+        thermal_img = Image.open(io.BytesIO(thermal_bytes))
+        thermal_img.load()
+        if thermal_img.width < MIN_IMAGE_DIMENSION or thermal_img.height < MIN_IMAGE_DIMENSION:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"Thermal dimensions ({thermal_img.width}x{thermal_img.height}) are too small."
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=THERMAL_ERROR_MSG
+        )
+
+    is_thermal_valid, thermal_err = validate_thermal_image(thermal_img, thermal_name)
+    if not is_thermal_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=thermal_err or THERMAL_ERROR_MSG
+        )
+
+    # 3. Check for genuine multimodal fusion model
+    fusion_ckpt = (
+        get_checkpoint_path_for_modality("multimodal")
+        or get_checkpoint_path_for_modality("fusion")
+        or get_checkpoint_path_for_modality("combined")
+    )
+
+    if not fusion_ckpt:
+        logger.info(
+            f"Combined analysis requested for case {case_id or 'MF-COMBINED'}, but multimodal fusion model is not yet available."
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Combined analysis model is not yet available."
+        )
+
+    # Future: When fusion model weights are trained and loaded, genuine multimodal inference will execute here.
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="Combined analysis model is not yet available."
+    )
 
 
 @app.get("/api/gradcam-image/{filename}")

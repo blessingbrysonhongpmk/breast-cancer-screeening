@@ -57,6 +57,7 @@ export function App() {
   const [currentView, setCurrentView] = useState<string>(getInitialView);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [modelReadiness, setModelReadiness] = useState<ModelReadinessResponse | null>(null);
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [latestAnalysis, setLatestAnalysis] = useState<AnalysisResponse | null>(null);
   const [targetSample, setTargetSample] = useState<string | null>(null);
 
@@ -73,15 +74,19 @@ export function App() {
 
   const syncBackendData = async () => {
     setIsSyncing(true);
+    setBackendStatus('checking');
     try {
       const [hlth, readi] = await Promise.all([
-        fetchHealthCheck().catch(() => null),
-        fetchModelReadiness().catch(() => null)
+        fetchHealthCheck(),
+        fetchModelReadiness()
       ]);
-      if (hlth) setHealth(hlth);
-      if (readi) setModelReadiness(readi);
+      setHealth(hlth);
+      setModelReadiness(readi);
+      setBackendStatus(hlth?.status === 'healthy' ? 'online' : 'offline');
     } catch (e) {
       console.error('Failed to sync backend:', e);
+      setBackendStatus('offline');
+      setHealth(null);
     } finally {
       setIsSyncing(false);
     }
@@ -90,16 +95,20 @@ export function App() {
   useEffect(() => {
     let active = true;
     Promise.all([
-      fetchHealthCheck().catch(() => null),
-      fetchModelReadiness().catch(() => null)
+      fetchHealthCheck(),
+      fetchModelReadiness()
     ])
       .then(([hlth, readi]) => {
         if (!active) return;
-        if (hlth) setHealth(hlth);
-        if (readi) setModelReadiness(readi);
+        setHealth(hlth);
+        setModelReadiness(readi);
+        setBackendStatus(hlth?.status === 'healthy' ? 'online' : 'offline');
       })
       .catch((e) => {
+        if (!active) return;
         console.error('Failed to sync backend:', e);
+        setBackendStatus('offline');
+        setHealth(null);
       });
     return () => {
       active = false;
@@ -303,6 +312,7 @@ export function App() {
             <HomePage
               health={health}
               modelReadiness={modelReadiness}
+              backendStatus={backendStatus}
               onNavigate={handleNavigate}
             />
           )}

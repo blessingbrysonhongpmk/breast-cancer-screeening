@@ -102,7 +102,10 @@ def test_export_research_report_markdown_endpoint(client):
 
 def test_analyze_with_advanced_metrics(client):
     """Verifies POST /api/analyze returns advanced metrics and supports optional TTA flag."""
-    img = Image.new("L", (224, 224), color=128)
+    img = Image.new("L", (224, 224), color=0)
+    for y in range(40, 180):
+        for x in range(40, 180):
+            img.putpixel((x, y), 140)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
 

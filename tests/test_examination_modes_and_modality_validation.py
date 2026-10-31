@@ -1,0 +1,253 @@
+"""Test suite for the Three Examination Modes and Strict Modality Boundaries.
+Verifies all 8 testing requirements specified by the user:
+1. Mammogram mode accepts a valid mammogram.
+2. Mammogram mode rejects a thermal image.
+3. Thermal mode accepts a valid thermal image.
+4. Thermal mode rejects a mammogram.
+5. Combined mode refuses to proceed with only one image.
+6. Combined mode rejects incorrect image types in either field.
+7. Combined mode accepts both validated images but produces a result only if the genuine fusion model is available.
+8. Missing model weights never produce fake predictions.
+"""
+
+import io
+import pytest
+from pathlib import Path
+from PIL import Image
+from fastapi.testclient import TestClient
+
+from app.server import app, LOADED_MODELS
+from src.validation.modality_detector import (
+    validate_mammogram_image,
+    validate_thermal_image,
+    detect_image_modality,
+    MAMMOGRAM_ERROR_MSG,
+    THERMAL_ERROR_MSG,
+)
+
+client = TestClient(app)
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+THERMAL_SAMPLE = PROJECT_ROOT / "data" / "raw" / "thermal" / "Breast Thermography" / "IIR0110" / "IIR0110_anterior.jpg"
+
+
+def _create_synthetic_pgm_bytes():
+    """Generates a compact PGM radiograph (224x224) with black background border."""
+    img = Image.new("L", (224, 224), color=0)
+    for y in range(40, 180):
+        for x in range(40, 180):
+            img.putpixel((x, y), 150)
+    buf = io.BytesIO()
+    img.save(buf, format="PPM")
+    buf.seek(0)
+    return buf.getvalue()
+
+
+def _create_synthetic_mammogram_png_bytes():
+    """Generates a synthetic grayscale mammogram PNG."""
+    img = Image.new("L", (224, 224), color=0)
+    for y in range(40, 180):
+        for x in range(40, 180):
+            img.putpixel((x, y), 150)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return buf.getvalue()
+
+
+def _create_synthetic_thermal_bytes():
+    """Generates a synthetic false-color infrared image with high RGB divergence."""
+    img = Image.new("RGB", (224, 224), color=(255, 30, 10))
+    for y in range(40, 180):
+        for x in range(40, 180):
+            img.putpixel((x, y), (10, 220, 255))
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG")
+    buf.seek(0)
+    return buf.getvalue()
+
+
+# ----------------------------------------------------------------------
+# Scenario 1: Mammogram mode accepts a valid mammogram
+# ----------------------------------------------------------------------
+def test_scenario_1_mammogram_accepts_valid_mammogram():
+    """Mode 1: POST /api/analyze/mammogram accepts genuine mammogram and runs inference."""
+    pgm_bytes = _create_synthetic_pgm_bytes()
+
+    response = client.post(
+        "/api/analyze/mammogram",
+        files={"file": ("sample_mammo.pgm", pgm_bytes, "image/x-portable-graymap")}
+    )
+    assert response.status_code == 200, f"Expected 200 OK, got {response.status_code}: {response.text}"
+    data = response.json()
+    assert data["modality"] == "mammogram"
+    assert data["inference_ready"] is True
+    assert data["predicted_class"] in {"normal", "benign", "malignant"}
+    assert data["confidence"] > 0.0
+    assert "layer4" in data["message"]
+
+
+# ----------------------------------------------------------------------
+# Scenario 2: Mammogram mode rejects a thermal image
+# ----------------------------------------------------------------------
+def test_scenario_2_mammogram_rejects_thermal_image():
+    """Mode 1: POST /api/analyze/mammogram strictly rejects thermal scans."""
+    if THERMAL_SAMPLE.exists():
+        with open(THERMAL_SAMPLE, "rb") as f:
+            thermal_bytes = f.read()
+            fn = "IIR0110_anterior.jpg"
+    else:
+        thermal_bytes = _create_synthetic_thermal_bytes()
+        fn = "thermal_infrared.jpg"
+
+    response = client.post(
+        "/api/analyze/mammogram",
+        files={"file": (fn, thermal_bytes, "image/jpeg")}
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == MAMMOGRAM_ERROR_MSG
+
+
+# ----------------------------------------------------------------------
+# Scenario 3: Thermal mode accepts a valid thermal image
+# ----------------------------------------------------------------------
+def test_scenario_3_thermal_accepts_valid_thermal():
+    """Mode 2: POST /api/analyze/thermal accepts genuine thermal image and runs inference."""
+    if THERMAL_SAMPLE.exists():
+        with open(THERMAL_SAMPLE, "rb") as f:
+            thermal_bytes = f.read()
+            fn = "IIR0110_anterior.jpg"
+    else:
+        thermal_bytes = _create_synthetic_thermal_bytes()
+        fn = "thermal_sample.jpg"
+
+    response = client.post(
+        "/api/analyze/thermal",
+        files={"file": (fn, thermal_bytes, "image/jpeg")}
+    )
+    assert response.status_code == 200, f"Expected 200 OK, got {response.status_code}: {response.text}"
+    data = response.json()
+    assert data["modality"] == "thermal"
+    assert data["inference_ready"] is True
+    assert data["predicted_class"] in {"normal", "benign", "malignant"}
+    assert data["confidence"] > 0.0
+
+
+# ----------------------------------------------------------------------
+# Scenario 4: Thermal mode rejects a mammogram
+# ----------------------------------------------------------------------
+def test_scenario_4_thermal_rejects_mammogram():
+    """Mode 2: POST /api/analyze/thermal strictly rejects mammograms (including PGM)."""
+    pgm_bytes = _create_synthetic_pgm_bytes()
+
+    response = client.post(
+        "/api/analyze/thermal",
+        files={"file": ("mdb001lm.pgm", pgm_bytes, "image/x-portable-graymap")}
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == THERMAL_ERROR_MSG
+
+
+# ----------------------------------------------------------------------
+# Scenario 5: Combined mode refuses to proceed with only one image
+# ----------------------------------------------------------------------
+def test_scenario_5_combined_refuses_single_image():
+    """Mode 3: POST /api/analyze/combined fails if either mandatory image is missing."""
+    file_bytes = _create_synthetic_mammogram_png_bytes()
+
+    # Missing thermal image
+    res1 = client.post(
+        "/api/analyze/combined",
+        files={"mammogram_file": ("scan.png", file_bytes, "image/png")}
+    )
+    assert res1.status_code == 422, f"Expected 422 for missing thermal file, got {res1.status_code}"
+
+    # Missing mammogram image
+    res2 = client.post(
+        "/api/analyze/combined",
+        files={"thermal_file": ("thermal.jpg", _create_synthetic_thermal_bytes(), "image/jpeg")}
+    )
+    assert res2.status_code == 422, f"Expected 422 for missing mammogram file, got {res2.status_code}"
+
+
+# ----------------------------------------------------------------------
+# Scenario 6: Combined mode rejects incorrect image types in either field
+# ----------------------------------------------------------------------
+def test_scenario_6_combined_rejects_inverted_modalities():
+    """Mode 3: Cross-rejection in dual upload fields:
+    - Thermal image in mammogram field -> 400 "Invalid image. Please upload a mammogram image."
+    - Mammogram image in thermal field -> 400 "Invalid image. Please upload a thermal image."
+    """
+    mammo_bytes = _create_synthetic_pgm_bytes()
+    thermal_bytes = _create_synthetic_thermal_bytes()
+
+    # 1. Thermal image incorrectly placed in mammogram field
+    res_bad_mammo = client.post(
+        "/api/analyze/combined",
+        files={
+            "mammogram_file": ("thermal_in_mammo.jpg", thermal_bytes, "image/jpeg"),
+            "thermal_file": ("thermal_valid.jpg", thermal_bytes, "image/jpeg"),
+        }
+    )
+    assert res_bad_mammo.status_code == 400
+    assert res_bad_mammo.json()["detail"] == MAMMOGRAM_ERROR_MSG
+
+    # 2. Mammogram image incorrectly placed in thermal field
+    res_bad_thermal = client.post(
+        "/api/analyze/combined",
+        files={
+            "mammogram_file": ("mammo_valid.pgm", mammo_bytes, "image/x-portable-graymap"),
+            "thermal_file": ("mammo_in_thermal.pgm", mammo_bytes, "image/x-portable-graymap"),
+        }
+    )
+    assert res_bad_thermal.status_code == 400
+    assert res_bad_thermal.json()["detail"] == THERMAL_ERROR_MSG
+
+
+# ----------------------------------------------------------------------
+# Scenario 7: Combined mode accepts both validated images but produces a result
+#             ONLY if the genuine fusion model is available.
+# ----------------------------------------------------------------------
+def test_scenario_7_combined_returns_503_when_no_fusion_model():
+    """Mode 3: Validates both images, but returns 503 Service Unavailable with
+    'Combined analysis model is not yet available.' because no genuine fusion model exists.
+    """
+    mammo_bytes = _create_synthetic_pgm_bytes()
+    thermal_bytes = _create_synthetic_thermal_bytes()
+
+    response = client.post(
+        "/api/analyze/combined",
+        data={"case_id": "MF-CASE-2026-TEST"},
+        files={
+            "mammogram_file": ("valid_mammo.pgm", mammo_bytes, "image/x-portable-graymap"),
+            "thermal_file": ("valid_thermal.jpg", thermal_bytes, "image/jpeg"),
+        }
+    )
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Combined analysis model is not yet available."
+
+
+# ----------------------------------------------------------------------
+# Scenario 8: Missing model weights never produce fake predictions
+# ----------------------------------------------------------------------
+def test_scenario_8_missing_weights_never_produce_fake_predictions(monkeypatch):
+    """Missing model weights must return awaiting_model_training and never fabricate scores."""
+    from app import server
+
+    # Simulate missing model
+    monkeypatch.setattr(server, "get_modality_model", lambda mod: None)
+
+    mammo_bytes = _create_synthetic_pgm_bytes()
+
+    response = client.post(
+        "/api/analyze/mammogram",
+        files={"file": ("sample_mammo.pgm", mammo_bytes, "image/x-portable-graymap")}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "awaiting_model_training"
+    assert data["inference_ready"] is False
+    assert data["predicted_class"] is None
+    assert data["confidence"] is None
+    assert data["probabilities"] is None
+    assert data["gradcam_url"] is None
