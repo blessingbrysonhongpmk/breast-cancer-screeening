@@ -680,8 +680,8 @@ export const HomePage: React.FC<HomePageProps> = ({
                 {mammoReady && thermalReady
                   ? 'Models Ready (2/2)'
                   : mammoReady || thermalReady
-                  ? 'Partial (1/2 Ready)'
-                  : 'Models Standby'}
+                    ? 'Partial (1/2 Ready)'
+                    : 'Models Standby'}
               </span>
             </div>
           </div>

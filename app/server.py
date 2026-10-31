@@ -130,6 +130,18 @@ class ClearHistoryResponse(BaseModel):
     cleared_count: int
 
 
+class ImageValidationResponse(BaseModel):
+    valid_format: bool
+    format: str
+    dimensions: Dict[str, int]
+    size_bytes: int
+    modality_verified: bool
+    detected_modality: str
+    expected_modality: str
+    explanation: str
+    error: Optional[str] = None
+
+
 # ============================================================================
 # Model Management & Safe Loader
 # ============================================================================
@@ -952,6 +964,118 @@ async def analyze_combined_images(
     raise HTTPException(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         detail="Combined analysis model is not yet available."
+    )
+
+
+@app.post("/api/validate-scan", response_model=ImageValidationResponse)
+async def validate_scan_image(
+    file: UploadFile = File(...),
+    expected_modality: str = Form("mammogram")
+) -> ImageValidationResponse:
+    """Validates an uploaded breast image independently:
+    1. Checks file extension, readable bytes, and payload size.
+    2. Opens and inspects dimensions and color mode.
+    3. Runs modality detector to distinguish file validation from modality verification.
+    """
+    safe_name = sanitize_filename(file.filename)
+    norm_expected = expected_modality.lower().strip()
+    suffix = Path(safe_name).suffix.lower()
+
+    allowed_exts = {".png", ".jpg", ".jpeg", ".pgm"} if norm_expected == "mammogram" else {".png", ".jpg", ".jpeg"}
+    if suffix not in allowed_exts:
+        err_msg = MAMMOGRAM_ERROR_MSG if norm_expected == "mammogram" else THERMAL_ERROR_MSG
+        return ImageValidationResponse(
+            valid_format=False,
+            format=suffix.replace(".", "").upper() or "UNKNOWN",
+            dimensions={"width": 0, "height": 0},
+            size_bytes=0,
+            modality_verified=False,
+            detected_modality="unknown",
+            expected_modality=norm_expected,
+            explanation=f"Unsupported file format '{suffix}'.",
+            error=err_msg
+        )
+
+    contents = await file.read()
+    size_bytes = len(contents)
+    if size_bytes == 0:
+        return ImageValidationResponse(
+            valid_format=False,
+            format="EMPTY",
+            dimensions={"width": 0, "height": 0},
+            size_bytes=0,
+            modality_verified=False,
+            detected_modality="unknown",
+            expected_modality=norm_expected,
+            explanation="Uploaded file is empty.",
+            error="Uploaded file contains 0 bytes. Please select a valid image file."
+        )
+
+    if size_bytes > MAX_UPLOAD_SIZE_BYTES:
+        return ImageValidationResponse(
+            valid_format=False,
+            format="OVERSIZED",
+            dimensions={"width": 0, "height": 0},
+            size_bytes=size_bytes,
+            modality_verified=False,
+            detected_modality="unknown",
+            expected_modality=norm_expected,
+            explanation=f"File size exceeds maximum allowed limit of {MAX_UPLOAD_SIZE_MB}MB.",
+            error=f"File exceeds maximum allowed size of {MAX_UPLOAD_SIZE_MB}MB."
+        )
+
+    try:
+        pil_img = Image.open(io.BytesIO(contents))
+        pil_img.load()
+        w, h = pil_img.size
+        format_name = pil_img.format or "UNKNOWN"
+    except Exception as ex:
+        err_msg = MAMMOGRAM_ERROR_MSG if norm_expected == "mammogram" else THERMAL_ERROR_MSG
+        return ImageValidationResponse(
+            valid_format=False,
+            format="CORRUPT",
+            dimensions={"width": 0, "height": 0},
+            size_bytes=size_bytes,
+            modality_verified=False,
+            detected_modality="invalid",
+            expected_modality=norm_expected,
+            explanation=f"Image bytes are corrupt or unreadable: {ex}",
+            error=err_msg
+        )
+
+    if w < MIN_IMAGE_DIMENSION or h < MIN_IMAGE_DIMENSION:
+        return ImageValidationResponse(
+            valid_format=False,
+            format=format_name,
+            dimensions={"width": w, "height": h},
+            size_bytes=size_bytes,
+            modality_verified=False,
+            detected_modality="invalid",
+            expected_modality=norm_expected,
+            explanation=f"Image dimensions ({w}x{h}) are below minimum {MIN_IMAGE_DIMENSION}x{MIN_IMAGE_DIMENSION}.",
+            error=f"Image dimensions ({w}x{h}) are too small. Minimum required is {MIN_IMAGE_DIMENSION}x{MIN_IMAGE_DIMENSION} pixels."
+        )
+
+    # Perform strict modality boundary verification
+    if norm_expected == "mammogram":
+        is_verified, explanation = validate_mammogram_image(pil_img, safe_name)
+        err = None if is_verified else (explanation or MAMMOGRAM_ERROR_MSG)
+        detected = "mammogram" if is_verified else ("thermal" if "thermal" in explanation.lower() else "invalid")
+    else:
+        is_verified, explanation = validate_thermal_image(pil_img, safe_name)
+        err = None if is_verified else (explanation or THERMAL_ERROR_MSG)
+        detected = "thermal" if is_verified else ("mammogram" if "mammogram" in explanation.lower() else "invalid")
+
+    return ImageValidationResponse(
+        valid_format=True,
+        format=format_name,
+        dimensions={"width": w, "height": h},
+        size_bytes=size_bytes,
+        modality_verified=is_verified,
+        detected_modality=detected,
+        expected_modality=norm_expected,
+        explanation=explanation,
+        error=err
     )
 
 

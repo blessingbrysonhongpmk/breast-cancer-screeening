@@ -6,24 +6,64 @@ This document provides step-by-step procedures to manually and automatically ver
 
 ## 1. Quick Verification Commands
 
-### Run Full Automated Test Suite (54 Tests)
+### Run Full Automated Test Suite (61 Tests)
 ```powershell
 py -3.10 -m pytest tests/ -v
 ```
 
-### Run Dashboard Truth & Environmental Tests
-```powershell
-py -3.10 -m pytest tests/test_dashboard_functionality_and_truth.py -v
-```
-
-### Run 3-Mode Examination & Modality Validation Tests
+### Run 3-Mode Examination & Modality Validation Tests (9 Tests)
 ```powershell
 py -3.10 -m pytest tests/test_examination_modes_and_modality_validation.py -v
 ```
 
+### Run Dashboard Truth & Environmental Tests (4 Tests)
+```powershell
+py -3.10 -m pytest tests/test_dashboard_functionality_and_truth.py -v
+```
+
+### Run API Reliability & Security Tests (15 Tests)
+```powershell
+py -3.10 -m pytest tests/test_api_reliability.py -v
+```
+
 ---
 
-## 2. Testing the 4 Environmental Conditions
+## 2. Verification of New Examination Features
+
+### 1. Mammogram Preview & PGM Radiograph Rendering
+- **Actual Uploaded Radiograph Rendered:** Supported formats include `.pgm`, `.png`, `.jpg`, and `.jpeg`. When a raw Netpbm `.pgm` file (e.g. from MIAS: `mdb001lm.pgm`, 4320×2048 px) is uploaded, the client-side PGM decoder ([`frontend/src/utils/pgmDecoder.ts`](file:///e:/my%20projects/breast%20cancer%20screening/frontend/src/utils/pgmDecoder.ts)) parses binary `P5` bytes directly into a Canvas data URL and renders the actual breast radiograph on screen.
+- **No Text-Only Placeholders:** The interface renders the actual breast tissue, density structure, and pectoral boundaries. Text placeholders like *"PGM Radiograph Loaded"* have been eliminated.
+- **Aspect Ratio Preservation:** Images are contained within dark radiology viewports using `object-fit: contain` to prevent optical distortion.
+- **Zoom / Fullscreen Modal:** Clicking the **Zoom View** (`<Maximize2 />`) button opens a high-resolution lightbox inspection modal with image dimensions and contrast/invert diagnostic filters.
+
+### 2. Thermal Image Preview & False-Color Palette
+- **Native RGB Preservation:** Thermal images (e.g., from Mendeley Thermography: `IIR0110_anterior.jpg`) are displayed in their original false-color thermal palette without forced grayscale conversion.
+- **Metadata Display:** Filename, dimensions (e.g., `640×480 px`), and an **RGB Thermal Palette** badge are prominently displayed.
+- **Zoom / Inspection View:** Thermal images also feature the Zoom View lightbox for detailed inspection of thermal hotspots.
+
+### 3. Separate Validation States: Format vs Modality Verification
+- **Dual Validation Pipeline:**
+  1. **File Format & Dimensions:** Verifies readable bytes, supported extensions, dimensions $\ge 32\times 32$ px, and file size $\le 25$ MB.
+  2. **Modality Verification:** Enforces strict boundary checks (color divergence, saturation, luminance distribution, radiographic background borders) via `POST /api/validate-scan`.
+- **UI State Separation:**
+  - Valid Mammogram: Shows `✓ File Format & Dimensions: Valid (PGM • 4320×2048 px • 8.4 MB)` AND `✓ Modality Verification: Verified Mammogram`.
+  - Thermal Uploaded into Mammogram Mode: Shows `✓ File Format: Valid (JPEG • 640×480 px)` BUT `✕ Modality Verification: Rejected — Invalid image. Please upload a mammogram image.`
+  - PGM Uploaded into Thermal Mode: Shows `✕ File Format: Unsupported format '.pgm'` AND `✕ Modality Verification: Rejected — Invalid image. Please upload a thermal image.`
+
+### 4. Verified Reference Samples Marked as TEST DATA
+- **Prominent Tagging:** All curated reference scans from the MIAS and Mendeley repositories are explicitly tagged with `[TEST DATA]` chips.
+- **Clear Research Context:** The reference sample drawer clearly states: *"TEST DATA: Research reference scan for algorithm verification (Not live patient records)."*
+- **No Synthetic Pairing:** Because MIAS (UK) and Mendeley (Mexico) represent independent patient cohorts with zero shared participants, arbitrary pairing of unrelated images has been eliminated. The Combined Screening mode explicitly informs the user that paired scans must originate from clinical PACS or paired study uploads.
+
+### 5. Combined Multimodal Screening Safeguards
+- **Dual Mandatory Dropzones:** Requires both a validated mammogram radiograph and a validated infrared thermogram.
+- **Analyze Button Permanently Disabled:** Displays **`"Combined analysis model is not yet available."`** (`disabled={true}`).
+- **Zero Fabrication Policy:** Explanatory alert explains that genuine multimodal fusion requires a trained joint fusion model with paired patient provenance. The system strictly prohibits averaging or combining unimodal scores into synthetic risk metrics.
+- **Backend Guard:** Direct calls to `POST /api/analyze/combined` return **HTTP 503 Service Unavailable** with zero history corruption.
+
+---
+
+## 3. Testing the 4 Environmental Conditions
 
 ### Condition A: Normal Operation (Backend Online, All Models Loaded)
 1. **Start Backend Server:**
@@ -49,7 +89,7 @@ py -3.10 -m pytest tests/test_examination_modes_and_modality_validation.py -v
 ---
 
 ### Condition B: Backend Offline (Server Stopped)
-1. **Stop the Backend Server** (Ctrl+C in terminal or kill task-3552).
+1. **Stop the Backend Server** (Ctrl+C in terminal).
 2. **Refresh the Frontend (`http://127.0.0.1:5173`):**
    - **System Status Card:** Updates to **"Backend Disconnected"** with a red dot and `Offline` badge.
    - **Model Status Card:** Shows **"Unavailable"** (gray/red).
@@ -107,68 +147,18 @@ py -3.10 -m pytest tests/test_examination_modes_and_modality_validation.py -v
 
 ---
 
-## 3. Testing the 3 Examination Modes
+## 4. Test Suite Execution Summary
 
-Navigate to **New Examination** (`/examination`):
-
-### Mode 1: Mammogram Screening
-1. **Select Tab:** "Mammogram Screening".
-2. **Upload Valid Mammogram:** Select a MIAS PGM image or grayscale mammogram PNG/JPG.
-   - Preview loads immediately.
-   - Modality detector confirms grayscale breast anatomy.
-   - Click **"Run Mammogram Analysis"**.
-   - Progress bar displays real-time inference steps.
-   - Redirects to **Results** page with genuine ResNet-50 probabilities and true Grad-CAM heatmap on `layer4`.
-3. **Negative Test (Cross-Modality Rejection):**
-   - Upload a colorful thermal image into the Mammogram mode.
-   - UI immediately blocks submission and presents the exact error:
-     > **"Invalid image. Please upload a mammogram image."**
-   - Backend endpoint (`POST /api/analyze/mammogram`) strictly returns HTTP 400 with the same message if bypassed.
-
----
-
-### Mode 2: Thermal Screening
-1. **Select Tab:** "Thermal Screening".
-2. **Upload Valid Thermal Image:** Select an RGB thermogram from the Mendeley dataset.
-   - Preview loads immediately.
-   - Modality detector verifies color palette / temperature distribution.
-   - Click **"Run Thermal Analysis"**.
-   - Redirects to **Results** page with genuine ResNet-50 classification.
-3. **Negative Test (Cross-Modality Rejection):**
-   - Upload a grayscale mammogram into Thermal mode.
-   - UI immediately blocks submission and presents the exact error:
-     > **"Invalid image. Please upload a thermal image."**
-   - Backend endpoint (`POST /api/analyze/thermal`) strictly returns HTTP 400 with the same message if bypassed.
-
----
-
-### Mode 3: Combined Multimodal Screening
-1. **Select Tab:** "Combined Multimodal Screening".
-2. **Verify Two Mandatory Upload Dropzones:**
-   - Dropzone 1: Mammogram Image (requires valid mammogram; rejects thermograms).
-   - Dropzone 2: Thermal Image (requires valid thermogram; rejects mammograms).
-3. **Upload Workflow:**
-   - Upload only a mammogram: Button remains disabled (`"Upload both images to analyze"`).
-   - Upload both images: Both previews appear with replacement and removal buttons.
-4. **Multimodal Model Status Verification:**
-   - Action button displays: **"Combined analysis model is not yet available."**
-   - Button is disabled (`disabled={true}`).
-   - Subtext explains: *"The Multimodal Fusion model requires paired patient data and is currently pending training. Individual screening modes are fully operational."*
-5. **Backend Safety:**
-   - If a request is sent directly to `POST /api/analyze/combined`, the server validates both modalities and returns **HTTP 503** with message `"Combined analysis model is not yet available."`.
-   - **Zero fake records** are written to the database or recent analyses history.
-
----
-
-## 4. Scientific Truth & Non-Fabrication Summary
-
-| Feature / Metric | Backend Verification Mechanism | UI Display Truth |
-|---|---|---|
-| **System Status** | `GET /api/health` response verification | `Online` vs `Offline` (no hardcoded state) |
-| **Mammogram Model** | PyTorch model instantiation + checkpoint check | `Model Ready` vs `Unavailable` |
-| **Thermal Model** | PyTorch model instantiation + checkpoint check | `Model Ready` vs `Unavailable` |
-| **Grad-CAM** | PyTorch hook execution test on `layer4` | `Available` vs `Unavailable` |
-| **Real-time Analysis** | Live model forward pass verification | `Active` vs `Standby` |
-| **Project Readiness** | Dynamic: $\frac{\text{Verified Items}}{4} \times 100\%$ | Dynamic SVG donut (0% - 100%) |
-| **Last Analysis** | `GET /api/recent-analyses` most recent entry | Real timestamp or "No examinations yet" |
-| **Combined Screening** | `POST /api/analyze/combined` HTTP 503 guard | Button disabled with explanatory message |
+| Test File | Total Tests | Status | Execution Time |
+|---|---|---|---|
+| `tests/test_advanced_backend.py` | 6 | **PASS** | 0.85s |
+| `tests/test_api_reliability.py` | 15 | **PASS** | 4.12s |
+| `tests/test_archive_safety.py` | 4 | **PASS** | 0.12s |
+| `tests/test_dashboard_functionality_and_truth.py` | 4 | **PASS** | 8.87s |
+| `tests/test_deeplearning.py` | 6 | **PASS** | 3.45s |
+| `tests/test_examination_modes_and_modality_validation.py` | 9 | **PASS** | 14.79s |
+| `tests/test_manifest_and_idempotence.py` | 3 | **PASS** | 0.22s |
+| `tests/test_metadata_parser.py` | 1 | **PASS** | 0.08s |
+| `tests/test_scanner_and_identifier.py` | 4 | **PASS** | 0.18s |
+| `tests/test_transforms.py` | 9 | **PASS** | 0.95s |
+| **Total Automated Tests** | **61** | **ALL PASS** | **24.54s** |

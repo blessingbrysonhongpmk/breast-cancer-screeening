@@ -147,6 +147,18 @@ export interface ClearHistoryResponse {
   cleared_count: number;
 }
 
+export interface ImageValidationResult {
+  valid_format: boolean;
+  format: string;
+  dimensions: { width: number; height: number };
+  size_bytes: number;
+  modality_verified: boolean;
+  detected_modality: string;
+  expected_modality: string;
+  explanation: string;
+  error?: string | null;
+}
+
 export interface EvaluationBenchmark {
   status?: string;
   mammogram?: {
@@ -308,6 +320,33 @@ export async function submitCombinedAnalysis(
   });
   if (!res.ok) {
     let errorDetail = 'Combined analysis model is not yet available.';
+    try {
+      const errorJson = await res.json();
+      if (errorJson.detail) {
+        errorDetail = errorJson.detail;
+      }
+    } catch {
+      // Fallback
+    }
+    throw new Error(errorDetail);
+  }
+  return res.json();
+}
+
+export async function validateScanImage(
+  file: File,
+  expectedModality: 'mammogram' | 'thermal'
+): Promise<ImageValidationResult> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('expected_modality', expectedModality);
+
+  const res = await fetch(`${API_BASE}/api/validate-scan`, {
+    method: 'POST',
+    body: formData
+  });
+  if (!res.ok) {
+    let errorDetail = 'Validation failed';
     try {
       const errorJson = await res.json();
       if (errorJson.detail) {

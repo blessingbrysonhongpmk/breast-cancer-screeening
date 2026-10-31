@@ -251,3 +251,63 @@ def test_scenario_8_missing_weights_never_produce_fake_predictions(monkeypatch):
     assert data["confidence"] is None
     assert data["probabilities"] is None
     assert data["gradcam_url"] is None
+
+
+# ----------------------------------------------------------------------
+# Scenario 9: Separate validation endpoint verifies format vs modality
+# ----------------------------------------------------------------------
+def test_scenario_9_validate_scan_endpoint_distinguishes_format_and_modality():
+    """Endpoint POST /api/validate-scan must report separate file format and modality verification."""
+    mammo_bytes = _create_synthetic_pgm_bytes()
+    thermal_bytes = _create_synthetic_thermal_bytes()
+
+    # 1. Valid Mammogram PGM in mammogram mode
+    res1 = client.post(
+        "/api/validate-scan",
+        files={"file": ("scan.pgm", mammo_bytes, "image/x-portable-graymap")},
+        data={"expected_modality": "mammogram"}
+    )
+    assert res1.status_code == 200
+    d1 = res1.json()
+    assert d1["valid_format"] is True
+    assert d1["modality_verified"] is True
+    assert d1["detected_modality"] == "mammogram"
+    assert d1["error"] is None
+
+    # 2. Valid Thermal JPG in thermal mode
+    res2 = client.post(
+        "/api/validate-scan",
+        files={"file": ("thermal.jpg", thermal_bytes, "image/jpeg")},
+        data={"expected_modality": "thermal"}
+    )
+    assert res2.status_code == 200
+    d2 = res2.json()
+    assert d2["valid_format"] is True
+    assert d2["modality_verified"] is True
+    assert d2["detected_modality"] == "thermal"
+    assert d2["error"] is None
+
+    # 3. Cross-Modality: Thermal in Mammogram Mode -> format valid, but modality rejected
+    res3 = client.post(
+        "/api/validate-scan",
+        files={"file": ("thermal.jpg", thermal_bytes, "image/jpeg")},
+        data={"expected_modality": "mammogram"}
+    )
+    assert res3.status_code == 200
+    d3 = res3.json()
+    assert d3["valid_format"] is True  # Format is valid JPEG
+    assert d3["modality_verified"] is False  # But modality is rejected!
+    assert d3["error"] == MAMMOGRAM_ERROR_MSG
+
+    # 4. Cross-Modality: PGM in Thermal Mode -> format and modality rejected
+    res4 = client.post(
+        "/api/validate-scan",
+        files={"file": ("scan.pgm", mammo_bytes, "image/x-portable-graymap")},
+        data={"expected_modality": "thermal"}
+    )
+    assert res4.status_code == 200
+    d4 = res4.json()
+    assert d4["valid_format"] is False
+    assert d4["modality_verified"] is False
+    assert d4["error"] == THERMAL_ERROR_MSG
+

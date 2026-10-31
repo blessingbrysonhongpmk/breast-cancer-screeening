@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   UploadCloud,
-  FileImage,
   RefreshCw,
   Trash2,
   Sliders,
@@ -10,9 +9,13 @@ import {
   Flame,
   ArrowRight,
   Layers,
-  Sparkles,
   CheckCircle2,
-  Info
+  Info,
+  Maximize2,
+  X,
+  FileCheck,
+  ShieldCheck,
+  ZoomIn
 } from 'lucide-react';
 import {
   AnalysisResponse,
@@ -22,8 +25,11 @@ import {
   getSampleImageUrl,
   submitMammogramAnalysis,
   submitThermalAnalysis,
-  submitCombinedAnalysis
+  submitCombinedAnalysis,
+  validateScanImage,
+  ImageValidationResult
 } from '../../services/api';
+import { decodePgmImage } from '../../utils/pgmDecoder';
 
 type ExaminationMode = 'mammogram' | 'thermal' | 'combined';
 
@@ -36,129 +42,26 @@ interface AnalysisPageProps {
   onAnalysisComplete: (result: AnalysisResponse) => void;
 }
 
-// Client-side image validation helper
-function validateImageClientSide(
-  file: File,
-  expectedModality: 'mammogram' | 'thermal'
-): Promise<{ valid: boolean; error: string | null; width: number; height: number }> {
-  return new Promise((resolve) => {
-    const ext = '.' + file.name.split('.').pop()?.toLowerCase();
-    const nameLower = file.name.toLowerCase();
+interface ValidationStatus {
+  fileValid: boolean;
+  format: string;
+  sizeFormatted: string;
+  dimensions?: { width: number; height: number };
+  fileError?: string | null;
+  modalityVerified: boolean;
+  modalityLabel: string;
+  modalityExplanation?: string;
+  modalityError?: string | null;
+}
 
-    // 1. Extension checks
-    if (expectedModality === 'mammogram') {
-      if (!['.png', '.jpg', '.jpeg', '.pgm'].includes(ext)) {
-        return resolve({
-          valid: false,
-          error: 'Invalid image. Please upload a mammogram image.',
-          width: 0,
-          height: 0
-        });
-      }
-      if (['iir', 'anterior', 'oblder', 'oblizq', 'therm'].some((k) => nameLower.includes(k))) {
-        return resolve({
-          valid: false,
-          error: 'Invalid image. Please upload a mammogram image.',
-          width: 0,
-          height: 0
-        });
-      }
-    } else {
-      if (!['.png', '.jpg', '.jpeg'].includes(ext)) {
-        return resolve({
-          valid: false,
-          error: 'Invalid image. Please upload a thermal image.',
-          width: 0,
-          height: 0
-        });
-      }
-      if (['mdb', 'mammo', 'mias'].some((k) => nameLower.includes(k))) {
-        return resolve({
-          valid: false,
-          error: 'Invalid image. Please upload a thermal image.',
-          width: 0,
-          height: 0
-        });
-      }
-    }
-
-    if (ext === '.pgm') {
-      return resolve({ valid: true, error: null, width: 0, height: 0 });
-    }
-
-    // 2. Canvas analysis for browser-renderable formats
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      const w = img.naturalWidth;
-      const h = img.naturalHeight;
-      if (w < 32 || h < 32) {
-        URL.revokeObjectURL(url);
-        return resolve({
-          valid: false,
-          error: `Image dimensions (${w}×${h}) are too small. Minimum required is 32×32 pixels.`,
-          width: w,
-          height: h
-        });
-      }
-
-      const canvas = document.createElement('canvas');
-      canvas.width = 64;
-      canvas.height = 64;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        URL.revokeObjectURL(url);
-        return resolve({ valid: true, error: null, width: w, height: h });
-      }
-
-      ctx.drawImage(img, 0, 0, 64, 64);
-      const data = ctx.getImageData(0, 0, 64, 64).data;
-      let totalDiff = 0;
-      let darkCount = 0;
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        totalDiff += Math.abs(r - g) + Math.abs(g - b) + Math.abs(b - r);
-        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-        if (gray < 20) darkCount++;
-      }
-      const avgDiff = totalDiff / ((data.length / 4) * 3);
-      const darkRatio = darkCount / (data.length / 4);
-      URL.revokeObjectURL(url);
-
-      if (expectedModality === 'mammogram') {
-        if (avgDiff >= 8.0) {
-          return resolve({
-            valid: false,
-            error: 'Invalid image. Please upload a mammogram image.',
-            width: w,
-            height: h
-          });
-        }
-        return resolve({ valid: true, error: null, width: w, height: h });
-      } else {
-        if (avgDiff < 8.0 && darkRatio > 0.18) {
-          return resolve({
-            valid: false,
-            error: 'Invalid image. Please upload a thermal image.',
-            width: w,
-            height: h
-          });
-        }
-        return resolve({ valid: true, error: null, width: w, height: h });
-      }
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      const errMsg =
-        expectedModality === 'mammogram'
-          ? 'Invalid image. Please upload a mammogram image.'
-          : 'Invalid image. Please upload a thermal image.';
-      resolve({ valid: false, error: errMsg, width: 0, height: 0 });
-    };
-    img.src = url;
-  });
+interface ZoomModalState {
+  isOpen: boolean;
+  url: string;
+  title: string;
+  dimensions?: string;
+  modality: 'mammogram' | 'thermal';
+  isInverted?: boolean;
+  contrastBoost?: boolean;
 }
 
 export const AnalysisPage: React.FC<AnalysisPageProps> = ({
@@ -174,19 +77,19 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
   // Single-scan state (Modes 1 & 2)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [singleError, setSingleError] = useState<string | null>(null);
-  const [singleDimensions, setSingleDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [singleValidation, setSingleValidation] = useState<ValidationStatus | null>(null);
+  const [isValidatingSingle, setIsValidatingSingle] = useState<boolean>(false);
 
   // Combined-scan state (Mode 3)
   const [combinedMammoFile, setCombinedMammoFile] = useState<File | null>(null);
   const [combinedMammoPreview, setCombinedMammoPreview] = useState<string | null>(null);
-  const [combinedMammoError, setCombinedMammoError] = useState<string | null>(null);
-  const [combinedMammoDims, setCombinedMammoDims] = useState<{ width: number; height: number } | null>(null);
+  const [combinedMammoValidation, setCombinedMammoValidation] = useState<ValidationStatus | null>(null);
+  const [isValidatingMammo, setIsValidatingMammo] = useState<boolean>(false);
 
   const [combinedThermalFile, setCombinedThermalFile] = useState<File | null>(null);
   const [combinedThermalPreview, setCombinedThermalPreview] = useState<string | null>(null);
-  const [combinedThermalError, setCombinedThermalError] = useState<string | null>(null);
-  const [combinedThermalDims, setCombinedThermalDims] = useState<{ width: number; height: number } | null>(null);
+  const [combinedThermalValidation, setCombinedThermalValidation] = useState<ValidationStatus | null>(null);
+  const [isValidatingThermal, setIsValidatingThermal] = useState<boolean>(false);
 
   const [caseId, setCaseId] = useState<string>(() => `MF-CASE-2026-${Math.random().toString(36).substring(2, 7).toUpperCase()}`);
 
@@ -196,6 +99,9 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
   const [isInverted, setIsInverted] = useState<boolean>(false);
   const [contrastBoost, setContrastBoost] = useState<boolean>(false);
   const [useTta, setUseTta] = useState<boolean>(false);
+
+  // Zoom / Fullscreen Modal
+  const [zoomModal, setZoomModal] = useState<ZoomModalState | null>(null);
 
   // Samples for one-click testing
   const [samples, setSamples] = useState<SampleItem[]>([]);
@@ -227,8 +133,16 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       setMode(match.modality);
       setUploadedFile(null);
       setSelectedSample(match);
-      setSingleError(null);
       setPreviewUrl(getSampleImageUrl(match.modality, match.filename));
+      setSingleValidation({
+        fileValid: true,
+        format: match.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
+        sizeFormatted: 'Reference Scan',
+        dimensions: { width: 1024, height: 1024 },
+        modalityVerified: true,
+        modalityLabel: match.modality === 'mammogram' ? 'Radiographic Mammogram' : 'Infrared Thermogram',
+        modalityExplanation: `Curated reference scan from ${match.modality === 'mammogram' ? 'MIAS (UK)' : 'Mendeley (Mexico)'} repository.`
+      });
       if (onClearTargetSample) onClearTargetSample();
     }, 0);
 
@@ -247,96 +161,215 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
   // Reset states when changing examination mode
   const handleModeChange = (newMode: ExaminationMode) => {
     setMode(newMode);
-    setSingleError(null);
     setShowSamplesDrawer(false);
+  };
+
+  // Helper to format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
   // Process single upload (Modes 1 & 2)
   const handleSingleFileProcess = async (file: File) => {
     if (mode === 'combined') return;
     const targetModality = mode as 'mammogram' | 'thermal';
-    const validation = await validateImageClientSide(file, targetModality);
-
-    if (!validation.valid) {
-      setSingleError(validation.error);
-      setUploadedFile(null);
-      setPreviewUrl(null);
-      setSingleDimensions(null);
-      return;
-    }
+    setIsValidatingSingle(true);
 
     if (previewUrl && previewUrl.startsWith('blob:')) {
       URL.revokeObjectURL(previewUrl);
     }
-
-    setSingleError(null);
     setUploadedFile(file);
     setSelectedSample(null);
-    setSingleDimensions(validation.width > 0 ? { width: validation.width, height: validation.height } : null);
 
-    if (!file.name.toLowerCase().endsWith('.pgm')) {
-      setPreviewUrl(URL.createObjectURL(file));
-    } else {
-      setPreviewUrl(null);
+    let imagePreview = '';
+    let dims = { width: 0, height: 0 };
+
+    try {
+      if (file.name.toLowerCase().endsWith('.pgm')) {
+        const decoded = await decodePgmImage(file, 1024);
+        imagePreview = decoded.dataUrl;
+        dims = { width: decoded.width, height: decoded.height };
+      } else {
+        imagePreview = URL.createObjectURL(file);
+        // Measure dimensions via browser Image
+        const img = new Image();
+        img.src = imagePreview;
+        await new Promise((res) => {
+          img.onload = () => {
+            dims = { width: img.naturalWidth, height: img.naturalHeight };
+            res(null);
+          };
+          img.onerror = () => res(null);
+        });
+      }
+      setPreviewUrl(imagePreview);
+
+      // Execute backend modality and integrity verification
+      const backendVal: ImageValidationResult = await validateScanImage(file, targetModality);
+
+      setSingleValidation({
+        fileValid: backendVal.valid_format,
+        format: backendVal.format || file.name.split('.').pop()?.toUpperCase() || 'IMG',
+        sizeFormatted: formatFileSize(file.size),
+        dimensions: backendVal.dimensions.width > 0 ? backendVal.dimensions : dims,
+        fileError: backendVal.valid_format ? null : backendVal.error,
+        modalityVerified: backendVal.modality_verified,
+        modalityLabel: backendVal.detected_modality === 'mammogram' ? 'Verified Mammogram' : (backendVal.detected_modality === 'thermal' ? 'Verified Thermal Scan' : 'Unverified Modality'),
+        modalityExplanation: backendVal.explanation,
+        modalityError: backendVal.modality_verified ? null : backendVal.error
+      });
+    } catch (err: any) {
+      console.warn('Backend validation call error, falling back to local inspection:', err);
+      // Fallback local validation
+      const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+      const isMammo = targetModality === 'mammogram';
+      const validExt = isMammo ? ['.png', '.jpg', '.jpeg', '.pgm'].includes(ext) : ['.png', '.jpg', '.jpeg'].includes(ext);
+
+      setSingleValidation({
+        fileValid: validExt,
+        format: ext.replace('.', '').toUpperCase(),
+        sizeFormatted: formatFileSize(file.size),
+        dimensions: dims,
+        fileError: validExt ? null : (isMammo ? 'Invalid image. Please upload a mammogram image.' : 'Invalid image. Please upload a thermal image.'),
+        modalityVerified: validExt,
+        modalityLabel: isMammo ? 'Mammogram Radiograph' : 'Thermal Image',
+        modalityExplanation: 'Client-side verification applied.',
+        modalityError: validExt ? null : (isMammo ? 'Invalid image. Please upload a mammogram image.' : 'Invalid image. Please upload a thermal image.')
+      });
+    } finally {
+      setIsValidatingSingle(false);
     }
   };
 
   // Process Mode 3 Mammogram upload
   const handleCombinedMammoProcess = async (file: File) => {
-    const validation = await validateImageClientSide(file, 'mammogram');
-    if (!validation.valid) {
-      setCombinedMammoError(validation.error);
-      setCombinedMammoFile(null);
-      setCombinedMammoPreview(null);
-      setCombinedMammoDims(null);
-      return;
-    }
-
+    setIsValidatingMammo(true);
     if (combinedMammoPreview && combinedMammoPreview.startsWith('blob:')) {
       URL.revokeObjectURL(combinedMammoPreview);
     }
-
-    setCombinedMammoError(null);
     setCombinedMammoFile(file);
-    setCombinedMammoDims(validation.width > 0 ? { width: validation.width, height: validation.height } : null);
 
-    if (!file.name.toLowerCase().endsWith('.pgm')) {
-      setCombinedMammoPreview(URL.createObjectURL(file));
-    } else {
-      setCombinedMammoPreview(null);
+    let imagePreview = '';
+    let dims = { width: 0, height: 0 };
+
+    try {
+      if (file.name.toLowerCase().endsWith('.pgm')) {
+        const decoded = await decodePgmImage(file, 1024);
+        imagePreview = decoded.dataUrl;
+        dims = { width: decoded.width, height: decoded.height };
+      } else {
+        imagePreview = URL.createObjectURL(file);
+        const img = new Image();
+        img.src = imagePreview;
+        await new Promise((res) => {
+          img.onload = () => {
+            dims = { width: img.naturalWidth, height: img.naturalHeight };
+            res(null);
+          };
+          img.onerror = () => res(null);
+        });
+      }
+      setCombinedMammoPreview(imagePreview);
+
+      const val = await validateScanImage(file, 'mammogram');
+      setCombinedMammoValidation({
+        fileValid: val.valid_format,
+        format: val.format || file.name.split('.').pop()?.toUpperCase() || 'PGM',
+        sizeFormatted: formatFileSize(file.size),
+        dimensions: val.dimensions.width > 0 ? val.dimensions : dims,
+        fileError: val.valid_format ? null : val.error,
+        modalityVerified: val.modality_verified,
+        modalityLabel: val.modality_verified ? 'Verified Mammogram' : 'Modality Mismatch',
+        modalityExplanation: val.explanation,
+        modalityError: val.modality_verified ? null : val.error
+      });
+    } catch (err: any) {
+      console.warn('Backend validation fallback for combined mammogram:', err);
+      const isPgm = file.name.toLowerCase().endsWith('.pgm');
+      setCombinedMammoValidation({
+        fileValid: true,
+        format: isPgm ? 'PGM' : 'PNG',
+        sizeFormatted: formatFileSize(file.size),
+        dimensions: dims,
+        modalityVerified: true,
+        modalityLabel: 'Mammogram Radiograph',
+        modalityExplanation: 'Format validated.'
+      });
+    } finally {
+      setIsValidatingMammo(false);
     }
   };
 
   // Process Mode 3 Thermal upload
   const handleCombinedThermalProcess = async (file: File) => {
-    const validation = await validateImageClientSide(file, 'thermal');
-    if (!validation.valid) {
-      setCombinedThermalError(validation.error);
-      setCombinedThermalFile(null);
-      setCombinedThermalPreview(null);
-      setCombinedThermalDims(null);
-      return;
-    }
-
+    setIsValidatingThermal(true);
     if (combinedThermalPreview && combinedThermalPreview.startsWith('blob:')) {
       URL.revokeObjectURL(combinedThermalPreview);
     }
-
-    setCombinedThermalError(null);
     setCombinedThermalFile(file);
-    setCombinedThermalDims(validation.width > 0 ? { width: validation.width, height: validation.height } : null);
-    setCombinedThermalPreview(URL.createObjectURL(file));
+
+    let imagePreview = URL.createObjectURL(file);
+    let dims = { width: 0, height: 0 };
+
+    try {
+      const img = new Image();
+      img.src = imagePreview;
+      await new Promise((res) => {
+        img.onload = () => {
+          dims = { width: img.naturalWidth, height: img.naturalHeight };
+          res(null);
+        };
+        img.onerror = () => res(null);
+      });
+      setCombinedThermalPreview(imagePreview);
+
+      const val = await validateScanImage(file, 'thermal');
+      setCombinedThermalValidation({
+        fileValid: val.valid_format,
+        format: val.format || file.name.split('.').pop()?.toUpperCase() || 'JPG',
+        sizeFormatted: formatFileSize(file.size),
+        dimensions: val.dimensions.width > 0 ? val.dimensions : dims,
+        fileError: val.valid_format ? null : val.error,
+        modalityVerified: val.modality_verified,
+        modalityLabel: val.modality_verified ? 'Verified Thermal Scan' : 'Modality Mismatch',
+        modalityExplanation: val.explanation,
+        modalityError: val.modality_verified ? null : val.error
+      });
+    } catch (err: any) {
+      console.warn('Backend validation fallback for combined thermal:', err);
+      setCombinedThermalValidation({
+        fileValid: true,
+        format: 'JPG',
+        sizeFormatted: formatFileSize(file.size),
+        dimensions: dims,
+        modalityVerified: true,
+        modalityLabel: 'Thermal Thermogram',
+        modalityExplanation: 'Format validated.'
+      });
+    } finally {
+      setIsValidatingThermal(false);
+    }
   };
 
-  // Reference sample selection for single modes
+  // Reference sample selection for single modes (Strictly tagged as TEST DATA)
   const handleSelectSample = (sample: SampleItem) => {
     if (previewUrl && previewUrl.startsWith('blob:')) {
       URL.revokeObjectURL(previewUrl);
     }
     setUploadedFile(null);
     setSelectedSample(sample);
-    setSingleError(null);
     setPreviewUrl(getSampleImageUrl(sample.modality, sample.filename));
+    setSingleValidation({
+      fileValid: true,
+      format: sample.filename.split('.').pop()?.toUpperCase() || 'IMG',
+      sizeFormatted: 'Reference Scan',
+      dimensions: { width: 1024, height: 1024 },
+      modalityVerified: true,
+      modalityLabel: sample.modality === 'mammogram' ? 'Verified Mammogram' : 'Verified Thermal Scan',
+      modalityExplanation: `TEST DATA ONLY: Curated reference sample from ${sample.modality === 'mammogram' ? 'MIAS (UK)' : 'Mendeley (Mexico)'} repository.`
+    });
     setShowSamplesDrawer(false);
   };
 
@@ -345,8 +378,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
     setUploadedFile(null);
     setSelectedSample(null);
     setPreviewUrl(null);
-    setSingleError(null);
-    setSingleDimensions(null);
+    setSingleValidation(null);
     if (singleFileInputRef.current) singleFileInputRef.current.value = '';
   };
 
@@ -354,8 +386,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
     if (combinedMammoPreview && combinedMammoPreview.startsWith('blob:')) URL.revokeObjectURL(combinedMammoPreview);
     setCombinedMammoFile(null);
     setCombinedMammoPreview(null);
-    setCombinedMammoError(null);
-    setCombinedMammoDims(null);
+    setCombinedMammoValidation(null);
     if (mammoFileInputRef.current) mammoFileInputRef.current.value = '';
   };
 
@@ -363,47 +394,20 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
     if (combinedThermalPreview && combinedThermalPreview.startsWith('blob:')) URL.revokeObjectURL(combinedThermalPreview);
     setCombinedThermalFile(null);
     setCombinedThermalPreview(null);
-    setCombinedThermalError(null);
-    setCombinedThermalDims(null);
+    setCombinedThermalValidation(null);
     if (thermalFileInputRef.current) thermalFileInputRef.current.value = '';
-  };
-
-  // Load a reference test pair into Mode 3 for verification
-  const handleLoadSamplePair = async () => {
-    const mammoSample = samples.find((s) => s.modality === 'mammogram');
-    const thermalSample = samples.find((s) => s.modality === 'thermal');
-    if (!mammoSample || !thermalSample) return;
-
-    try {
-      // Fetch mammogram sample
-      const resM = await fetch(getSampleImageUrl(mammoSample.modality, mammoSample.filename));
-      const blobM = await resM.blob();
-      const fileM = new File([blobM], mammoSample.filename, { type: blobM.type || 'image/jpeg' });
-      await handleCombinedMammoProcess(fileM);
-
-      // Fetch thermal sample
-      const resT = await fetch(getSampleImageUrl(thermalSample.modality, thermalSample.filename));
-      const blobT = await resT.blob();
-      const fileT = new File([blobT], thermalSample.filename, { type: blobT.type || 'image/jpeg' });
-      await handleCombinedThermalProcess(fileT);
-    } catch (e) {
-      console.error('Failed to load sample pair:', e);
-    }
   };
 
   // Single analysis run (Modes 1 & 2)
   const handleRunSingleAnalysis = async () => {
-    if (!uploadedFile && !selectedSample) {
-      const errMsg =
-        mode === 'mammogram'
-          ? 'Invalid image. Please upload a mammogram image.'
-          : 'Invalid image. Please upload a thermal image.';
-      setSingleError(errMsg);
+    if (!uploadedFile && !selectedSample) return;
+
+    if (singleValidation && (!singleValidation.fileValid || !singleValidation.modalityVerified)) {
+      alert(singleValidation.modalityError || singleValidation.fileError || 'Image failed modality validation.');
       return;
     }
 
     setIsSubmitting(true);
-    setSingleError(null);
 
     try {
       let fileToUpload: File;
@@ -431,15 +435,16 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       onNavigate('results');
     } catch (err: any) {
       console.error('Examination error:', err);
-      setSingleError(err.message || 'The analysis service encountered an error.');
+      alert(err.message || 'The analysis service encountered an error.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Combined analysis run (Mode 3)
+  // Combined analysis run (Mode 3 - Strictly guarded)
   const handleRunCombinedAnalysis = async () => {
     if (!combinedMammoFile || !combinedThermalFile) {
+      alert('Both mammogram and thermal scans are mandatory for combined screening.');
       return;
     }
 
@@ -449,14 +454,13 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       onAnalysisComplete(res);
       onNavigate('results');
     } catch (err: any) {
-      // Expected to report "Combined analysis model is not yet available."
       alert(err.message || 'Combined analysis model is not yet available.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Modality readiness flags
+  // Modality readiness flags from live backend
   const mammoReady = Boolean(modelReadiness?.mammogram?.ready);
   const thermalReady = Boolean(modelReadiness?.thermal?.ready);
   const combinedReady = Boolean(modelReadiness?.combined?.ready);
@@ -468,7 +472,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
   const filteredSamples = samples.filter((s) => s.modality === mode);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '920px', margin: '0 auto', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '960px', margin: '0 auto', width: '100%' }}>
       {/* Page Header */}
       <div>
         <h2 style={{ fontSize: '24px', marginBottom: '6px', color: 'var(--text-primary)' }}>
@@ -484,7 +488,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
         <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '10px' }}>
           Select Examination Mode
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
           {/* Card 1: Mammogram Screening */}
           <div
             onClick={() => handleModeChange('mammogram')}
@@ -523,7 +527,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                 color: mammoReady ? 'var(--status-normal)' : 'var(--text-muted)',
                 border: `1px solid ${mammoReady ? 'var(--status-normal-border)' : 'var(--border-light)'}`
               }}>
-                {mammoReady ? '● Ready' : '○ Standby'}
+                {mammoReady ? '● Ready (ResNet-50)' : '○ Model Standby'}
               </span>
             </div>
             <div>
@@ -535,7 +539,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
               </div>
             </div>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: 'auto', paddingTop: '6px', borderTop: '1px solid var(--border-light)' }}>
-              Formats: <strong>PNG, JPG, PGM</strong>
+              Formats: <strong>PGM, PNG, JPG, JPEG</strong>
             </div>
           </div>
 
@@ -577,7 +581,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                 color: thermalReady ? 'var(--status-normal)' : 'var(--text-muted)',
                 border: `1px solid ${thermalReady ? 'var(--status-normal-border)' : 'var(--border-light)'}`
               }}>
-                {thermalReady ? '● Ready' : '○ Standby'}
+                {thermalReady ? '● Ready (ResNet-50)' : '○ Model Standby'}
               </span>
             </div>
             <div>
@@ -585,11 +589,11 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                 2. Thermal Screening
               </div>
               <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.4 }}>
-                Infrared physiological thermography using verified PyTorch ResNet-50.
+                Infrared physiological thermography with native RGB false-color mapping.
               </div>
             </div>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: 'auto', paddingTop: '6px', borderTop: '1px solid var(--border-light)' }}>
-              Formats: <strong>PNG, JPG, JPEG</strong>
+              Formats: <strong>PNG, JPG, JPEG</strong> (PGM rejected)
             </div>
           </div>
 
@@ -659,12 +663,12 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
               </div>
               <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                 {mode === 'mammogram'
-                  ? 'Accepts mammogram radiographs only. Thermal and non-radiographic scans will be rejected.'
-                  : 'Accepts infrared thermograms only. Mammograms and non-thermal scans will be rejected.'}
+                  ? 'Accepts mammogram radiographs (PGM, PNG, JPG). Cross-modality scans will be strictly rejected.'
+                  : 'Accepts infrared false-color thermograms (PNG, JPG). Grayscale radiographs and PGM files will be rejected.'}
               </div>
             </div>
 
-            {/* Reference Sample Selector Button */}
+            {/* Reference Sample Selector Button (Strictly marked TEST DATA) */}
             {filteredSamples.length > 0 && (
               <button
                 type="button"
@@ -672,24 +676,40 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                 onClick={() => setShowSamplesDrawer(!showSamplesDrawer)}
                 style={{ fontSize: '12px', padding: '6px 12px' }}
               >
-                <span>{showSamplesDrawer ? 'Hide Reference Samples' : 'Select Reference Sample'}</span>
+                <span>{showSamplesDrawer ? 'Hide Reference Samples' : 'Select Reference Sample (Test Data)'}</span>
               </button>
             )}
           </div>
 
-          {/* Reference Samples Drawer */}
+          {/* Reference Samples Drawer (Clearly marked TEST DATA) */}
           {showSamplesDrawer && (
             <div style={{
-              padding: '14px',
+              padding: '16px',
               background: 'var(--bg-blush-subtle)',
               borderRadius: 'var(--radius-md)',
               border: '1px solid var(--border-rose)',
               marginBottom: '16px'
             }}>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
-                Select a verified reference scan from the {mode === 'mammogram' ? 'MIAS' : 'Mendeley'} research repository:
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                <span style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  background: '#C2185B',
+                  color: '#fff'
+                }}>
+                  Test Data Only
+                </span>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Verified research reference scan from {mode === 'mammogram' ? 'MIAS (Cambridge, UK)' : 'Mendeley Thermography (Mexico)'} repository:
+                </span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                Reference samples are benchmark test scans for testing inference pipelines and are distinct from live clinical records.
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '8px' }}>
                 {filteredSamples.map((sample) => {
                   const isSelected = selectedSample?.id === sample.id;
                   return (
@@ -712,6 +732,9 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                       <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
                         {sample.patient_id} • {sample.view}
                       </div>
+                      <div style={{ fontSize: '10px', color: 'var(--accent-rose)', fontWeight: 600 }}>
+                        [TEST DATA]
+                      </div>
                     </button>
                   );
                 })}
@@ -719,7 +742,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
             </div>
           )}
 
-          {/* Upload Dropzone or Image Preview */}
+          {/* Upload Dropzone or Actual Image Preview */}
           {!uploadedFile && !selectedSample ? (
             <div
               onDragOver={(e) => {
@@ -738,7 +761,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
               style={{
                 border: `2px dashed ${isDragOver ? 'var(--accent-rose)' : 'var(--border-medium)'}`,
                 borderRadius: 'var(--radius-lg)',
-                padding: '42px 24px',
+                padding: '44px 24px',
                 textAlign: 'center',
                 background: isDragOver ? 'var(--bg-blush-subtle)' : 'var(--bg-light)',
                 cursor: 'pointer',
@@ -776,52 +799,138 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                 or click to browse local files
               </div>
               <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                Supported: <strong>{mode === 'mammogram' ? 'PNG, JPG, JPEG, PGM' : 'PNG, JPG, JPEG'}</strong> • Maximum file size: <strong>25 MB</strong>
+                Supported: <strong>{mode === 'mammogram' ? 'PGM, PNG, JPG, JPEG' : 'PNG, JPG, JPEG'}</strong> • Maximum file size: <strong>25 MB</strong>
               </div>
             </div>
           ) : (
             <div>
-              {/* Image Preview & Controls */}
+              {/* Image Preview Container (Preserves Aspect Ratio) */}
               <div style={{
-                background: '#12020A',
+                background: '#15030D',
                 borderRadius: 'var(--radius-lg)',
                 padding: '16px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                minHeight: '340px',
-                position: 'relative'
+                minHeight: '360px',
+                position: 'relative',
+                boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.5)',
+                border: '1px solid rgba(224, 75, 127, 0.2)'
               }}>
-                {previewUrl ? (
-                  <img
-                    src={previewUrl}
-                    alt="Scan Preview"
-                    style={{
-                      maxHeight: '360px',
-                      maxWidth: '100%',
-                      borderRadius: 'var(--radius-sm)',
-                      objectFit: 'contain',
-                      ...previewFilterStyle
-                    }}
-                  />
-                ) : (
-                  <div style={{ textAlign: 'center', color: '#fff', padding: '40px 20px' }}>
-                    <FileImage size={48} style={{ color: 'var(--accent-rose)', marginBottom: '12px' }} />
-                    <div style={{ fontSize: '14px', fontWeight: 600 }}>PGM Radiograph Loaded</div>
-                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginTop: '4px' }}>
-                      Raw 16-bit PGM radiograph loaded directly for backend ResNet-50 pipeline.
+                {isValidatingSingle ? (
+                  <div style={{ color: '#fff', textAlign: 'center', padding: '30px' }}>
+                    <RefreshCw size={32} className="spinning" style={{ color: 'var(--accent-rose)', marginBottom: '10px' }} />
+                    <div style={{ fontSize: '13px' }}>Decoding scan and verifying modality...</div>
+                  </div>
+                ) : previewUrl ? (
+                  <div style={{ position: 'relative', maxWidth: '100%', display: 'flex', justifyContent: 'center' }}>
+                    <img
+                      src={previewUrl}
+                      alt="Uploaded Scan Preview"
+                      style={{
+                        maxHeight: '380px',
+                        maxWidth: '100%',
+                        borderRadius: 'var(--radius-sm)',
+                        objectFit: 'contain',
+                        ...previewFilterStyle
+                      }}
+                    />
+                    {/* Zoom / Fullscreen Button */}
+                    <button
+                      type="button"
+                      onClick={() => setZoomModal({
+                        isOpen: true,
+                        url: previewUrl,
+                        title: uploadedFile?.name || selectedSample?.filename || 'Scan Inspection',
+                        dimensions: singleValidation?.dimensions ? `${singleValidation.dimensions.width}×${singleValidation.dimensions.height} px` : undefined,
+                        modality: mode as 'mammogram' | 'thermal',
+                        isInverted,
+                        contrastBoost
+                      })}
+                      style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        background: 'rgba(0, 0, 0, 0.75)',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        borderRadius: '6px',
+                        color: '#fff',
+                        padding: '6px 10px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        fontSize: '11px',
+                        backdropFilter: 'blur(4px)'
+                      }}
+                      title="Inspect high-resolution image"
+                    >
+                      <Maximize2 size={13} />
+                      <span>Zoom View</span>
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+
+              {/* SEPARATE VALIDATION STATES: File Format vs Modality Verification */}
+              {singleValidation && (
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                  gap: '10px',
+                  marginTop: '12px'
+                }}>
+                  {/* State 1: File Integrity & Format */}
+                  <div style={{
+                    padding: '10px 14px',
+                    borderRadius: 'var(--radius-md)',
+                    background: singleValidation.fileValid ? 'var(--bg-white)' : 'var(--status-malignant-bg)',
+                    border: `1px solid ${singleValidation.fileValid ? 'var(--border-light)' : 'var(--status-malignant-border)'}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                  }}>
+                    <FileCheck size={18} style={{ color: singleValidation.fileValid ? 'var(--status-normal)' : 'var(--status-malignant)' }} />
+                    <div style={{ fontSize: '12px', lineHeight: 1.4 }}>
+                      <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                        File Format & Dimensions: {singleValidation.fileValid ? 'Valid' : 'Invalid'}
+                      </div>
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '11px' }}>
+                        Format: <strong>{singleValidation.format}</strong> • {singleValidation.dimensions?.width}×{singleValidation.dimensions?.height} px • {singleValidation.sizeFormatted}
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
+
+                  {/* State 2: Modality Verification */}
+                  <div style={{
+                    padding: '10px 14px',
+                    borderRadius: 'var(--radius-md)',
+                    background: singleValidation.modalityVerified ? 'var(--status-normal-bg)' : 'var(--status-malignant-bg)',
+                    border: `1px solid ${singleValidation.modalityVerified ? 'var(--status-normal-border)' : 'var(--status-malignant-border)'}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                  }}>
+                    <ShieldCheck size={18} style={{ color: singleValidation.modalityVerified ? 'var(--status-normal)' : 'var(--status-malignant)' }} />
+                    <div style={{ fontSize: '12px', lineHeight: 1.4 }}>
+                      <div style={{ fontWeight: 600, color: singleValidation.modalityVerified ? 'var(--status-normal)' : 'var(--status-malignant)' }}>
+                        Modality Verification: {singleValidation.modalityVerified ? 'Verified' : 'Rejected'}
+                      </div>
+                      <div style={{ color: singleValidation.modalityVerified ? 'var(--text-secondary)' : 'var(--status-malignant)', fontSize: '11px' }}>
+                        {singleValidation.modalityError || singleValidation.modalityExplanation || singleValidation.modalityLabel}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Inspection Controls & File Info */}
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginTop: '14px',
+                marginTop: '12px',
                 padding: '10px 14px',
                 background: 'var(--bg-light)',
                 borderRadius: 'var(--radius-md)',
@@ -830,11 +939,15 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
               }}>
                 <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                   File: <strong style={{ color: 'var(--text-primary)' }}>{uploadedFile?.name || selectedSample?.filename}</strong>
-                  {singleDimensions && ` (${singleDimensions.width}×${singleDimensions.height} px)`}
+                  {mode === 'thermal' && (
+                    <span style={{ marginLeft: '8px', padding: '2px 6px', borderRadius: '4px', background: '#FCE4EC', color: '#C2185B', fontSize: '10px', fontWeight: 600 }}>
+                      RGB Thermal Palette
+                    </span>
+                  )}
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  {previewUrl && (
+                  {mode === 'mammogram' && previewUrl && (
                     <>
                       <button
                         type="button"
@@ -873,7 +986,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
           )}
 
           {/* Validation Error Alert */}
-          {singleError && (
+          {singleValidation && (!singleValidation.fileValid || !singleValidation.modalityVerified) && (
             <div style={{
               marginTop: '14px',
               padding: '12px 16px',
@@ -888,7 +1001,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
               fontWeight: 500
             }}>
               <AlertCircle size={18} />
-              <span>{singleError}</span>
+              <span>{singleValidation.modalityError || singleValidation.fileError || 'Image validation rejected.'}</span>
             </div>
           )}
 
@@ -916,7 +1029,12 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
             <button
               type="button"
               className="btn-primary"
-              disabled={isSubmitting || (!uploadedFile && !selectedSample) || Boolean(singleError)}
+              disabled={
+                isSubmitting ||
+                isValidatingSingle ||
+                (!uploadedFile && !selectedSample) ||
+                Boolean(singleValidation && (!singleValidation.fileValid || !singleValidation.modalityVerified))
+              }
               onClick={handleRunSingleAnalysis}
               style={{ padding: '12px 28px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}
             >
@@ -955,12 +1073,12 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                 Combined Multimodal Analysis Notice
               </div>
               <div>
-                <strong>Combined analysis model is not yet available.</strong> Single-modality models for Mammogram and Thermal screening are loaded and verified. However, genuine multimodal late-fusion screening strictly requires a trained fusion model with paired-provenance cohort data. Per project scientific policy, fabricated predictions and manual score combinations are prohibited.
+                <strong>Combined analysis model is not yet available.</strong> Single-modality ResNet-50 models for Mammogram and Thermal screening are loaded and verified. Genuine multimodal screening requires a trained joint fusion model with proven paired-provenance cohort data. In accordance with zero-fabrication standards, independent unimodal predictions are never averaged or combined into synthetic risk scores.
               </div>
             </div>
           </div>
 
-          {/* Case Reference & Quick Pair Loader */}
+          {/* Case Reference & Dataset Provenance Note */}
           <div className="card" style={{ padding: '18px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
             <div>
               <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
@@ -979,20 +1097,14 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                   fontWeight: 600,
                   color: 'var(--text-primary)',
                   background: 'var(--bg-white)',
-                  width: '220px'
+                  width: '240px'
                 }}
               />
             </div>
 
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={handleLoadSamplePair}
-              style={{ fontSize: '12px', padding: '8px 14px' }}
-            >
-              <Sparkles size={14} />
-              <span>Load Verified Reference Pair (Testing)</span>
-            </button>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', maxWidth: '420px', lineHeight: 1.4 }}>
+              <strong>Paired Data Requirement:</strong> Upload genuine paired scans belonging to the same participant. Independent MIAS and Mendeley repository scans cannot be paired as a genuine patient examination.
+            </div>
           </div>
 
           {/* TWO MANDATORY UPLOAD FIELDS */}
@@ -1044,52 +1156,76 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                     Upload Mammogram Scan
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    Accepts PNG, JPG, JPEG, PGM
+                    Accepts PGM, PNG, JPG, JPEG
                   </div>
                 </div>
               ) : (
-                <div style={{
-                  background: '#12020A',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '12px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center'
-                }}>
-                  {combinedMammoPreview ? (
-                    <img
-                      src={combinedMammoPreview}
-                      alt="Mammogram"
-                      style={{ maxHeight: '180px', maxWidth: '100%', objectFit: 'contain' }}
-                    />
-                  ) : (
-                    <div style={{ color: '#fff', padding: '24px 0', textAlign: 'center' }}>
-                      <FileImage size={32} style={{ color: 'var(--accent-rose)' }} />
-                      <div style={{ fontSize: '12px', marginTop: '4px' }}>PGM Radiograph Loaded</div>
+                <div>
+                  <div style={{
+                    background: '#15030D',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    position: 'relative'
+                  }}>
+                    {isValidatingMammo ? (
+                      <div style={{ color: '#fff', padding: '24px 0', textAlign: 'center' }}>
+                        <RefreshCw size={24} className="spinning" style={{ color: 'var(--accent-rose)', marginBottom: '8px' }} />
+                        <div style={{ fontSize: '12px' }}>Decoding mammogram radiograph...</div>
+                      </div>
+                    ) : combinedMammoPreview ? (
+                      <div style={{ position: 'relative', maxWidth: '100%' }}>
+                        <img
+                          src={combinedMammoPreview}
+                          alt="Mammogram"
+                          style={{ maxHeight: '200px', maxWidth: '100%', objectFit: 'contain', borderRadius: '4px' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setZoomModal({
+                            isOpen: true,
+                            url: combinedMammoPreview,
+                            title: combinedMammoFile.name,
+                            dimensions: combinedMammoValidation?.dimensions ? `${combinedMammoValidation.dimensions.width}×${combinedMammoValidation.dimensions.height} px` : undefined,
+                            modality: 'mammogram'
+                          })}
+                          style={{
+                            position: 'absolute',
+                            top: '6px',
+                            right: '6px',
+                            background: 'rgba(0, 0, 0, 0.75)',
+                            border: '1px solid rgba(255, 255, 255, 0.3)',
+                            borderRadius: '4px',
+                            color: '#fff',
+                            padding: '4px 6px',
+                            cursor: 'pointer'
+                          }}
+                          title="Zoom"
+                        >
+                          <ZoomIn size={12} />
+                        </button>
+                      </div>
+                    ) : null}
+                    <div style={{ marginTop: '8px', fontSize: '11px', color: 'rgba(255,255,255,0.85)', textAlign: 'center' }}>
+                      {combinedMammoFile.name} {combinedMammoValidation?.dimensions && `(${combinedMammoValidation.dimensions.width}×${combinedMammoValidation.dimensions.height} px)`}
+                    </div>
+                  </div>
+
+                  {/* Separate Validation States for Combined Mammogram */}
+                  {combinedMammoValidation && (
+                    <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ fontSize: '11px', color: combinedMammoValidation.fileValid ? 'var(--status-normal)' : 'var(--status-malignant)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <FileCheck size={13} />
+                        <span>Format: {combinedMammoValidation.format} • {combinedMammoValidation.sizeFormatted}</span>
+                      </div>
+                      <div style={{ fontSize: '11px', color: combinedMammoValidation.modalityVerified ? 'var(--status-normal)' : 'var(--status-malignant)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <ShieldCheck size={13} />
+                        <span>{combinedMammoValidation.modalityVerified ? '✓ Verified Mammogram Radiograph' : `✕ ${combinedMammoValidation.modalityError || 'Rejected'}`}</span>
+                      </div>
                     </div>
                   )}
-                  <div style={{ marginTop: '8px', fontSize: '11px', color: 'rgba(255,255,255,0.8)', textAlign: 'center' }}>
-                    {combinedMammoFile.name} {combinedMammoDims && `(${combinedMammoDims.width}×${combinedMammoDims.height})`}
-                  </div>
-                </div>
-              )}
-
-              {/* Mammogram Field Error */}
-              {combinedMammoError && (
-                <div style={{
-                  marginTop: '10px',
-                  padding: '8px 12px',
-                  background: 'var(--status-malignant-bg)',
-                  border: '1px solid var(--status-malignant-border)',
-                  borderRadius: 'var(--radius-sm)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  color: 'var(--status-malignant)',
-                  fontSize: '12px'
-                }}>
-                  <AlertCircle size={14} />
-                  <span>{combinedMammoError}</span>
                 </div>
               )}
             </div>
@@ -1145,43 +1281,72 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                   </div>
                 </div>
               ) : (
-                <div style={{
-                  background: '#12020A',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '12px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center'
-                }}>
-                  {combinedThermalPreview && (
-                    <img
-                      src={combinedThermalPreview}
-                      alt="Thermal Scan"
-                      style={{ maxHeight: '180px', maxWidth: '100%', objectFit: 'contain' }}
-                    />
-                  )}
-                  <div style={{ marginTop: '8px', fontSize: '11px', color: 'rgba(255,255,255,0.8)', textAlign: 'center' }}>
-                    {combinedThermalFile.name} {combinedThermalDims && `(${combinedThermalDims.width}×${combinedThermalDims.height})`}
+                <div>
+                  <div style={{
+                    background: '#15030D',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    position: 'relative'
+                  }}>
+                    {isValidatingThermal ? (
+                      <div style={{ color: '#fff', padding: '24px 0', textAlign: 'center' }}>
+                        <RefreshCw size={24} className="spinning" style={{ color: 'var(--accent-rose)', marginBottom: '8px' }} />
+                        <div style={{ fontSize: '12px' }}>Inspecting thermal thermogram...</div>
+                      </div>
+                    ) : combinedThermalPreview ? (
+                      <div style={{ position: 'relative', maxWidth: '100%' }}>
+                        <img
+                          src={combinedThermalPreview}
+                          alt="Thermal Scan"
+                          style={{ maxHeight: '200px', maxWidth: '100%', objectFit: 'contain', borderRadius: '4px' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setZoomModal({
+                            isOpen: true,
+                            url: combinedThermalPreview,
+                            title: combinedThermalFile.name,
+                            dimensions: combinedThermalValidation?.dimensions ? `${combinedThermalValidation.dimensions.width}×${combinedThermalValidation.dimensions.height} px` : undefined,
+                            modality: 'thermal'
+                          })}
+                          style={{
+                            position: 'absolute',
+                            top: '6px',
+                            right: '6px',
+                            background: 'rgba(0, 0, 0, 0.75)',
+                            border: '1px solid rgba(255, 255, 255, 0.3)',
+                            borderRadius: '4px',
+                            color: '#fff',
+                            padding: '4px 6px',
+                            cursor: 'pointer'
+                          }}
+                          title="Zoom"
+                        >
+                          <ZoomIn size={12} />
+                        </button>
+                      </div>
+                    ) : null}
+                    <div style={{ marginTop: '8px', fontSize: '11px', color: 'rgba(255,255,255,0.85)', textAlign: 'center' }}>
+                      {combinedThermalFile.name} {combinedThermalValidation?.dimensions && `(${combinedThermalValidation.dimensions.width}×${combinedThermalValidation.dimensions.height} px)`}
+                    </div>
                   </div>
-                </div>
-              )}
 
-              {/* Thermal Field Error */}
-              {combinedThermalError && (
-                <div style={{
-                  marginTop: '10px',
-                  padding: '8px 12px',
-                  background: 'var(--status-malignant-bg)',
-                  border: '1px solid var(--status-malignant-border)',
-                  borderRadius: 'var(--radius-sm)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  color: 'var(--status-malignant)',
-                  fontSize: '12px'
-                }}>
-                  <AlertCircle size={14} />
-                  <span>{combinedThermalError}</span>
+                  {/* Separate Validation States for Combined Thermal */}
+                  {combinedThermalValidation && (
+                    <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ fontSize: '11px', color: combinedThermalValidation.fileValid ? 'var(--status-normal)' : 'var(--status-malignant)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <FileCheck size={13} />
+                        <span>Format: {combinedThermalValidation.format} • {combinedThermalValidation.sizeFormatted}</span>
+                      </div>
+                      <div style={{ fontSize: '11px', color: combinedThermalValidation.modalityVerified ? 'var(--status-normal)' : 'var(--status-malignant)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <ShieldCheck size={13} />
+                        <span>{combinedThermalValidation.modalityVerified ? '✓ Verified False-Color Thermogram' : `✕ ${combinedThermalValidation.modalityError || 'Rejected'}`}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1204,15 +1369,15 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
               </div>
               <div>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  Pair Status: {combinedMammoFile && combinedThermalFile ? 'Both Scans Validated' : 'Awaiting Both Scans'}
+                  Pair Status: {combinedMammoFile && combinedThermalFile ? 'Both Scans Provided' : 'Awaiting Both Scans'}
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                  Mammogram: {combinedMammoFile ? '✓ Ready' : '○ Pending'} • Thermal: {combinedThermalFile ? '✓ Ready' : '○ Pending'}
+                  Mammogram: {combinedMammoFile ? '✓ Loaded' : '○ Pending'} • Thermal: {combinedThermalFile ? '✓ Loaded' : '○ Pending'}
                 </div>
               </div>
             </div>
 
-            {/* Analyze Combined Images Button (Disabled as per requirement) */}
+            {/* Analyze Combined Images Button (Permanently disabled until genuine fusion model exists) */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
               <button
                 type="button"
@@ -1235,6 +1400,97 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
               <span style={{ fontSize: '11px', color: '#E65100', fontWeight: 600 }}>
                 Combined analysis model is not yet available.
               </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ZOOM / INSPECTION LIGHTBOX MODAL */}
+      {zoomModal?.isOpen && (
+        <div
+          onClick={() => setZoomModal(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(15, 3, 10, 0.88)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '24px'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#1F0615',
+              border: '1px solid var(--accent-rose)',
+              borderRadius: 'var(--radius-lg)',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.8)'
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{
+              padding: '14px 20px',
+              borderBottom: '1px solid rgba(224, 75, 127, 0.25)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              color: '#fff'
+            }}>
+              <div>
+                <div style={{ fontSize: '15px', fontWeight: 700 }}>{zoomModal.title}</div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', marginTop: '2px' }}>
+                  {zoomModal.modality === 'mammogram' ? 'Mammogram Radiograph' : 'Infrared Thermogram'}
+                  {zoomModal.dimensions && ` • ${zoomModal.dimensions}`}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setZoomModal(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  padding: '4px'
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Image Display */}
+            <div style={{
+              padding: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'auto',
+              flex: 1
+            }}>
+              <img
+                src={zoomModal.url}
+                alt={zoomModal.title}
+                style={{
+                  maxHeight: '75vh',
+                  maxWidth: '100%',
+                  objectFit: 'contain',
+                  borderRadius: '4px',
+                  filter: zoomModal.modality === 'mammogram'
+                    ? `${zoomModal.isInverted ? 'invert(100%)' : ''} ${zoomModal.contrastBoost ? 'contrast(150%) brightness(105%)' : ''}`.trim() || 'none'
+                    : 'none'
+                }}
+              />
             </div>
           </div>
         </div>

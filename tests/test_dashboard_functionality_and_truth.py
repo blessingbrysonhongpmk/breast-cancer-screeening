@@ -96,3 +96,4 @@ def test_dashboard_missing_model_weights(monkeypatch):
     assert data["gradcam_ready"] is False
     assert data["realtime_inference_ready"] is False
     assert data["all_ready"] is False
+
