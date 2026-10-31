@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
-  LayoutDashboard,
-  Eye,
-  Flame,
-  ClipboardList,
-  Layers,
-  Database,
-  Award,
-  Settings,
+  Home,
+  PlusCircle,
+  FileCheck2,
+  History,
+  Info,
   RefreshCw,
   Menu,
   X
@@ -15,34 +12,45 @@ import {
 
 import {
   SystemStatus,
-  DatasetStats,
   ModelStatus,
   AnalysisResponse,
   fetchSystemStatus,
-  fetchDatasetStats,
   fetchModelStatus
 } from './services/api';
 
-import { OverviewPage } from './features/overview/OverviewPage';
-import { MammogramPage } from './features/mammogram/MammogramPage';
-import { ThermalPage } from './features/thermal/ThermalPage';
+import { HomePage } from './features/home/HomePage';
+import { AnalysisPage } from './features/analysis/AnalysisPage';
 import { ResultsPage } from './features/results/ResultsPage';
-import { ExplainabilityPage } from './features/explainability/ExplainabilityPage';
-import { DatasetsPage } from './features/datasets/DatasetsPage';
-import { EvaluationPage } from './features/evaluation/EvaluationPage';
-import { SettingsPage } from './features/settings/SettingsPage';
+import { HistoryPage } from './features/history/HistoryPage';
+import { AboutPage } from './features/about/AboutPage';
 
 export function App() {
-  // Synchronize route with URL hash for browser back/forward and refresh persistence
-  const getInitialView = () => {
-    const hash = window.location.hash.replace('#', '').trim();
-    const validIds = ['overview', 'mammogram', 'thermal', 'results', 'explainability', 'datasets', 'evaluation', 'settings'];
-    return validIds.includes(hash) ? hash : 'overview';
+  const [activeModality, setActiveModality] = useState<'mammogram' | 'thermal'>('mammogram');
+
+  const normalizeView = (hash: string): string => {
+    const clean = hash.replace('#', '').trim().toLowerCase();
+    if (['home', 'analyze', 'results', 'history', 'about'].includes(clean)) {
+      return clean;
+    }
+    // Backward compatibility for existing links
+    if (clean === 'overview') return 'home';
+    if (clean === 'mammogram') {
+      setActiveModality('mammogram');
+      return 'analyze';
+    }
+    if (clean === 'thermal') {
+      setActiveModality('thermal');
+      return 'analyze';
+    }
+    if (clean === 'explainability') return 'results';
+    if (['datasets', 'evaluation', 'settings'].includes(clean)) return 'about';
+    return 'home';
   };
+
+  const getInitialView = () => normalizeView(window.location.hash);
 
   const [currentView, setCurrentView] = useState<string>(getInitialView);
   const [status, setStatus] = useState<SystemStatus | null>(null);
-  const [stats, setStats] = useState<DatasetStats | null>(null);
   const [modelStatus, setModelStatus] = useState<ModelStatus | null>(null);
   const [latestAnalysis, setLatestAnalysis] = useState<AnalysisResponse | null>(null);
 
@@ -51,11 +59,7 @@ export function App() {
 
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '').trim();
-      const validIds = ['overview', 'mammogram', 'thermal', 'results', 'explainability', 'datasets', 'evaluation', 'settings'];
-      if (validIds.includes(hash)) {
-        setCurrentView(hash);
-      }
+      setCurrentView(normalizeView(window.location.hash));
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
@@ -64,13 +68,11 @@ export function App() {
   const syncBackendData = async () => {
     setIsSyncing(true);
     try {
-      const [sys, dset, mdl] = await Promise.all([
+      const [sys, mdl] = await Promise.all([
         fetchSystemStatus().catch(() => null),
-        fetchDatasetStats().catch(() => null),
         fetchModelStatus().catch(() => null)
       ]);
       if (sys) setStatus(sys);
-      if (dset) setStats(dset);
       if (mdl) setModelStatus(mdl);
     } catch (e) {
       console.error('Failed to sync backend:', e);
@@ -84,22 +86,24 @@ export function App() {
   }, []);
 
   const navItems = [
-    { id: 'overview', label: 'Command Center', icon: LayoutDashboard },
-    { id: 'mammogram', label: 'Mammogram Viewport', icon: Eye },
-    { id: 'thermal', label: 'Thermal Viewport', icon: Flame },
-    { id: 'results', label: 'Analysis Records', icon: ClipboardList },
-    { id: 'explainability', label: 'Grad-CAM XAI', icon: Layers },
-    { id: 'datasets', label: 'Manifest Workspace', icon: Database },
-    { id: 'evaluation', label: 'Model Benchmark', icon: Award },
-    { id: 'settings', label: 'System & Citations', icon: Settings }
+    { id: 'home', label: 'Home', icon: Home },
+    { id: 'analyze', label: 'New Analysis', icon: PlusCircle },
+    { id: 'results', label: 'Results', icon: FileCheck2 },
+    { id: 'history', label: 'Analysis History', icon: History },
+    { id: 'about', label: 'About & Disclaimer', icon: Info }
   ];
 
-  const handleNavigate = (view: string) => {
+  const handleNavigate = (view: string, modality?: 'mammogram' | 'thermal') => {
+    if (modality) {
+      setActiveModality(modality);
+    }
     setCurrentView(view);
     window.location.hash = view;
     setMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const isBackendConnected = Boolean(status);
 
   return (
     <div className="layout-root">
@@ -113,46 +117,50 @@ export function App() {
       {/* Sidebar Navigation */}
       <aside className={`sidebar ${mobileMenuOpen ? 'open' : ''}`}>
         {/* Brand Wordmark */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+          <div
+            onClick={() => handleNavigate('home')}
+            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+          >
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              background: 'linear-gradient(135deg, var(--primary-rose), var(--dusty-rose))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#FFFFFF',
+              fontWeight: 700,
+              fontSize: '15px',
+              boxShadow: '0 2px 6px rgba(178, 59, 85, 0.28)'
+            }}>
+              M
+            </div>
+            <div>
               <div style={{
-                width: '28px',
-                height: '28px',
-                borderRadius: '8px',
-                background: 'linear-gradient(135deg, var(--primary-rose), var(--dusty-rose))',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#FFFFFF',
-                fontWeight: 700,
-                fontSize: '14px',
-                boxShadow: '0 2px 6px rgba(178, 59, 85, 0.3)'
-              }}>
-                M
-              </div>
-              <span style={{
                 fontFamily: "'Playfair Display', Georgia, serif",
                 fontSize: '18px',
                 fontWeight: 600,
                 color: 'var(--text-primary)',
-                letterSpacing: '-0.01em'
+                letterSpacing: '-0.01em',
+                lineHeight: 1.1
               }}>
                 MammoFusion
-              </span>
-            </div>
-            <div style={{
-              fontSize: '10px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              color: 'var(--text-muted)',
-              marginTop: '4px',
-              paddingLeft: '36px',
-              fontWeight: 600
-            }}>
-              RESEARCH WORKSPACE
+              </div>
+              <div style={{
+                fontSize: '10px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                color: 'var(--text-muted)',
+                fontWeight: 600,
+                marginTop: '2px'
+              }}>
+                Research Prototype
+              </div>
             </div>
           </div>
+
           <button
             className="mobile-close-btn"
             onClick={() => setMobileMenuOpen(false)}
@@ -163,7 +171,7 @@ export function App() {
         </div>
 
         {/* Navigation Menu */}
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
@@ -173,38 +181,35 @@ export function App() {
                 onClick={() => handleNavigate(item.id)}
                 className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
               >
-                <Icon size={16} color={isActive ? 'var(--primary-rose)' : 'var(--text-muted)'} />
+                <Icon size={18} color={isActive ? '#FFFFFF' : 'var(--text-muted)'} />
                 <span>{item.label}</span>
               </button>
             );
           })}
         </nav>
 
-        {/* Sidebar Telemetry Footer */}
+        {/* Sidebar Footer */}
         <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
           <div style={{
-            padding: '12px',
-            background: 'var(--bg-muted)',
+            padding: '14px',
+            background: 'var(--bg-blush-subtle)',
             borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-light)',
+            border: '1px solid var(--border-rose)',
             fontSize: '11px'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Repository Audit</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>System Status</span>
               <span style={{
                 width: '7px',
                 height: '7px',
                 borderRadius: '50%',
-                background: 'var(--status-normal)',
+                background: isBackendConnected ? 'var(--status-normal)' : 'var(--status-benign)',
+                boxShadow: isBackendConnected ? '0 0 6px rgba(21, 128, 61, 0.4)' : 'none',
                 display: 'inline-block'
               }} />
             </div>
-            <div style={{ color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <span>679 Verified Images</span>
-              <span>100% Readable • 0 Corrupt</span>
-              <span className="mono" style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                Drive E: {status?.disk.free_gb ?? '—'} GB free
-              </span>
+            <div style={{ color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+              {isBackendConnected ? 'Connected to AI Engine' : 'Reconnecting to Server...'}
             </div>
           </div>
         </div>
@@ -222,38 +227,35 @@ export function App() {
             >
               <Menu size={22} color="var(--text-primary)" />
             </button>
+
             <div>
-              <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted)' }}>
-                Multimodal Oncology AI
-              </div>
-              <h1 style={{ fontSize: '17px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              <h1 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
                 {navItems.find((n) => n.id === currentView)?.label}
               </h1>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* Live Backend Connection Indicator */}
+            {/* Connection Indicator */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '5px 10px',
+              padding: '4px 10px',
               borderRadius: 'var(--radius-sm)',
-              background: 'var(--status-normal-bg)',
-              border: '1px solid var(--status-normal-border)',
+              background: isBackendConnected ? 'var(--status-normal-bg)' : 'var(--status-benign-bg)',
+              border: `1px solid ${isBackendConnected ? 'var(--status-normal-border)' : 'var(--status-benign-border)'}`,
               fontSize: '11px',
-              color: 'var(--status-normal)',
+              color: isBackendConnected ? 'var(--status-normal)' : 'var(--status-benign)',
               fontWeight: 600
             }}>
               <span style={{
                 width: '6px',
                 height: '6px',
                 borderRadius: '50%',
-                background: 'var(--status-normal)',
-                boxShadow: '0 0 6px rgba(21, 128, 61, 0.6)'
+                background: isBackendConnected ? 'var(--status-normal)' : 'var(--status-benign)'
               }} />
-              <span>FastAPI Live :8000</span>
+              <span>{isBackendConnected ? 'Backend Connected' : 'Disconnected'}</span>
             </div>
 
             {/* Sync Button */}
@@ -261,35 +263,28 @@ export function App() {
               onClick={syncBackendData}
               disabled={isSyncing}
               className="btn-secondary"
-              style={{ padding: '6px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
-              title="Synchronize telemetry with backend"
+              style={{ padding: '5px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+              title="Refresh connection status"
             >
               <RefreshCw size={12} className={isSyncing ? 'spinning' : ''} />
-              <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
+              <span>{isSyncing ? 'Refreshing...' : 'Refresh'}</span>
             </button>
           </div>
         </header>
 
         {/* Viewport Content */}
         <main className="content-container">
-          {currentView === 'overview' && (
-            <OverviewPage
-              stats={stats}
-              status={status}
+          {currentView === 'home' && (
+            <HomePage
               modelStatus={modelStatus}
               onNavigate={handleNavigate}
             />
           )}
 
-          {currentView === 'mammogram' && (
-            <MammogramPage
-              onNavigate={handleNavigate}
-              onAnalysisComplete={(res) => setLatestAnalysis(res)}
-            />
-          )}
-
-          {currentView === 'thermal' && (
-            <ThermalPage
+          {currentView === 'analyze' && (
+            <AnalysisPage
+              initialModality={activeModality}
+              modelStatus={modelStatus}
               onNavigate={handleNavigate}
               onAnalysisComplete={(res) => setLatestAnalysis(res)}
             />
@@ -302,20 +297,15 @@ export function App() {
             />
           )}
 
-          {currentView === 'explainability' && (
-            <ExplainabilityPage modelStatus={modelStatus} />
+          {currentView === 'history' && (
+            <HistoryPage
+              onNavigate={handleNavigate}
+              onSelectResult={(res) => setLatestAnalysis(res)}
+            />
           )}
 
-          {currentView === 'datasets' && (
-            <DatasetsPage />
-          )}
-
-          {currentView === 'evaluation' && (
-            <EvaluationPage modelStatus={modelStatus} />
-          )}
-
-          {currentView === 'settings' && (
-            <SettingsPage status={status} />
+          {currentView === 'about' && (
+            <AboutPage />
           )}
         </main>
       </div>
