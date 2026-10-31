@@ -151,16 +151,29 @@ cd ..
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/api/health` | Service health status and version. |
-| `GET` | `/api/models/readiness` | Per-modality model readiness (`mammogram` and `thermal` loaded status). |
+| `GET` | `/api/models/readiness` | Per-modality model readiness (`mammogram`, `thermal`, `combined`, Grad-CAM, realtime). |
 | `GET` | `/api/status` | System milestones, disk headroom, and scientific policy. |
 | `GET` | `/api/datasets` | Verified dataset audit statistics across modalities. |
 | `GET` | `/api/samples` | Curated reference sample list for one-click testing. |
 | `GET` | `/api/sample-image/{modality}/{filename}` | Stream browser-compatible JPEG thumbnail. |
-| `POST` | `/api/analyze` | Upload image for validation, ResNet-50 inference, and Grad-CAM generation. |
+| `POST` | `/api/analyze/mammogram` | Mode 1: Grayscale mammogram upload & inference with cross-modality rejection. |
+| `POST` | `/api/analyze/thermal` | Mode 2: Thermal image upload & inference with cross-modality rejection. |
+| `POST` | `/api/analyze/combined` | Mode 3: Paired multimodal upload validation (returns 503 until fusion model trained). |
+| `POST` | `/api/analyze` | Backwards-compatible router for unimodal analysis. |
 | `GET` | `/api/gradcam-image/{filename}` | Retrieve generated Grad-CAM saliency map. |
 | `GET` | `/api/recent-analyses` | Retrieve current session's analysis records. |
 | `DELETE` | `/api/recent-analyses` | Clear session analysis history from disk and memory. |
 | `GET` | `/api/manifests/export/{modality}` | Download verified CSV manifest. |
+
+### Examination Modes
+1. **Mode 1: Mammogram Screening (`/api/analyze/mammogram`)**  
+   Accepts grayscale mammogram images (`.pgm`, `.png`, `.jpg`). Rejects thermal images with `"Invalid image. Please upload a mammogram image."`.
+2. **Mode 2: Thermal Screening (`/api/analyze/thermal`)**  
+   Accepts thermal false-color or temperature-mapped images (`.png`, `.jpg`). Rejects mammograms with `"Invalid image. Please upload a thermal image."`.
+3. **Mode 3: Combined Multimodal Screening (`/api/analyze/combined`)**  
+   Dual upload requiring both a valid mammogram and a valid thermal image. In compliance with strict research integrity, because unpaired datasets cannot produce scientifically valid fusion without joint patient provenance, the system informs the user that *"Combined analysis model is not yet available."* and disables synthesis of fabricated fusion scores.
+
+For manual testing workflows across multiple conditions, see [MANUAL_TESTING_GUIDE.md](file:///e:/my%20projects/breast%20cancer%20screening/MANUAL_TESTING_GUIDE.md).
 
 ### Analysis Request Contract (`POST /api/analyze`)
 - **Multipart Form Data:**
