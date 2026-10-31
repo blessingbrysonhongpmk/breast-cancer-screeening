@@ -155,8 +155,24 @@ export interface ImageValidationResult {
   modality_verified: boolean;
   detected_modality: string;
   expected_modality: string;
+  verification_level: 'format_validated' | 'image_type_checked' | 'provenance_verified' | 'invalid';
+  image_type_passed: boolean;
+  provenance_verified: boolean;
+  provenance_source?: string | null;
+  patient_id?: string | null;
   explanation: string;
   error?: string | null;
+}
+
+export interface PairValidationResult {
+  mammogram_validation: ImageValidationResult;
+  thermal_validation: ImageValidationResult;
+  pairing_status: 'not_verified' | 'verified' | 'mismatch' | 'invalid';
+  pairing_badge: string;
+  combined_status: string;
+  combined_explanation: string;
+  fusion_model_available: boolean;
+  can_analyze: boolean;
 }
 
 export interface EvaluationBenchmark {
@@ -347,6 +363,37 @@ export async function validateScanImage(
   });
   if (!res.ok) {
     let errorDetail = 'Validation failed';
+    try {
+      const errorJson = await res.json();
+      if (errorJson.detail) {
+        errorDetail = errorJson.detail;
+      }
+    } catch {
+      // Fallback
+    }
+    throw new Error(errorDetail);
+  }
+  return res.json();
+}
+
+export async function validateScanPair(
+  mammogramFile: File,
+  thermalFile: File,
+  caseId?: string
+): Promise<PairValidationResult> {
+  const formData = new FormData();
+  formData.append('mammogram_file', mammogramFile);
+  formData.append('thermal_file', thermalFile);
+  if (caseId) {
+    formData.append('case_id', caseId);
+  }
+
+  const res = await fetch(`${API_BASE}/api/validate-pair`, {
+    method: 'POST',
+    body: formData
+  });
+  if (!res.ok) {
+    let errorDetail = 'Pair validation failed';
     try {
       const errorJson = await res.json();
       if (errorJson.detail) {

@@ -41,14 +41,12 @@ py -3.10 -m pytest tests/test_api_reliability.py -v
 - **Metadata Display:** Filename, dimensions (e.g., `640×480 px`), and an **RGB Thermal Palette** badge are prominently displayed.
 - **Zoom / Inspection View:** Thermal images also feature the Zoom View lightbox for detailed inspection of thermal hotspots.
 
-### 3. Separate Validation States: Format vs Modality Verification
-- **Dual Validation Pipeline:**
-  1. **File Format & Dimensions:** Verifies readable bytes, supported extensions, dimensions $\ge 32\times 32$ px, and file size $\le 25$ MB.
-  2. **Modality Verification:** Enforces strict boundary checks (color divergence, saturation, luminance distribution, radiographic background borders) via `POST /api/validate-scan`.
-- **UI State Separation:**
-  - Valid Mammogram: Shows `✓ File Format & Dimensions: Valid (PGM • 4320×2048 px • 8.4 MB)` AND `✓ Modality Verification: Verified Mammogram`.
-  - Thermal Uploaded into Mammogram Mode: Shows `✓ File Format: Valid (JPEG • 640×480 px)` BUT `✕ Modality Verification: Rejected — Invalid image. Please upload a mammogram image.`
-  - PGM Uploaded into Thermal Mode: Shows `✕ File Format: Unsupported format '.pgm'` AND `✕ Modality Verification: Rejected — Invalid image. Please upload a thermal image.`
+### 3. Four Levels of Scientific Evidence & Validation States
+The platform rigorously distinguishes between four levels of validation evidence:
+1. **Level 1 — File Format Validated:** Verifies readable bytes, valid dimensions ($\ge 224\times 224$ px), file size $\le 25$ MB, and supported container format.
+2. **Level 2 — Image Type Checked:** Algorithmic appearance checks (grayscale histogram, air-tissue borders, or RGB color divergence) verify that the image matches modality criteria. If the image is a custom/unindexed user upload without manifest provenance, the UI displays strictly **`"Image type check passed"`** (never "Verified Mammogram Radiograph" or "Verified False-Color Thermogram").
+3. **Level 3 — Modality Provenance Verified:** Confirms the scan against trusted clinical study records (`mammogram_manifest.csv` or `thermal_manifest.csv`). The UI displays **`"Modality provenance verified ({dataset}: {patient_id})"`**.
+4. **Level 4 — Same-Patient Pairing Verified:** Evaluated via `POST /api/validate-pair`. Requires both scans to originate from the same verified participant and cohort.
 
 ### 4. Verified Reference Samples Marked as TEST DATA
 - **Prominent Tagging:** All curated reference scans from the MIAS and Mendeley repositories are explicitly tagged with `[TEST DATA]` chips.
@@ -57,9 +55,17 @@ py -3.10 -m pytest tests/test_api_reliability.py -v
 
 ### 5. Combined Multimodal Screening Safeguards
 - **Dual Mandatory Dropzones:** Requires both a validated mammogram radiograph and a validated infrared thermogram.
-- **Analyze Button Permanently Disabled:** Displays **`"Combined analysis model is not yet available."`** (`disabled={true}`).
-- **Zero Fabrication Policy:** Explanatory alert explains that genuine multimodal fusion requires a trained joint fusion model with paired patient provenance. The system strictly prohibits averaging or combining unimodal scores into synthetic risk metrics.
-- **Backend Guard:** Direct calls to `POST /api/analyze/combined` return **HTTP 503 Service Unavailable** with zero history corruption.
+- **Analyze Button Guarded:** Disabled whenever the genuine multimodal fusion model is unavailable or pairing is unverified.
+- **Dedicated Pairing Status:** Displays exact clinical status:
+  - `Pairing not verified`
+  - `Pairing verified from trusted dataset metadata`
+  - `Pairing mismatch`
+- **Exact Status Messages:**
+  - *"Both files accepted, pairing not verified."*
+  - *"Both files validated, pairing verified, fusion model unavailable."*
+  - *"Pairing mismatch — Scans belong to different participants or cohorts."*
+- **Multimodal Notice:** *"Combined analysis available only when a genuine trained fusion model is loaded and pairing requirements are satisfied."*
+- **Zero Fabrication Policy:** Prohibits averaging or synthesizing unimodal scores into fake risk metrics. Direct calls to `POST /api/analyze/combined` return **HTTP 503 Service Unavailable**.
 
 ---
 
@@ -147,20 +153,55 @@ py -3.10 -m pytest tests/test_api_reliability.py -v
 
 ---
 
-## 4. Testing the 8 Combined Upload & Pair Status Combinations
+## 4. Testing Image Validation and Patient-Pair Verification Separately
 
-Mode 3 (Combined Multimodal Screening) enforces independent states (`empty`, `uploaded`, `format_validated`, `modality_verified`, `invalid`, `error`) and calculates Pair Status strictly:
+### 4.1 Testing Image Validation Separately (Endpoints: `/api/validate-scan`)
+Image validation evaluates individual image integrity, formatting, heuristic properties, and manifest provenance.
 
-| Combination # | Scenario Tested | Mammogram State | Thermal State | Pair Status Displayed | Analyze Button |
+1. **Test Arbitrary Valid Mammogram (Image type check passed, unverified provenance):**
+   ```powershell
+   curl -F "file=@tests/fixtures/sample_mammo.pgm" -F "expected_modality=mammogram" http://127.0.0.1:8000/api/validate-scan
+   ```
+   - **Expected Verification Level:** `image_type_checked`
+   - **Provenance Verified:** `false`
+   - **UI Badge:** `"Image type check passed"` (Never displays "Verified Mammogram Radiograph")
+
+2. **Test Manifest-Backed Mammogram (Modality provenance verified):**
+   ```powershell
+   curl -F "file=@data/raw/mammogram/mdb001lm.pgm" -F "expected_modality=mammogram" http://127.0.0.1:8000/api/validate-scan
+   ```
+   - **Expected Verification Level:** `provenance_verified`
+   - **Provenance Verified:** `true`
+   - **Provenance Source:** `MIAS`
+   - **Patient ID:** `MIAS_P001`
+   - **UI Badge:** `"Modality provenance verified (MIAS: MIAS_P001)"`
+
+3. **Test Cross-Modality Rejection (Thermal into Mammogram Mode):**
+   ```powershell
+   curl -F "file=@data/raw/thermal/Breast Thermography/IIR0110/IIR0110_anterior.jpg" -F "expected_modality=mammogram" http://127.0.0.1:8000/api/validate-scan
+   ```
+   - **Expected Verification Level:** `format_validated`
+   - **Modality Verified:** `false`
+   - **UI Alert:** `"Invalid image. Please upload a mammogram image."`
+
+---
+
+### 4.2 Testing Patient-Pair Verification Separately (Endpoint: `/api/validate-pair`)
+Pair verification evaluates cross-modal compatibility, clinical cohort provenance, and same-patient pairing.
+
+| Scenario | Input Mammogram | Input Thermal Scan | Expected Pairing Status | Combined Status Displayed | Analyze Button |
 |---|---|---|---|---|---|
-| **Comb 1** | Neither image uploaded | `empty` | `empty` | **"No images uploaded"** (muted) | **Disabled** |
-| **Comb 2** | Mammogram only | `modality_verified` | `empty` | **"Mammogram uploaded — Thermal image required"** (amber) | **Disabled** |
-| **Comb 3** | Thermal only | `empty` | `modality_verified` | **"Thermal image uploaded — Mammogram required"** (amber) | **Disabled** |
-| **Comb 4** | Both uploaded (during validation) | `uploaded` | `uploaded` | **"Validating image pair..."** (blush) | **Disabled** |
-| **Comb 5** | Invalid mammogram + valid thermal | `invalid` | `modality_verified` | **"Pair validation failed"** (red alert) | **Disabled** |
-| **Comb 6** | Valid mammogram + invalid thermal | `modality_verified` | `invalid` | **"Pair validation failed"** (red alert) | **Disabled** |
-| **Comb 7** | Both valid, fusion model loaded | `modality_verified` | `modality_verified` | **"Both images validated"** (green) | **Enabled** |
-| **Comb 8** | Both valid, fusion model missing | `modality_verified` | `modality_verified` | **"Images validated — Combined model unavailable"** (amber/info) | **Disabled** |
+| **Neither Uploaded** | *None* | *None* | `empty` | **"No images uploaded"** | **Disabled** |
+| **Mammogram Only** | `mdb001lm.pgm` | *None* | `incomplete` | **"Mammogram uploaded — Thermal image required"** | **Disabled** |
+| **Thermal Only** | *None* | `IIR0110_anterior.jpg` | `incomplete` | **"Thermal image uploaded — Mammogram required"** | **Disabled** |
+| **Invalid Image** | `sample.pgm` | `inverted_pgm.pgm` (invalid thermal) | `invalid` | **"Pair validation failed"** | **Disabled** |
+| **Unverified Scans** | `custom_mammo.pgm` (unindexed) | `custom_thermal.jpg` (unindexed) | `not_verified` | **"Both files accepted, pairing not verified."** | **Disabled** |
+| **Cohort Mismatch** | `mdb001lm.pgm` (MIAS UK, `MIAS_P001`) | `IIR0110_anterior.jpg` (Mendeley, `IIR0110`) | `mismatch` | **"Pairing mismatch — Scans belong to different participants or cohorts."** | **Disabled** |
+| **Verified Same-Patient Pair** | Paired Study Mammogram (`PT_001`) | Paired Study Thermogram (`PT_001`) | `verified` | **"Both files validated, pairing verified, fusion model unavailable."** | **Disabled** |
+
+**Multimodal Requirement Notice:**
+In all combined modes where fusion inference cannot proceed, the interface displays:
+> *"Combined analysis available only when a genuine trained fusion model is loaded and pairing requirements are satisfied."*
 
 ---
 
@@ -173,9 +214,9 @@ Mode 3 (Combined Multimodal Screening) enforces independent states (`empty`, `up
 | `tests/test_archive_safety.py` | 4 | **PASS** | 0.12s |
 | `tests/test_dashboard_functionality_and_truth.py` | 4 | **PASS** | 9.79s |
 | `tests/test_deeplearning.py` | 6 | **PASS** | 3.45s |
-| `tests/test_examination_modes_and_modality_validation.py` | 10 | **PASS** | 44.54s |
+| `tests/test_examination_modes_and_modality_validation.py` | 14 | **PASS** | 16.78s |
 | `tests/test_manifest_and_idempotence.py` | 3 | **PASS** | 0.22s |
 | `tests/test_metadata_parser.py` | 1 | **PASS** | 0.08s |
 | `tests/test_scanner_and_identifier.py` | 4 | **PASS** | 0.18s |
 | `tests/test_transforms.py` | 9 | **PASS** | 0.95s |
-| **Total Automated Tests** | **62** | **ALL PASS** | **64.30s** |
+| **Total Automated Tests** | **66** | **ALL PASS** | **36.54s** |

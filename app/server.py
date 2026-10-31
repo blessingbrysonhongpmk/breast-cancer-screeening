@@ -138,8 +138,69 @@ class ImageValidationResponse(BaseModel):
     modality_verified: bool
     detected_modality: str
     expected_modality: str
+    verification_level: str = "format_validated"  # "format_validated" | "image_type_checked" | "provenance_verified" | "invalid"
+    image_type_passed: bool = False
+    provenance_verified: bool = False
+    provenance_source: Optional[str] = None
+    patient_id: Optional[str] = None
     explanation: str
     error: Optional[str] = None
+
+
+class PairValidationResponse(BaseModel):
+    mammogram_validation: ImageValidationResponse
+    thermal_validation: ImageValidationResponse
+    pairing_status: str  # "not_verified" | "verified" | "mismatch" | "invalid"
+    pairing_badge: str   # "Pairing not verified" | "Pairing verified from trusted dataset metadata" | "Pairing mismatch" | "Pair validation failed"
+    combined_status: str # "Both files accepted, pairing not verified." | "Both files validated, pairing verified, fusion model unavailable." | ...
+    combined_explanation: str
+    fusion_model_available: bool
+    can_analyze: bool
+
+
+# ============================================================================
+# Dataset Manifest Provenance Lookups (Level 3 & Level 4 Verification)
+# ============================================================================
+
+MAMMOGRAM_MANIFEST_LOOKUP: Dict[str, Dict[str, Any]] = {}
+THERMAL_MANIFEST_LOOKUP: Dict[str, Dict[str, Any]] = {}
+
+def _init_manifest_lookups():
+    """Caches manifest records to allow instant provenance verification against known cohorts."""
+    global MAMMOGRAM_MANIFEST_LOOKUP, THERMAL_MANIFEST_LOOKUP
+    mammo_csv = MANIFESTS_DIR / "mammogram_manifest.csv"
+    if mammo_csv.exists():
+        try:
+            with open(mammo_csv, "r", encoding="utf-8") as f:
+                for row in csv.DictReader(f):
+                    fn = row.get("filename", "").strip()
+                    if fn:
+                        MAMMOGRAM_MANIFEST_LOOKUP[fn.lower()] = {
+                            "dataset": row.get("dataset", "MIAS"),
+                            "patient_id": row.get("patient_id", ""),
+                            "label": row.get("label", ""),
+                            "relative_path": row.get("relative_path", "")
+                        }
+        except Exception as ex:
+            logger.warning(f"Could not load mammogram manifest lookup: {ex}")
+
+    thermal_csv = MANIFESTS_DIR / "thermal_manifest.csv"
+    if thermal_csv.exists():
+        try:
+            with open(thermal_csv, "r", encoding="utf-8") as f:
+                for row in csv.DictReader(f):
+                    fn = row.get("filename", "").strip()
+                    if fn:
+                        THERMAL_MANIFEST_LOOKUP[fn.lower()] = {
+                            "dataset": row.get("dataset", "Mendeley Thermography"),
+                            "patient_id": row.get("patient_id", ""),
+                            "label": row.get("label", ""),
+                            "relative_path": row.get("relative_path", "")
+                        }
+        except Exception as ex:
+            logger.warning(f"Could not load thermal manifest lookup: {ex}")
+
+_init_manifest_lookups()
 
 
 # ============================================================================
@@ -992,6 +1053,11 @@ async def validate_scan_image(
             modality_verified=False,
             detected_modality="unknown",
             expected_modality=norm_expected,
+            verification_level="invalid",
+            image_type_passed=False,
+            provenance_verified=False,
+            provenance_source=None,
+            patient_id=None,
             explanation=f"Unsupported file format '{suffix}'.",
             error=err_msg
         )
@@ -1007,6 +1073,11 @@ async def validate_scan_image(
             modality_verified=False,
             detected_modality="unknown",
             expected_modality=norm_expected,
+            verification_level="invalid",
+            image_type_passed=False,
+            provenance_verified=False,
+            provenance_source=None,
+            patient_id=None,
             explanation="Uploaded file is empty.",
             error="Uploaded file contains 0 bytes. Please select a valid image file."
         )
@@ -1020,6 +1091,11 @@ async def validate_scan_image(
             modality_verified=False,
             detected_modality="unknown",
             expected_modality=norm_expected,
+            verification_level="invalid",
+            image_type_passed=False,
+            provenance_verified=False,
+            provenance_source=None,
+            patient_id=None,
             explanation=f"File size exceeds maximum allowed limit of {MAX_UPLOAD_SIZE_MB}MB.",
             error=f"File exceeds maximum allowed size of {MAX_UPLOAD_SIZE_MB}MB."
         )
@@ -1039,6 +1115,11 @@ async def validate_scan_image(
             modality_verified=False,
             detected_modality="invalid",
             expected_modality=norm_expected,
+            verification_level="invalid",
+            image_type_passed=False,
+            provenance_verified=False,
+            provenance_source=None,
+            patient_id=None,
             explanation=f"Image bytes are corrupt or unreadable: {ex}",
             error=err_msg
         )
@@ -1052,19 +1133,50 @@ async def validate_scan_image(
             modality_verified=False,
             detected_modality="invalid",
             expected_modality=norm_expected,
+            verification_level="invalid",
+            image_type_passed=False,
+            provenance_verified=False,
+            provenance_source=None,
+            patient_id=None,
             explanation=f"Image dimensions ({w}x{h}) are below minimum {MIN_IMAGE_DIMENSION}x{MIN_IMAGE_DIMENSION}.",
             error=f"Image dimensions ({w}x{h}) are too small. Minimum required is {MIN_IMAGE_DIMENSION}x{MIN_IMAGE_DIMENSION} pixels."
         )
 
     # Perform strict modality boundary verification
     if norm_expected == "mammogram":
-        is_verified, explanation = validate_mammogram_image(pil_img, safe_name)
-        err = None if is_verified else (explanation or MAMMOGRAM_ERROR_MSG)
-        detected = "mammogram" if is_verified else ("thermal" if "thermal" in explanation.lower() else "invalid")
+        is_verified, modality_expl = validate_mammogram_image(pil_img, safe_name)
+        err = None if is_verified else (modality_expl or MAMMOGRAM_ERROR_MSG)
+        detected = "mammogram" if is_verified else ("thermal" if "thermal" in modality_expl.lower() else "invalid")
     else:
-        is_verified, explanation = validate_thermal_image(pil_img, safe_name)
-        err = None if is_verified else (explanation or THERMAL_ERROR_MSG)
-        detected = "thermal" if is_verified else ("mammogram" if "mammogram" in explanation.lower() else "invalid")
+        is_verified, modality_expl = validate_thermal_image(pil_img, safe_name)
+        err = None if is_verified else (modality_expl or THERMAL_ERROR_MSG)
+        detected = "thermal" if is_verified else ("mammogram" if "mammogram" in modality_expl.lower() else "invalid")
+
+    # Evaluate the 4 evidence levels:
+    # 1. File format validated (already passed)
+    # 2. Image type checked (modality heuristic passed)
+    # 3. Modality provenance verified (matches manifest)
+    image_type_passed = is_verified
+    provenance_verified = False
+    provenance_source = None
+    patient_id = None
+
+    if is_verified:
+        fn_key = safe_name.lower()
+        lookup = MAMMOGRAM_MANIFEST_LOOKUP if norm_expected == "mammogram" else THERMAL_MANIFEST_LOOKUP
+        rec = lookup.get(fn_key)
+        if rec and rec.get("patient_id"):
+            provenance_verified = True
+            provenance_source = rec.get("dataset")
+            patient_id = rec.get("patient_id")
+            verification_level = "provenance_verified"
+            explanation = f"Modality provenance verified from {provenance_source} dataset metadata for patient {patient_id}."
+        else:
+            verification_level = "image_type_checked"
+            explanation = "Image type check passed based on image appearance and histogram properties (unverified clinical provenance)."
+    else:
+        verification_level = "format_validated"
+        explanation = modality_expl
 
     return ImageValidationResponse(
         valid_format=True,
@@ -1074,8 +1186,108 @@ async def validate_scan_image(
         modality_verified=is_verified,
         detected_modality=detected,
         expected_modality=norm_expected,
+        verification_level=verification_level,
+        image_type_passed=image_type_passed,
+        provenance_verified=provenance_verified,
+        provenance_source=provenance_source,
+        patient_id=patient_id,
         explanation=explanation,
         error=err
+    )
+
+
+@app.post("/api/validate-pair", response_model=PairValidationResponse)
+async def validate_scan_pair(
+    mammogram_file: UploadFile = File(...),
+    thermal_file: UploadFile = File(...),
+    case_id: Optional[str] = Form(None)
+) -> PairValidationResponse:
+    """Mode 3 Pair Validation:
+    Independently validates mammogram and thermal uploads across the 4 evidence levels:
+    1. File format validated
+    2. Image type checked
+    3. Modality provenance verified
+    4. Same-patient pairing verified
+    """
+    mammo_val = await validate_scan_image(mammogram_file, expected_modality="mammogram")
+    thermal_val = await validate_scan_image(thermal_file, expected_modality="thermal")
+
+    fusion_ckpt = (
+        get_checkpoint_path_for_modality("multimodal")
+        or get_checkpoint_path_for_modality("fusion")
+        or get_checkpoint_path_for_modality("combined")
+    )
+    fusion_available = fusion_ckpt is not None
+
+    # Check validity of individual scans
+    if not mammo_val.modality_verified or not thermal_val.modality_verified:
+        return PairValidationResponse(
+            mammogram_validation=mammo_val,
+            thermal_validation=thermal_val,
+            pairing_status="invalid",
+            pairing_badge="Pair validation failed",
+            combined_status="Pair validation failed",
+            combined_explanation="One or both uploaded scans failed image validation. Please upload genuine mammogram and thermal scans.",
+            fusion_model_available=fusion_available,
+            can_analyze=False
+        )
+
+    # Both scans passed image type checks. Now evaluate same-patient pairing.
+    # Level 4: Same-patient pairing requires provenance verification on both scans
+    if not mammo_val.provenance_verified or not thermal_val.provenance_verified:
+        return PairValidationResponse(
+            mammogram_validation=mammo_val,
+            thermal_validation=thermal_val,
+            pairing_status="not_verified",
+            pairing_badge="Pairing not verified",
+            combined_status="Both files accepted, pairing not verified.",
+            combined_explanation="Combined analysis available only when a genuine trained fusion model is loaded and pairing requirements are satisfied.",
+            fusion_model_available=fusion_available,
+            can_analyze=False
+        )
+
+    # Both have verified dataset provenance. Check cohort and patient ID match.
+    is_same_patient = (
+        mammo_val.patient_id == thermal_val.patient_id and
+        mammo_val.provenance_source == thermal_val.provenance_source
+    )
+    if not is_same_patient:
+        return PairValidationResponse(
+            mammogram_validation=mammo_val,
+            thermal_validation=thermal_val,
+            pairing_status="mismatch",
+            pairing_badge="Pairing mismatch",
+            combined_status="Pairing mismatch — Scans belong to different participants or cohorts.",
+            combined_explanation=(
+                f"Mammogram is from {mammo_val.provenance_source} ({mammo_val.patient_id}) and thermal scan is from "
+                f"{thermal_val.provenance_source} ({thermal_val.patient_id}). Independent cohort images cannot be paired for multimodal diagnosis."
+            ),
+            fusion_model_available=fusion_available,
+            can_analyze=False
+        )
+
+    # Verified same-patient pairing from trusted metadata
+    if not fusion_available:
+        return PairValidationResponse(
+            mammogram_validation=mammo_val,
+            thermal_validation=thermal_val,
+            pairing_status="verified",
+            pairing_badge="Pairing verified from trusted dataset metadata",
+            combined_status="Both files validated, pairing verified, fusion model unavailable.",
+            combined_explanation="Combined analysis available only when a genuine trained fusion model is loaded and pairing requirements are satisfied.",
+            fusion_model_available=False,
+            can_analyze=False
+        )
+
+    return PairValidationResponse(
+        mammogram_validation=mammo_val,
+        thermal_validation=thermal_val,
+        pairing_status="verified",
+        pairing_badge="Pairing verified from trusted dataset metadata",
+        combined_status="Both files validated, pairing verified, fusion model ready.",
+        combined_explanation="Genuine trained multimodal fusion model loaded and ready for paired inference.",
+        fusion_model_available=True,
+        can_analyze=True
     )
 
 

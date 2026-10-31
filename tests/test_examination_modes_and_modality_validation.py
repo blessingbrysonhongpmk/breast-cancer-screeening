@@ -388,3 +388,161 @@ def test_scenario_10_all_pair_upload_and_validation_combinations():
     assert res78.json()["detail"] == "Combined analysis model is not yet available."
 
 
+# ----------------------------------------------------------------------
+# Scenario 11: Distinguish 4 evidence levels in image validation
+# ----------------------------------------------------------------------
+def test_scenario_11_four_evidence_levels_distinction():
+    """Validates that backend strictly distinguishes:
+    1. File format validated
+    2. Image type checked (heuristic appearance check passed without manifest record)
+    3. Modality provenance verified (genuine manifest metadata backing)
+    """
+    valid_mammo_bytes = _create_synthetic_pgm_bytes()
+    valid_thermal_bytes = _create_synthetic_thermal_bytes()
+
+    # Case A: Arbitrary user mammogram (heuristic check passed, unverified provenance)
+    res_user_mammo = client.post(
+        "/api/validate-scan",
+        files={"file": ("custom_patient_radiograph.pgm", valid_mammo_bytes, "image/x-portable-graymap")},
+        data={"expected_modality": "mammogram"}
+    )
+    assert res_user_mammo.status_code == 200
+    d_user = res_user_mammo.json()
+    assert d_user["valid_format"] is True
+    assert d_user["image_type_passed"] is True
+    assert d_user["verification_level"] == "image_type_checked"
+    assert d_user["provenance_verified"] is False
+    assert d_user["patient_id"] is None
+
+    # Case B: Curated MIAS mammogram (provenance verified from manifest)
+    res_mias = client.post(
+        "/api/validate-scan",
+        files={"file": ("mdb001lm.pgm", valid_mammo_bytes, "image/x-portable-graymap")},
+        data={"expected_modality": "mammogram"}
+    )
+    assert res_mias.status_code == 200
+    d_mias = res_mias.json()
+    assert d_mias["valid_format"] is True
+    assert d_mias["image_type_passed"] is True
+    assert d_mias["verification_level"] == "provenance_verified"
+    assert d_mias["provenance_verified"] is True
+    assert d_mias["provenance_source"] == "MIAS"
+    assert d_mias["patient_id"] == "MIAS_P001"
+
+    # Case C: Curated Mendeley thermogram (provenance verified from manifest)
+    res_mendeley = client.post(
+        "/api/validate-scan",
+        files={"file": ("IIR0110_anterior.jpg", valid_thermal_bytes, "image/jpeg")},
+        data={"expected_modality": "thermal"}
+    )
+    assert res_mendeley.status_code == 200
+    d_mendeley = res_mendeley.json()
+    assert d_mendeley["valid_format"] is True
+    assert d_mendeley["image_type_passed"] is True
+    assert d_mendeley["verification_level"] == "provenance_verified"
+    assert d_mendeley["provenance_verified"] is True
+    assert d_mendeley["provenance_source"] in {"Mendeley Thermography", "Mendeley_Thermography"}
+    assert d_mendeley["patient_id"] == "IIR0110"
+
+
+# ----------------------------------------------------------------------
+# Scenario 12: Validate Pair - Unverified Provenance
+# ----------------------------------------------------------------------
+def test_scenario_12_validate_pair_unverified_provenance():
+    """When both uploaded files pass type check but lack dataset metadata:
+    pairing_status must be 'not_verified' and combined_status 'Both files accepted, pairing not verified.'
+    """
+    valid_mammo = _create_synthetic_pgm_bytes()
+    valid_thermal = _create_synthetic_thermal_bytes()
+
+    res = client.post(
+        "/api/validate-pair",
+        files={
+            "mammogram_file": ("patient_scan.pgm", valid_mammo, "image/x-portable-graymap"),
+            "thermal_file": ("patient_thermal.jpg", valid_thermal, "image/jpeg")
+        },
+        data={"case_id": "MF-CASE-UNVERIFIED"}
+    )
+    assert res.status_code == 200
+    d = res.json()
+    assert d["pairing_status"] == "not_verified"
+    assert d["pairing_badge"] == "Pairing not verified"
+    assert d["combined_status"] == "Both files accepted, pairing not verified."
+    assert "Combined analysis available only when a genuine trained fusion model is loaded" in d["combined_explanation"]
+    assert d["can_analyze"] is False
+
+
+# ----------------------------------------------------------------------
+# Scenario 13: Validate Pair - Cohort / Patient Mismatch
+# ----------------------------------------------------------------------
+def test_scenario_13_validate_pair_mismatch():
+    """When pairing a MIAS mammogram and a Mendeley thermogram:
+    cohorts are independent, so pairing_status must be 'mismatch'.
+    """
+    valid_mammo = _create_synthetic_pgm_bytes()
+    valid_thermal = _create_synthetic_thermal_bytes()
+
+    res = client.post(
+        "/api/validate-pair",
+        files={
+            "mammogram_file": ("mdb001lm.pgm", valid_mammo, "image/x-portable-graymap"),
+            "thermal_file": ("IIR0110_anterior.jpg", valid_thermal, "image/jpeg")
+        },
+        data={"case_id": "MF-CASE-CROSSCOHORT"}
+    )
+    assert res.status_code == 200
+    d = res.json()
+    assert d["pairing_status"] == "mismatch"
+    assert d["pairing_badge"] == "Pairing mismatch"
+    assert d["combined_status"] == "Pairing mismatch — Scans belong to different participants or cohorts."
+    assert "MIAS" in d["combined_explanation"]
+    assert "Mendeley" in d["combined_explanation"]
+    assert d["can_analyze"] is False
+
+
+# ----------------------------------------------------------------------
+# Scenario 14: Validate Pair - Matching Patient Provenance
+# ----------------------------------------------------------------------
+def test_scenario_14_validate_pair_verified_same_patient(monkeypatch):
+    """When both scans belong to the same verified participant in trusted metadata:
+    pairing_status must be 'verified', but fusion model unavailable prevents execution.
+    """
+    from app.server import MAMMOGRAM_MANIFEST_LOOKUP, THERMAL_MANIFEST_LOOKUP
+
+    # Temporarily register a verified paired fixture
+    MAMMOGRAM_MANIFEST_LOOKUP["paired_mammo.pgm"] = {
+        "dataset": "PAIRED_TRIAL",
+        "patient_id": "PT_001",
+        "label": "benign"
+    }
+    THERMAL_MANIFEST_LOOKUP["paired_thermal.jpg"] = {
+        "dataset": "PAIRED_TRIAL",
+        "patient_id": "PT_001",
+        "label": "benign"
+    }
+
+    try:
+        valid_mammo = _create_synthetic_pgm_bytes()
+        valid_thermal = _create_synthetic_thermal_bytes()
+
+        res = client.post(
+            "/api/validate-pair",
+            files={
+                "mammogram_file": ("paired_mammo.pgm", valid_mammo, "image/x-portable-graymap"),
+                "thermal_file": ("paired_thermal.jpg", valid_thermal, "image/jpeg")
+            },
+            data={"case_id": "MF-CASE-MATCHED"}
+        )
+        assert res.status_code == 200
+        d = res.json()
+        assert d["pairing_status"] == "verified"
+        assert d["pairing_badge"] == "Pairing verified from trusted dataset metadata"
+        assert d["combined_status"] == "Both files validated, pairing verified, fusion model unavailable."
+        assert d["fusion_model_available"] is False
+        assert d["can_analyze"] is False
+    finally:
+        MAMMOGRAM_MANIFEST_LOOKUP.pop("paired_mammo.pgm", None)
+        THERMAL_MANIFEST_LOOKUP.pop("paired_thermal.jpg", None)
+
+
+

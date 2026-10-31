@@ -29,7 +29,9 @@ import {
   submitThermalAnalysis,
   submitCombinedAnalysis,
   validateScanImage,
-  ImageValidationResult
+  validateScanPair,
+  ImageValidationResult,
+  PairValidationResult
 } from '../../services/api';
 import { decodePgmImage } from '../../utils/pgmDecoder';
 
@@ -63,6 +65,11 @@ interface ValidationStatus {
   modalityVerified: boolean;
   modalityLabel: string;
   modalityExplanation?: string;
+  verificationLevel?: 'format_validated' | 'image_type_checked' | 'provenance_verified' | 'invalid';
+  imageTypePassed?: boolean;
+  provenanceVerified?: boolean;
+  provenanceSource?: string | null;
+  patientId?: string | null;
   errorMessage?: string | null;
 }
 
@@ -102,6 +109,10 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
   const [combinedThermalPreview, setCombinedThermalPreview] = useState<string | null>(null);
   const [combinedThermalStage, setCombinedThermalStage] = useState<SlotStage>('empty');
   const [combinedThermalValidation, setCombinedThermalValidation] = useState<ValidationStatus | null>(null);
+
+  // Dedicated Pair Validation Result (Level 4: Same-patient pairing)
+  const [pairValidation, setPairValidation] = useState<PairValidationResult | null>(null);
+  const [isPairValidating, setIsPairValidating] = useState<boolean>(false);
 
   const [caseId, setCaseId] = useState<string>(() => `MF-CASE-2026-${Math.random().toString(36).substring(2, 7).toUpperCase()}`);
 
@@ -235,6 +246,9 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
           dimensions: dims,
           fileError: backendVal.error,
           modalityVerified: false,
+          verificationLevel: 'invalid',
+          imageTypePassed: false,
+          provenanceVerified: false,
           modalityLabel: 'Format Invalid',
           errorMessage: backendVal.error || 'Invalid file format or corrupt image.'
         });
@@ -247,6 +261,9 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
           sizeFormatted: formatFileSize(file.size),
           dimensions: backendVal.dimensions.width > 0 ? backendVal.dimensions : dims,
           modalityVerified: false,
+          verificationLevel: backendVal.verification_level,
+          imageTypePassed: false,
+          provenanceVerified: false,
           modalityLabel: 'Modality Mismatch',
           modalityExplanation: backendVal.explanation,
           errorMessage: backendVal.error || (targetModality === 'mammogram' ? 'Invalid image. Please upload a mammogram image.' : 'Invalid image. Please upload a thermal image.')
@@ -260,7 +277,14 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
           sizeFormatted: formatFileSize(file.size),
           dimensions: backendVal.dimensions.width > 0 ? backendVal.dimensions : dims,
           modalityVerified: true,
-          modalityLabel: backendVal.detected_modality === 'mammogram' ? 'Verified Mammogram Radiograph' : 'Verified Infrared Thermogram',
+          verificationLevel: backendVal.verification_level,
+          imageTypePassed: backendVal.image_type_passed,
+          provenanceVerified: backendVal.provenance_verified,
+          provenanceSource: backendVal.provenance_source,
+          patientId: backendVal.patient_id,
+          modalityLabel: backendVal.verification_level === 'provenance_verified'
+            ? `Provenance Verified (${backendVal.provenance_source}: ${backendVal.patient_id})`
+            : 'Image type check passed',
           modalityExplanation: backendVal.explanation
         });
       }
@@ -342,10 +366,14 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
           dimensions: val.dimensions.width > 0 ? val.dimensions : dims,
           fileError: val.valid_format ? null : val.error,
           modalityVerified: false,
+          verificationLevel: val.verification_level,
+          imageTypePassed: false,
+          provenanceVerified: false,
           modalityLabel: 'Modality Mismatch',
           modalityExplanation: val.explanation,
           errorMessage: val.error || 'Invalid image. Please upload a mammogram image.'
         });
+        setPairValidation(null);
       } else {
         setCombinedMammoStage('modality_verified');
         setCombinedMammoValidation({
@@ -355,9 +383,19 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
           sizeFormatted: formatFileSize(file.size),
           dimensions: val.dimensions.width > 0 ? val.dimensions : dims,
           modalityVerified: true,
-          modalityLabel: 'Verified Mammogram',
+          verificationLevel: val.verification_level,
+          imageTypePassed: val.image_type_passed,
+          provenanceVerified: val.provenance_verified,
+          provenanceSource: val.provenance_source,
+          patientId: val.patient_id,
+          modalityLabel: val.verification_level === 'provenance_verified'
+            ? `Provenance Verified (${val.provenance_source}: ${val.patient_id})`
+            : 'Image type check passed',
           modalityExplanation: val.explanation
         });
+        if (combinedThermalFile) {
+          checkPairValidation(file, combinedThermalFile);
+        }
       }
     } catch (err: any) {
       console.warn('Backend validation fallback for combined mammogram:', err);
@@ -370,7 +408,10 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
         sizeFormatted: formatFileSize(file.size),
         dimensions: dims,
         modalityVerified: true,
-        modalityLabel: 'Mammogram Radiograph',
+        verificationLevel: 'image_type_checked',
+        imageTypePassed: true,
+        provenanceVerified: false,
+        modalityLabel: 'Image type check passed',
         modalityExplanation: 'Format validated.'
       });
     }
@@ -413,10 +454,14 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
           dimensions: val.dimensions.width > 0 ? val.dimensions : dims,
           fileError: val.valid_format ? null : val.error,
           modalityVerified: false,
+          verificationLevel: val.verification_level,
+          imageTypePassed: false,
+          provenanceVerified: false,
           modalityLabel: 'Modality Mismatch',
           modalityExplanation: val.explanation,
           errorMessage: val.error || 'Invalid image. Please upload a thermal image.'
         });
+        setPairValidation(null);
       } else {
         setCombinedThermalStage('modality_verified');
         setCombinedThermalValidation({
@@ -426,9 +471,19 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
           sizeFormatted: formatFileSize(file.size),
           dimensions: val.dimensions.width > 0 ? val.dimensions : dims,
           modalityVerified: true,
-          modalityLabel: 'Verified Thermal Scan',
+          verificationLevel: val.verification_level,
+          imageTypePassed: val.image_type_passed,
+          provenanceVerified: val.provenance_verified,
+          provenanceSource: val.provenance_source,
+          patientId: val.patient_id,
+          modalityLabel: val.verification_level === 'provenance_verified'
+            ? `Provenance Verified (${val.provenance_source}: ${val.patient_id})`
+            : 'Image type check passed',
           modalityExplanation: val.explanation
         });
+        if (combinedMammoFile) {
+          checkPairValidation(combinedMammoFile, file);
+        }
       }
     } catch (err: any) {
       console.warn('Backend validation fallback for combined thermal:', err);
@@ -440,9 +495,25 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
         sizeFormatted: formatFileSize(file.size),
         dimensions: dims,
         modalityVerified: true,
-        modalityLabel: 'Thermal Thermogram',
+        verificationLevel: 'image_type_checked',
+        imageTypePassed: true,
+        provenanceVerified: false,
+        modalityLabel: 'Image type check passed',
         modalityExplanation: 'Format validated.'
       });
+    }
+  };
+
+  const checkPairValidation = async (mammo: File, thermal: File) => {
+    setIsPairValidating(true);
+    try {
+      const res = await validateScanPair(mammo, thermal, caseId);
+      setPairValidation(res);
+    } catch (err) {
+      console.warn('Pair validation call error:', err);
+      setPairValidation(null);
+    } finally {
+      setIsPairValidating(false);
     }
   };
 
@@ -462,7 +533,12 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       sizeFormatted: 'Reference Scan',
       dimensions: { width: 1024, height: 1024 },
       modalityVerified: true,
-      modalityLabel: sample.modality === 'mammogram' ? 'Verified Mammogram' : 'Verified Thermal Scan',
+      verificationLevel: 'provenance_verified',
+      imageTypePassed: true,
+      provenanceVerified: true,
+      provenanceSource: sample.modality === 'mammogram' ? 'MIAS' : 'Mendeley',
+      patientId: sample.patient_id,
+      modalityLabel: `Modality Provenance Verified (${sample.modality === 'mammogram' ? 'MIAS' : 'Mendeley'}: ${sample.patient_id})`,
       modalityExplanation: `TEST DATA ONLY: Curated reference sample from ${sample.modality === 'mammogram' ? 'MIAS (UK)' : 'Mendeley (Mexico)'} repository.`
     });
     setShowSamplesDrawer(false);
@@ -484,6 +560,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
     setCombinedMammoPreview(null);
     setCombinedMammoStage('empty');
     setCombinedMammoValidation(null);
+    setPairValidation(null);
     if (mammoFileInputRef.current) mammoFileInputRef.current.value = '';
   };
 
@@ -493,6 +570,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
     setCombinedThermalPreview(null);
     setCombinedThermalStage('empty');
     setCombinedThermalValidation(null);
+    setPairValidation(null);
     if (thermalFileInputRef.current) thermalFileInputRef.current.value = '';
   };
 
@@ -510,6 +588,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
     badgeStyle: { bg: string; color: string; border: string };
     icon: React.ReactNode;
     isReady: boolean;
+    pairingBadgeText?: string;
+    pairingBadgeStyle?: { bg: string; color: string; border: string };
   } => {
     const mammoHasFile = combinedMammoStage !== 'empty';
     const thermalHasFile = combinedThermalStage !== 'empty';
@@ -563,31 +643,83 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
         subtitle: `${mammoDesc} • ${thermalDesc}`,
         badgeStyle: { bg: 'var(--status-malignant-bg)', color: 'var(--status-malignant)', border: 'var(--status-malignant-border)' },
         icon: <AlertCircle size={18} style={{ color: 'var(--status-malignant)' }} />,
+        isReady: false,
+        pairingBadgeText: 'Pair validation failed',
+        pairingBadgeStyle: { bg: 'var(--status-malignant-bg)', color: 'var(--status-malignant)', border: 'var(--status-malignant-border)' }
+      };
+    }
+
+    if (isPairValidating) {
+      return {
+        title: 'Validating image pair & provenance...',
+        subtitle: 'Checking image properties and verifying patient cohort pairing against clinical manifests.',
+        badgeStyle: { bg: 'var(--bg-blush-subtle)', color: 'var(--accent-rose)', border: 'var(--border-rose)' },
+        icon: <RefreshCw size={18} className="spinning" style={{ color: 'var(--accent-rose)' }} />,
         isReady: false
       };
     }
 
-    // Rule 5 & 6: Both uploaded and both valid
-    if (combinedMammoStage === 'modality_verified' && combinedThermalStage === 'modality_verified') {
-      if (combinedReady) {
-        // Rule 5: Both valid and fusion model available
+    if (pairValidation) {
+      if (pairValidation.pairing_status === 'mismatch') {
         return {
-          title: 'Both images validated',
-          subtitle: 'Both scans verified and multimodal fusion network loaded for inference.',
-          badgeStyle: { bg: 'var(--status-normal-bg)', color: 'var(--status-normal)', border: 'var(--status-normal-border)' },
-          icon: <CheckCircle2 size={18} style={{ color: 'var(--status-normal)' }} />,
-          isReady: true
-        };
-      } else {
-        // Rule 6: Both valid but fusion model unavailable
-        return {
-          title: 'Images validated — Combined model unavailable',
-          subtitle: 'Mammogram & Thermal scans are verified. Joint multimodal fusion model is pending training.',
-          badgeStyle: { bg: '#FFF8E1', color: '#F57F17', border: '#FFE082' },
-          icon: <Info size={18} style={{ color: '#F57F17' }} />,
-          isReady: false
+          title: pairValidation.combined_status,
+          subtitle: 'Combined analysis available only when a genuine trained fusion model is loaded and pairing requirements are satisfied.',
+          badgeStyle: { bg: 'var(--status-malignant-bg)', color: 'var(--status-malignant)', border: 'var(--status-malignant-border)' },
+          icon: <AlertCircle size={18} style={{ color: 'var(--status-malignant)' }} />,
+          isReady: false,
+          pairingBadgeText: 'Pairing mismatch',
+          pairingBadgeStyle: { bg: 'var(--status-malignant-bg)', color: 'var(--status-malignant)', border: 'var(--status-malignant-border)' }
         };
       }
+
+      if (pairValidation.pairing_status === 'not_verified') {
+        return {
+          title: 'Both files accepted, pairing not verified.',
+          subtitle: 'Combined analysis available only when a genuine trained fusion model is loaded and pairing requirements are satisfied.',
+          badgeStyle: { bg: '#FFF3E0', color: '#E65100', border: '#FFE0B2' },
+          icon: <AlertTriangle size={18} style={{ color: '#E65100' }} />,
+          isReady: false,
+          pairingBadgeText: 'Pairing not verified',
+          pairingBadgeStyle: { bg: '#FFF3E0', color: '#E65100', border: '#FFE0B2' }
+        };
+      }
+
+      if (pairValidation.pairing_status === 'verified') {
+        if (!pairValidation.fusion_model_available) {
+          return {
+            title: 'Both files validated, pairing verified, fusion model unavailable.',
+            subtitle: 'Combined analysis available only when a genuine trained fusion model is loaded and pairing requirements are satisfied.',
+            badgeStyle: { bg: '#FFF8E1', color: '#F57F17', border: '#FFE082' },
+            icon: <Info size={18} style={{ color: '#F57F17' }} />,
+            isReady: false,
+            pairingBadgeText: 'Pairing verified from trusted dataset metadata',
+            pairingBadgeStyle: { bg: 'var(--status-normal-bg)', color: 'var(--status-normal)', border: 'var(--status-normal-border)' }
+          };
+        } else {
+          return {
+            title: 'Both files validated, pairing verified, fusion model ready.',
+            subtitle: 'Combined analysis available only when a genuine trained fusion model is loaded and pairing requirements are satisfied.',
+            badgeStyle: { bg: 'var(--status-normal-bg)', color: 'var(--status-normal)', border: 'var(--status-normal-border)' },
+            icon: <CheckCircle2 size={18} style={{ color: 'var(--status-normal)' }} />,
+            isReady: true,
+            pairingBadgeText: 'Pairing verified from trusted dataset metadata',
+            pairingBadgeStyle: { bg: 'var(--status-normal-bg)', color: 'var(--status-normal)', border: 'var(--status-normal-border)' }
+          };
+        }
+      }
+    }
+
+    // Default fallback when both validated but pair response pending
+    if (combinedMammoStage === 'modality_verified' && combinedThermalStage === 'modality_verified') {
+      return {
+        title: 'Both files accepted, pairing not verified.',
+        subtitle: 'Combined analysis available only when a genuine trained fusion model is loaded and pairing requirements are satisfied.',
+        badgeStyle: { bg: '#FFF3E0', color: '#E65100', border: '#FFE0B2' },
+        icon: <AlertTriangle size={18} style={{ color: '#E65100' }} />,
+        isReady: false,
+        pairingBadgeText: 'Pairing not verified',
+        pairingBadgeStyle: { bg: '#FFF3E0', color: '#E65100', border: '#FFE0B2' }
+      };
     }
 
     // Intermediate state: validating
@@ -652,8 +784,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       return;
     }
 
-    if (!combinedReady) {
-      alert('Combined analysis model is not yet available.');
+    if (!pairValidation?.can_analyze) {
+      alert(pairValidation?.combined_explanation || 'Combined analysis model is not yet available.');
       return;
     }
 
@@ -1122,7 +1254,11 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                     <ShieldCheck size={18} style={{ color: singleValidation.modalityVerified ? 'var(--status-normal)' : 'var(--status-malignant)' }} />
                     <div style={{ fontSize: '12px', lineHeight: 1.4 }}>
                       <div style={{ fontWeight: 600, color: singleValidation.modalityVerified ? 'var(--status-normal)' : 'var(--status-malignant)' }}>
-                        Modality Verification: {singleValidation.modalityVerified ? 'Verified' : 'Rejected'}
+                        Modality Verification: {singleValidation.modalityVerified
+                          ? (singleValidation.verificationLevel === 'provenance_verified'
+                              ? `Provenance Verified (${singleValidation.provenanceSource}: ${singleValidation.patientId})`
+                              : 'Image type check passed')
+                          : 'Rejected'}
                       </div>
                       <div style={{ color: singleValidation.modalityVerified ? 'var(--text-secondary)' : 'var(--status-malignant)', fontSize: '11px' }}>
                         {singleValidation.errorMessage || singleValidation.modalityExplanation || singleValidation.modalityLabel}
@@ -1425,7 +1561,13 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                       </div>
                       <div style={{ fontSize: '11px', color: combinedMammoValidation.modalityVerified ? 'var(--status-normal)' : 'var(--status-malignant)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <ShieldCheck size={13} />
-                        <span>{combinedMammoValidation.modalityVerified ? '✓ Verified Mammogram Radiograph' : `✕ ${combinedMammoValidation.errorMessage || 'Invalid image. Please upload a mammogram image.'}`}</span>
+                        <span>
+                          {combinedMammoValidation.modalityVerified
+                            ? (combinedMammoValidation.verificationLevel === 'provenance_verified'
+                                ? `✓ Modality provenance verified (${combinedMammoValidation.provenanceSource}: ${combinedMammoValidation.patientId})`
+                                : '✓ Image type check passed')
+                            : `✕ ${combinedMammoValidation.errorMessage || 'Invalid image. Please upload a mammogram image.'}`}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -1547,7 +1689,13 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                       </div>
                       <div style={{ fontSize: '11px', color: combinedThermalValidation.modalityVerified ? 'var(--status-normal)' : 'var(--status-malignant)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <ShieldCheck size={13} />
-                        <span>{combinedThermalValidation.modalityVerified ? '✓ Verified False-Color Thermogram' : `✕ ${combinedThermalValidation.errorMessage || 'Invalid image. Please upload a thermal image.'}`}</span>
+                        <span>
+                          {combinedThermalValidation.modalityVerified
+                            ? (combinedThermalValidation.verificationLevel === 'provenance_verified'
+                                ? `✓ Modality provenance verified (${combinedThermalValidation.provenanceSource}: ${combinedThermalValidation.patientId})`
+                                : '✓ Image type check passed')
+                            : `✕ ${combinedThermalValidation.errorMessage || 'Invalid image. Please upload a thermal image.'}`}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -1558,7 +1706,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
 
           {/* DUAL UPLOAD STATUS & ANALYZE COMBINED IMAGES BUTTON */}
           <div className="card" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
               <div style={{
                 width: '36px',
                 height: '36px',
@@ -1568,15 +1716,31 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                flexShrink: 0
+                flexShrink: 0,
+                marginTop: '2px'
               }}>
                 {pairStatus.icon}
               </div>
               <div>
+                {pairStatus.pairingBadgeText && (
+                  <div style={{ marginBottom: '4px' }}>
+                    <span style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: '10px',
+                      background: pairStatus.pairingBadgeStyle?.bg || 'var(--bg-muted)',
+                      color: pairStatus.pairingBadgeStyle?.color || 'var(--text-muted)',
+                      border: `1px solid ${pairStatus.pairingBadgeStyle?.border || 'var(--border-light)'}`
+                    }}>
+                      Pairing: {pairStatus.pairingBadgeText}
+                    </span>
+                  </div>
+                )}
                 <div style={{ fontSize: '14px', fontWeight: 700, color: pairStatus.badgeStyle.color }}>
-                  Pair Status: {pairStatus.title}
+                  {pairStatus.title}
                 </div>
-                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', maxWidth: '520px' }}>
                   {pairStatus.subtitle}
                 </div>
               </div>
@@ -1598,16 +1762,12 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                   color: pairStatus.isReady ? undefined : 'var(--text-muted)',
                   border: pairStatus.isReady ? undefined : '1px solid var(--border-medium)'
                 }}
-                title={pairStatus.isReady ? "Execute multimodal inference" : "Combined analysis model is not yet available."}
+                title={pairStatus.isReady ? "Execute multimodal inference" : "Combined analysis available only when a genuine trained fusion model is loaded and pairing requirements are satisfied."}
               >
                 Analyze Combined Images
               </button>
-              <span style={{ fontSize: '11px', color: '#E65100', fontWeight: 600 }}>
-                {pairStatus.title === 'Images validated — Combined model unavailable'
-                  ? 'Combined analysis model is not yet available.'
-                  : (pairStatus.title === 'Pair validation failed'
-                    ? 'Pair validation failed — Please correct invalid scan.'
-                    : (!pairStatus.isReady ? 'Combined analysis model is not yet available.' : ''))}
+              <span style={{ fontSize: '11px', color: '#E65100', fontWeight: 600, maxWidth: '340px', textAlign: 'right', lineHeight: 1.3 }}>
+                {!pairStatus.isReady && 'Combined analysis available only when a genuine trained fusion model is loaded and pairing requirements are satisfied.'}
               </span>
             </div>
           </div>
