@@ -241,7 +241,7 @@ export async function submitImageAnalysis(
       if (errorJson.detail) {
         errorDetail = errorJson.detail;
       }
-    } catch (_) {
+    } catch {
       // Use fallback
     }
     throw new Error(errorDetail);

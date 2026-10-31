@@ -571,7 +571,7 @@ async def analyze_uploaded_image(
 
     if len(contents) > MAX_UPLOAD_SIZE_BYTES:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail=f"File size exceeds maximum allowed limit of {MAX_UPLOAD_SIZE_MB}MB."
         )
 
@@ -591,7 +591,7 @@ async def analyze_uploaded_image(
 
     if width < MIN_IMAGE_DIMENSION or height < MIN_IMAGE_DIMENSION:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f"Image dimensions ({width}x{height}) are too small. Minimum required dimension is {MIN_IMAGE_DIMENSION}x{MIN_IMAGE_DIMENSION} pixels."
         )
 

@@ -92,7 +92,26 @@ export function App() {
   };
 
   useEffect(() => {
-    syncBackendData();
+    let active = true;
+    Promise.all([
+      fetchHealthCheck().catch(() => null),
+      fetchModelReadiness().catch(() => null),
+      fetchSystemStatus().catch(() => null),
+      fetchModelStatus().catch(() => null)
+    ])
+      .then(([hlth, readi, sys, mdl]) => {
+        if (!active) return;
+        if (hlth) setHealth(hlth);
+        if (readi) setModelReadiness(readi);
+        if (sys) setStatus(sys);
+        if (mdl) setModelStatus(mdl);
+      })
+      .catch((e) => {
+        console.error('Failed to sync backend:', e);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const navItems = [
@@ -113,7 +132,7 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const isBackendConnected = Boolean(health?.status === 'healthy' || status);
+  const isBackendConnected = Boolean(health?.status === 'healthy' || status || modelStatus);
 
   return (
     <div className="layout-root">

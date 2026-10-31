@@ -40,7 +40,24 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
   };
 
   useEffect(() => {
-    loadHistory();
+    let active = true;
+    fetchRecentAnalyses()
+      .then((data) => {
+        if (active) {
+          setHistory(Array.isArray(data) ? data : []);
+          setIsLoading(false);
+        }
+      })
+      .catch((e) => {
+        if (active) {
+          console.error('Failed to load recent analyses:', e);
+          setHistory([]);
+          setIsLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (

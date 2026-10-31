@@ -60,12 +60,12 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       .catch((err) => console.error('Failed to load samples:', err));
   }, []);
 
-  // Update modality when initialModality changes
-  useEffect(() => {
-    if (initialModality) {
-      setModality(initialModality);
-    }
-  }, [initialModality]);
+  // Adjust modality when initialModality prop changes
+  const [prevInitialModality, setPrevInitialModality] = useState(initialModality);
+  if (initialModality && initialModality !== prevInitialModality) {
+    setPrevInitialModality(initialModality);
+    setModality(initialModality);
+  }
 
   // Clean up object URLs to prevent memory leaks
   useEffect(() => {
