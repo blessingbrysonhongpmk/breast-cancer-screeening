@@ -1,0 +1,21 @@
+{
+  "status": "completed",
+  "imported_archive": "S1 Dataset.rar",
+  "dataset_name": "DMR-IR (Database for Mastology Research with Infrared Image)",
+  "source": "Institute of Computer Science, Federal Fluminense University (UFF), Brazil (2014)",
+  "total_imported_images": 1000,
+  "modality": "thermal",
+  "camera_specification": "FLIR SC-620 IR Camera (640x480 native, resized to 224x224)",
+  "label_counts": {
+    "malignant": 500,
+    "normal": 500
+  },
+  "corrupted_images_count": 0,
+  "duplicate_images_count": 0,
+  "unique_participant_cohorts": 48,
+  "total_workspace_mammogram_images": 322,
+  "total_workspace_thermal_images": 1357,
+  "verified_paired_participants": 0,
+  "multimodal_fusion_status": "unavailable_no_genuine_pairs",
+  "scientific_rationale": "DMR-IR consists exclusively of infrared breast thermograms collected in Brazil. MIAS consists exclusively of mammogram film radiographs collected in the UK. No cross-cohort patient pairing exists between these independent clinical archives. Per clinical governance standards, unimodal classifiers must be trained independently and multimodal fusion must remain unavailable until verified paired data is provided."
+}

@@ -46,3 +46,4 @@
 > [!CAUTION]
 > **NOT AN FDA-CLEARED OR CE-MARKED MEDICAL DEVICE**  
 > MammoFusion-XAI is an academic research and engineering demonstration platform. It has not been approved for clinical diagnostic use, screening triage, or patient treatment planning by the US Food and Drug Administration (FDA), European Medicines Agency (EMA), or any regulatory authority. All predictions, confidence scores, and visual attention maps are intended solely for academic research, education, and algorithm evaluation. Certified radiological review is mandatory for all patient care decisions.
+

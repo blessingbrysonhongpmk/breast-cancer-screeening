@@ -441,7 +441,7 @@ def test_scenario_11_four_evidence_levels_distinction():
     assert d_mendeley["image_type_passed"] is True
     assert d_mendeley["verification_level"] == "provenance_verified"
     assert d_mendeley["provenance_verified"] is True
-    assert d_mendeley["provenance_source"] in {"Mendeley Thermography", "Mendeley_Thermography"}
+    assert d_mendeley["provenance_source"] in {"Mendeley Thermography", "Mendeley_Thermography", "Mendeley Thermography (Mexico)"}
     assert d_mendeley["patient_id"] == "IIR0110"
 
 
@@ -510,12 +510,12 @@ def test_scenario_14_validate_pair_verified_same_patient(monkeypatch):
     from app.server import MAMMOGRAM_MANIFEST_LOOKUP, THERMAL_MANIFEST_LOOKUP
 
     # Temporarily register a verified paired fixture
-    MAMMOGRAM_MANIFEST_LOOKUP["paired_mammo.pgm"] = {
+    MAMMOGRAM_MANIFEST_LOOKUP["test14_mammo.pgm"] = {
         "dataset": "PAIRED_TRIAL",
         "patient_id": "PT_001",
         "label": "benign"
     }
-    THERMAL_MANIFEST_LOOKUP["paired_thermal.jpg"] = {
+    THERMAL_MANIFEST_LOOKUP["test14_thermal.jpg"] = {
         "dataset": "PAIRED_TRIAL",
         "patient_id": "PT_001",
         "label": "benign"
@@ -528,8 +528,8 @@ def test_scenario_14_validate_pair_verified_same_patient(monkeypatch):
         res = client.post(
             "/api/validate-pair",
             files={
-                "mammogram_file": ("paired_mammo.pgm", valid_mammo, "image/x-portable-graymap"),
-                "thermal_file": ("paired_thermal.jpg", valid_thermal, "image/jpeg")
+                "mammogram_file": ("test14_mammo.pgm", valid_mammo, "image/x-portable-graymap"),
+                "thermal_file": ("test14_thermal.jpg", valid_thermal, "image/jpeg")
             },
             data={"case_id": "MF-CASE-MATCHED"}
         )
@@ -537,12 +537,286 @@ def test_scenario_14_validate_pair_verified_same_patient(monkeypatch):
         d = res.json()
         assert d["pairing_status"] == "verified"
         assert d["pairing_badge"] == "Pairing verified from trusted dataset metadata"
-        assert d["combined_status"] == "Both files validated, pairing verified, fusion model unavailable."
+        if d["fusion_model_available"]:
+            assert d["combined_status"] == "Both files validated, pairing verified, fusion model ready."
+            assert d["can_analyze"] is True
+        else:
+            assert d["combined_status"] == "Both files validated, pairing verified, fusion model unavailable."
+            assert d["fusion_model_available"] is False
+            assert d["can_analyze"] is False
+    finally:
+        MAMMOGRAM_MANIFEST_LOOKUP.pop("test14_mammo.pgm", None)
+        THERMAL_MANIFEST_LOOKUP.pop("test14_thermal.jpg", None)
+
+
+# ----------------------------------------------------------------------
+# Scenario 15: Same participant ID in trusted metadata
+# ----------------------------------------------------------------------
+def test_pairing_same_participant_id_in_trusted_metadata():
+    """Requirement: Same participant ID in trusted metadata.
+    Must return same_patient_status: 'Verified', same_patient_verified: True,
+    pairing_status: 'verified', participant_id: <pid>.
+    """
+    valid_mammo = _create_synthetic_pgm_bytes()
+    valid_thermal = _create_synthetic_thermal_bytes()
+
+    res = client.post(
+        "/api/validate-pair",
+        files={
+            "mammogram_file": ("paired_mammo.pgm", valid_mammo, "image/x-portable-graymap"),
+            "thermal_file": ("paired_thermal.jpg", valid_thermal, "image/jpeg")
+        },
+        data={"case_id": "TEST_CASE_001"}
+    )
+    assert res.status_code == 200
+    d = res.json()
+    assert d["same_patient_status"] == "Verified"
+    assert d["same_patient_verified"] is True
+    assert d["pairing_status"] == "verified"
+    assert d["participant_id"] == "TEST_PT_001"
+    assert "Same-patient pairing verified" in d["pairing_reason"]
+    if d["fusion_model_available"]:
+        assert d["can_analyze"] is True
+        assert d["combined_status"] == "Both files validated, pairing verified, fusion model ready."
+    else:
         assert d["fusion_model_available"] is False
         assert d["can_analyze"] is False
+
+
+# ----------------------------------------------------------------------
+# Scenario 16: Different participant IDs
+# ----------------------------------------------------------------------
+def test_pairing_different_participant_ids():
+    """Requirement: Different participant IDs in trusted metadata.
+    Must return same_patient_status: 'Not verified', same_patient_verified: False,
+    pairing_status: 'mismatch', with exact mismatch reason.
+    """
+    valid_mammo = _create_synthetic_pgm_bytes()
+    valid_thermal = _create_synthetic_thermal_bytes()
+
+    res = client.post(
+        "/api/validate-pair",
+        files={
+            "mammogram_file": ("mdb001lm.pgm", valid_mammo, "image/x-portable-graymap"),
+            "thermal_file": ("IIR0110_anterior.jpg", valid_thermal, "image/jpeg")
+        },
+        data={"case_id": "TEST_CASE_002"}
+    )
+    assert res.status_code == 200
+    d = res.json()
+    assert d["same_patient_status"] == "Not verified"
+    assert d["same_patient_verified"] is False
+    assert d["pairing_status"] == "mismatch"
+    assert "Participant ID mismatch" in d["pairing_reason"]
+    assert d["can_analyze"] is False
+
+
+# ----------------------------------------------------------------------
+# Scenario 17: Missing participant ID
+# ----------------------------------------------------------------------
+def test_pairing_missing_participant_id():
+    """Requirement: Missing participant ID in trusted metadata.
+    When a manifest record exists but lacks participant ID, pairing must NOT be verified.
+    """
+    from app.server import MAMMOGRAM_MANIFEST_LOOKUP, THERMAL_MANIFEST_LOOKUP
+
+    MAMMOGRAM_MANIFEST_LOOKUP["no_pid_mammo.pgm"] = {
+        "dataset": "BENCHMARK",
+        "patient_id": None,
+        "label": "normal"
+    }
+    THERMAL_MANIFEST_LOOKUP["no_pid_thermal.jpg"] = {
+        "dataset": "BENCHMARK",
+        "patient_id": None,
+        "label": "normal"
+    }
+
+    try:
+        valid_mammo = _create_synthetic_pgm_bytes()
+        valid_thermal = _create_synthetic_thermal_bytes()
+
+        res = client.post(
+            "/api/validate-pair",
+            files={
+                "mammogram_file": ("no_pid_mammo.pgm", valid_mammo, "image/x-portable-graymap"),
+                "thermal_file": ("no_pid_thermal.jpg", valid_thermal, "image/jpeg")
+            },
+            data={"case_id": "TEST_CASE_003"}
+        )
+        assert res.status_code == 200
+        d = res.json()
+        assert d["same_patient_status"] == "Not verified"
+        assert d["same_patient_verified"] is False
+        assert d["pairing_status"] == "not_verified"
+        assert "Participant identifier missing" in d["pairing_reason"]
+        assert d["can_analyze"] is False
     finally:
-        MAMMOGRAM_MANIFEST_LOOKUP.pop("paired_mammo.pgm", None)
-        THERMAL_MANIFEST_LOOKUP.pop("paired_thermal.jpg", None)
+        MAMMOGRAM_MANIFEST_LOOKUP.pop("no_pid_mammo.pgm", None)
+        THERMAL_MANIFEST_LOOKUP.pop("no_pid_thermal.jpg", None)
+
+
+# ----------------------------------------------------------------------
+# Scenario 18: Missing metadata
+# ----------------------------------------------------------------------
+def test_pairing_missing_metadata():
+    """Requirement: Missing metadata (uncatalogued scans).
+    Must return same_patient_status: 'Not verified', same_patient_verified: False,
+    pairing_status: 'not_verified', with exact reason explaining missing metadata.
+    """
+    valid_mammo = _create_synthetic_pgm_bytes()
+    valid_thermal = _create_synthetic_thermal_bytes()
+
+    res = client.post(
+        "/api/validate-pair",
+        files={
+            "mammogram_file": ("uncatalogued_mammo.pgm", valid_mammo, "image/x-portable-graymap"),
+            "thermal_file": ("uncatalogued_thermal.jpg", valid_thermal, "image/jpeg")
+        },
+        data={"case_id": "TEST_CASE_004"}
+    )
+    assert res.status_code == 200
+    d = res.json()
+    assert d["same_patient_status"] == "Not verified"
+    assert d["same_patient_verified"] is False
+    assert d["pairing_status"] == "not_verified"
+    assert "Missing trusted metadata" in d["pairing_reason"]
+    assert d["can_analyze"] is False
+
+
+# ----------------------------------------------------------------------
+# Scenario 19: Matching filenames but different participants
+# ----------------------------------------------------------------------
+def test_pairing_matching_filenames_but_different_participants():
+    """Requirement: Matching filenames but different participants.
+    Filename similarity must NEVER be treated as proof of same-patient identity.
+    Even if filenames are identical (e.g. 'case_01.png'), participant ID in metadata governs.
+    """
+    from app.server import MAMMOGRAM_MANIFEST_LOOKUP, THERMAL_MANIFEST_LOOKUP
+
+    # Both files named 'case_01.png', but metadata proves they belong to different patients!
+    MAMMOGRAM_MANIFEST_LOOKUP["case_01.png"] = {
+        "dataset": "COHORT_A",
+        "patient_id": "PATIENT_ALPHA",
+        "label": "benign"
+    }
+    THERMAL_MANIFEST_LOOKUP["case_01.png"] = {
+        "dataset": "COHORT_B",
+        "patient_id": "PATIENT_BETA",
+        "label": "benign"
+    }
+
+    try:
+        valid_mammo = _create_synthetic_mammogram_png_bytes()
+        valid_thermal = _create_synthetic_thermal_bytes()
+
+        res = client.post(
+            "/api/validate-pair",
+            files={
+                "mammogram_file": ("case_01.png", valid_mammo, "image/png"),
+                "thermal_file": ("case_01.png", valid_thermal, "image/jpeg")
+            },
+            data={"case_id": "TEST_CASE_005"}
+        )
+        assert res.status_code == 200
+        d = res.json()
+        assert d["same_patient_status"] == "Not verified"
+        assert d["same_patient_verified"] is False
+        assert d["pairing_status"] == "mismatch"
+        assert "Participant ID mismatch" in d["pairing_reason"]
+        assert "PATIENT_ALPHA" in d["pairing_reason"]
+        assert "PATIENT_BETA" in d["pairing_reason"]
+        assert d["can_analyze"] is False
+    finally:
+        MAMMOGRAM_MANIFEST_LOOKUP.pop("case_01.png", None)
+        THERMAL_MANIFEST_LOOKUP.pop("case_01.png", None)
+
+
+# ----------------------------------------------------------------------
+# Scenario 20: Both uploads present but fusion model unavailable
+# ----------------------------------------------------------------------
+def test_pairing_both_uploads_present_but_fusion_model_unavailable(monkeypatch):
+    """Requirement: Both uploads present and validated, same participant confirmed,
+    but fusion model unavailable.
+    Must keep combined analysis disabled: can_analyze=False, fusion_model_available=False,
+    combined_status: 'Both files validated, pairing verified, fusion model unavailable.'
+    And when a compatible fusion model is available, can_analyze becomes True.
+    """
+    from app import server
+
+    # 1. When fusion model is None (standard state)
+    monkeypatch.setattr(server, "get_checkpoint_path_for_modality", lambda mod: None)
+
+    valid_mammo = _create_synthetic_pgm_bytes()
+    valid_thermal = _create_synthetic_thermal_bytes()
+
+    res = client.post(
+        "/api/validate-pair",
+        files={
+            "mammogram_file": ("paired_mammo.pgm", valid_mammo, "image/x-portable-graymap"),
+            "thermal_file": ("paired_thermal.jpg", valid_thermal, "image/jpeg")
+        },
+        data={"case_id": "TEST_CASE_006"}
+    )
+    assert res.status_code == 200
+    d = res.json()
+    assert d["same_patient_status"] == "Verified"
+    assert d["same_patient_verified"] is True
+    assert d["pairing_status"] == "verified"
+    assert d["fusion_model_available"] is False
+    assert d["can_analyze"] is False
+    assert d["combined_status"] == "Both files validated, pairing verified, fusion model unavailable."
+
+    # 2. When a compatible genuine fusion checkpoint exists
+    monkeypatch.setattr(server, "get_checkpoint_path_for_modality", lambda mod: Path("models/fusion_resnet50.pt"))
+
+    res2 = client.post(
+        "/api/validate-pair",
+        files={
+            "mammogram_file": ("paired_mammo.pgm", valid_mammo, "image/x-portable-graymap"),
+            "thermal_file": ("paired_thermal.jpg", valid_thermal, "image/jpeg")
+        },
+        data={"case_id": "TEST_CASE_006"}
+    )
+    assert res2.status_code == 200
+    d2 = res2.json()
+    assert d2["same_patient_status"] == "Verified"
+    assert d2["same_patient_verified"] is True
+    assert d2["pairing_status"] == "verified"
+    assert d2["fusion_model_available"] is True
+    assert d2["can_analyze"] is True
+    assert d2["combined_status"] == "Both files validated, pairing verified, fusion model ready."
 
 
 
+
+
+
+def test_real_multimodal_paired_inference_and_gradcam():
+    """Verifies end-to-end multimodal inference and Grad-CAM generation for verified patient pairs."""
+    valid_mammo = _create_synthetic_pgm_bytes()
+    valid_thermal = _create_synthetic_thermal_bytes()
+
+    res = client.post(
+        "/api/analyze/combined",
+        files={
+            "mammogram_file": ("paired_mammo.pgm", valid_mammo, "image/x-portable-graymap"),
+            "thermal_file": ("paired_thermal.jpg", valid_thermal, "image/jpeg")
+        },
+        data={"case_id": "TEST_CASE_PAIRED_INFERENCE"}
+    )
+    assert res.status_code == 200
+    d = res.json()
+    assert d["status"] == "classified"
+    assert d["modality"] == "combined"
+    assert d["inference_ready"] is True
+    assert d["predicted_class"] in ["normal", "benign", "malignant"]
+    assert 0.0 <= d["confidence"] <= 1.0
+    assert d["probabilities"] is not None
+    assert "normal" in d["probabilities"]
+    assert "benign" in d["probabilities"]
+    assert "malignant" in d["probabilities"]
+    assert d["gradcam_url"] is not None
+
+    cam_res = client.get(d["gradcam_url"])
+    assert cam_res.status_code == 200
+    assert cam_res.headers["content-type"] == "image/jpeg"

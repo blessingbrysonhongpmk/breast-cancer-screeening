@@ -3,6 +3,7 @@ import {
   Home,
   Scan,
   BarChart3,
+  FileText,
   Clock,
   Info,
   RefreshCw,
@@ -29,24 +30,30 @@ import { AboutPage } from './features/about/AboutPage';
 import { PinkRibbon, WomanSilhouette } from './components/Illustrations';
 
 export function App() {
-  const [activeModality, setActiveModality] = useState<'mammogram' | 'thermal'>('mammogram');
+  const [activeModality, setActiveModality] = useState<'mammogram' | 'thermal' | 'combined'>('mammogram');
 
   const normalizeView = (hash: string): string => {
     const clean = hash.replace('#', '').trim().toLowerCase();
-    if (['dashboard', 'examination', 'results', 'history', 'about'].includes(clean)) {
+    if (['dashboard', 'screening', 'examination', 'results', 'history', 'about'].includes(clean)) {
+      if (clean === 'examination') return 'screening';
       return clean;
     }
     // Backward compatibility for existing links and hashes
     if (clean === 'home' || clean === 'overview') return 'dashboard';
-    if (clean === 'analyze') return 'examination';
+    if (clean === 'analyze' || clean === 'examination') return 'screening';
     if (clean === 'mammogram') {
       setActiveModality('mammogram');
-      return 'examination';
+      return 'screening';
     }
     if (clean === 'thermal') {
       setActiveModality('thermal');
-      return 'examination';
+      return 'screening';
     }
+    if (clean === 'combined') {
+      setActiveModality('combined');
+      return 'screening';
+    }
+    if (clean === 'reports') return 'results';
     if (clean === 'explainability' || clean === 'evaluation') return 'results';
     if (['datasets', 'settings'].includes(clean)) return 'about';
     return 'dashboard';
@@ -117,14 +124,14 @@ export function App() {
 
   // Exactly the 5 items matching user design
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'examination', label: 'New Examination', icon: Scan },
-    { id: 'results', label: 'Results', icon: BarChart3 },
-    { id: 'history', label: 'Patient History', icon: Clock },
+    { id: 'dashboard', label: 'Home', icon: Home },
+    { id: 'screening', label: 'Screening', icon: Scan },
+    { id: 'history', label: 'History', icon: Clock },
+    { id: 'results', label: 'Reports', icon: FileText },
     { id: 'about', label: 'About', icon: Info }
   ];
 
-  const handleNavigate = (view: string, modality?: 'mammogram' | 'thermal', sampleFilename?: string) => {
+  const handleNavigate = (view: string, modality?: 'mammogram' | 'thermal' | 'combined', sampleFilename?: string) => {
     const normalized = normalizeView(view);
     if (modality) {
       setActiveModality(modality);
@@ -314,10 +321,11 @@ export function App() {
               modelReadiness={modelReadiness}
               backendStatus={backendStatus}
               onNavigate={handleNavigate}
+              onSelectResult={(res) => setLatestAnalysis(res)}
             />
           )}
 
-          {currentView === 'examination' && (
+          {(currentView === 'screening' || currentView === 'examination') && (
             <AnalysisPage
               initialModality={activeModality}
               initialSampleFilename={targetSample}
@@ -325,6 +333,7 @@ export function App() {
               modelReadiness={modelReadiness}
               onNavigate={handleNavigate}
               onAnalysisComplete={(res) => setLatestAnalysis(res)}
+              latestResult={latestAnalysis}
             />
           )}
 

@@ -128,3 +128,4 @@ $$L_{\text{Grad-CAM}}^c = \text{ReLU}\left(\sum_k \alpha_k^c A^k\right)$$
 - **ReLU Rectification:** Isolates features positively contributing to the chosen diagnostic class.
 - **Colormap Overlay:** Uses OpenCV and Matplotlib Turbo colormap for perceptually uniform contrast without misleading rainbow artifacts.
 - **Focal Region Localization:** Thresholds top activations ($\ge 60\%$) to generate bounding boxes indicating anatomical regions of concern.
+

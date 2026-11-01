@@ -49,14 +49,23 @@ def detect_image_modality(img: Image.Image, filename: str = "") -> Tuple[str, st
     g = rgb_arr[:, :, 1]
     b = rgb_arr[:, :, 2]
 
-    # Channel delta and HSV saturation
+    # Channel delta across visible pixels
     ch_diff = float(np.mean(np.abs(r - g)) + np.mean(np.abs(g - b)) + np.mean(np.abs(b - r))) / 3.0
     max_c = np.maximum(np.maximum(r, g), b)
     min_c = np.minimum(np.minimum(r, g), b)
-    delta_c = max_c - min_c
-    with np.errstate(divide="ignore", invalid="ignore"):
-        sat = np.where(max_c > 0, delta_c / (max_c + 1e-6), 0)
-    mean_sat = float(np.mean(sat))
+
+    # Compute saturation ONLY on pixels with visible luminance (>= 20.0)
+    # This prevents black background quantisation noise in JPEG/PNG mammograms from causing artificial high saturation!
+    visible_mask = max_c >= 20.0
+    if np.sum(visible_mask) >= 30:
+        vis_max = max_c[visible_mask]
+        vis_min = min_c[visible_mask]
+        vis_sat = (vis_max - vis_min) / (vis_max + 1e-6)
+        mean_sat = float(np.mean(vis_sat))
+        chromatic_fraction = float(np.mean(vis_sat > 0.25))
+    else:
+        mean_sat = 0.0
+        chromatic_fraction = 0.0
 
     # Known filename provenance hints
     thermal_hints = ["iir", "anterior", "oblder", "oblizq", "therm", "infrared", "flir"]
@@ -68,15 +77,15 @@ def detect_image_modality(img: Image.Image, filename: str = "") -> Tuple[str, st
 
     # Provenance match: Digital Mammography naming
     if any(hint in filename_lower for hint in mammogram_hints):
-        if ch_diff >= 12.0 and mean_sat >= 0.15:
+        if ch_diff >= 12.0 and chromatic_fraction >= 0.15:
             return "invalid", f"Color image detected ({ch_diff:.1f} channel divergence) despite mammogram naming."
         return "mammogram", "Mammography dataset provenance and radiological contrast verified."
 
     # 5. Distinguish Color Scans vs Grayscale Scans
-    is_color = (ch_diff >= 8.0 or mean_sat >= 0.10)
+    # False-color infrared thermograms exhibit significant channel divergence AND genuine chromatic saturation on visible pixels.
+    is_color = (ch_diff >= 12.0 and chromatic_fraction >= 0.12) or (ch_diff >= 20.0)
     if is_color:
-        # High color divergence: infrared false-color thermogram
-        return "thermal", f"False-color infrared thermogram detected (channel divergence={ch_diff:.1f}, saturation={mean_sat:.2f})."
+        return "thermal", f"False-color infrared thermogram detected (channel divergence={ch_diff:.1f}, chromatic fraction={chromatic_fraction:.2f})."
 
     # 6. Grayscale Medical Images (Single-channel / Grayscale RGB)
     dark_ratio = float(np.mean(gray_arr < 20.0))
@@ -89,10 +98,10 @@ def detect_image_modality(img: Image.Image, filename: str = "") -> Tuple[str, st
     dynamic_range = float(np.percentile(gray_arr, 95) - np.percentile(gray_arr, 5))
 
     # Radiographic features: Mammograms have black background air borders OR high dynamic soft-tissue range
-    if dark_ratio >= 0.06 or edge_dark >= 0.08:
+    if dark_ratio >= 0.04 or edge_dark >= 0.05:
         return "mammogram", f"Radiographic background border and tissue contrast verified (dark_ratio={dark_ratio:.2f})."
 
-    if dynamic_range >= 30.0:
+    if dynamic_range >= 25.0:
         return "mammogram", f"Radiological soft-tissue dynamic range verified (span={dynamic_range:.1f})."
 
     # Ambient torso thermography (Mendeley grayscale torso view):
@@ -117,18 +126,36 @@ def validate_thermal_image(img: Image.Image, filename: str = "") -> Tuple[bool, 
     """Validates that the image is a valid thermal scan.
     Returns (True, explanation) if valid, or (False, error_message) if invalid.
     """
+    filename_lower = filename.lower()
+    suffix = os.path.splitext(filename_lower)[1]
+
     # PGM files are never thermal
-    if filename.lower().endswith(".pgm"):
+    if suffix == ".pgm":
         return False, THERMAL_ERROR_MSG
 
     # Explicit mammogram filenames are rejected in thermal slot
     mammogram_hints = ["mdb", "mammo", "mias", "ddsm", "cbis", "inbreast"]
-    if any(hint in filename.lower() for hint in mammogram_hints):
+    if any(hint in filename_lower for hint in mammogram_hints):
         return False, THERMAL_ERROR_MSG
 
     detected_modality, reason = detect_image_modality(img, filename)
     if detected_modality == "thermal":
         return True, reason
 
-    # Grayscale images with black radiographic borders are rejected in thermal
-    return False, THERMAL_ERROR_MSG
+    # Check for obvious single-breast unilateral radiograph with prominent black border (>40%)
+    thumb = img.copy()
+    thumb.thumbnail((128, 128), Image.Resampling.BILINEAR)
+    gray = np.array(thumb.convert("L"), dtype=np.float32)
+    dark_ratio = float(np.mean(gray < 20.0))
+    edge_dark = float(
+        np.mean(gray[0, :] < 20.0)
+        + np.mean(gray[-1, :] < 20.0)
+        + np.mean(gray[:, 0] < 20.0)
+        + np.mean(gray[:, -1] < 20.0)
+    ) / 4.0
+
+    if dark_ratio >= 0.40 and edge_dark >= 0.35:
+        return False, THERMAL_ERROR_MSG
+
+    # Valid non-blank thermal scan (e.g. grayscale torso thermography)
+    return True, f"Thermal infrared scan accepted for thermography analysis ({reason})."

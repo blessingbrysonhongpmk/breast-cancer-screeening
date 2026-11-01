@@ -201,3 +201,4 @@ Retrieves or clears recent examination records stored in `reports/recent_analyse
 
 ### `POST /api/reports/export-markdown`
 Accepts an `AnalysisResponse` object and returns a formatted research publication markdown report.
+

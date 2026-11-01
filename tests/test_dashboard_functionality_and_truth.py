@@ -34,7 +34,7 @@ def test_dashboard_last_analysis_truth():
         latest = records[0]
         assert "timestamp" in latest
         assert "modality" in latest
-        assert latest["modality"] in {"mammogram", "thermal"}
+        assert latest["modality"] in {"mammogram", "thermal", "combined"}
         assert latest.get("predicted_class") in {"normal", "benign", "malignant"}
 
 
@@ -62,11 +62,15 @@ def test_dashboard_models_successfully_loaded():
         assert thermal["checkpoint"] == "thermal_resnet50.pt"
         assert thermal["target_layer"] == "layer4"
 
-    # Combined model check: strictly reports pending training
+    # Combined model check: reports readiness dynamically based on checkpoint presence
     combined = data.get("combined")
     assert combined is not None
-    assert combined["ready"] is False
-    assert "Combined analysis model is not yet available." in combined["status_text"]
+    if (MODELS_DIR / "fusion_resnet50.pt").exists() or (MODELS_DIR / "multimodal_resnet50.pt").exists():
+        assert combined["ready"] is True
+        assert combined["status_text"] == "Model Ready"
+    else:
+        assert combined["ready"] is False
+        assert "Combined analysis model is not yet available." in combined["status_text"]
 
     # Grad-CAM and Real-time Analysis checks
     assert data["gradcam_ready"] is True

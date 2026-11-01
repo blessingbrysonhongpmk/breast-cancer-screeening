@@ -1,55 +1,235 @@
-relative_path,modality,dataset,filename,patient_id,view,image_width,image_height,file_type,file_size_bytes,label,patient_overall_label,left_diagnosis,right_diagnosis,age_years,temperature_c,weight_kg,height_cm,label_source,validation_status,validation_error,split
-Breast Thermography/IIR0130/IIR0130_anterior.jpg,thermal,Mendeley_Thermography,IIR0130_anterior.jpg,IIR0130,frontal,320,240,.jpg,223821,benign,benign,PB,N,44,35.8,87.7,161.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0130/IIR0130_oblder.jpg,thermal,Mendeley_Thermography,IIR0130_oblder.jpg,IIR0130,lateral_right,320,240,.jpg,223628,normal,benign,PB,N,44,35.8,87.7,161.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0130/IIR0130_oblizq.jpg,thermal,Mendeley_Thermography,IIR0130_oblizq.jpg,IIR0130,lateral_left,320,240,.jpg,223375,benign,benign,PB,N,44,35.8,87.7,161.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0240/IIR0240_anterior.jpg,thermal,Mendeley_Thermography,IIR0240_anterior.jpg,IIR0240,frontal,320,240,.jpg,224019,malignant,malignant,N,PM,65,35.7,66.3,150.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0240/IIR0240_oblder.jpg,thermal,Mendeley_Thermography,IIR0240_oblder.jpg,IIR0240,lateral_right,320,240,.jpg,223941,malignant,malignant,N,PM,65,35.7,66.3,150.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0240/IIR0240_oblizq.jpg,thermal,Mendeley_Thermography,IIR0240_oblizq.jpg,IIR0240,lateral_left,320,240,.jpg,223926,normal,malignant,N,PM,65,35.7,66.3,150.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0241/IIR0241_anterior.jpg,thermal,Mendeley_Thermography,IIR0241_anterior.jpg,IIR0241,frontal,320,240,.jpg,223880,malignant,malignant,N,PM,73,36.2,84.7,157.3,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0241/IIR0241_oblder.jpg,thermal,Mendeley_Thermography,IIR0241_oblder.jpg,IIR0241,lateral_right,320,240,.jpg,223667,malignant,malignant,N,PM,73,36.2,84.7,157.3,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0241/IIR0241_oblizq.jpg,thermal,Mendeley_Thermography,IIR0241_oblizq.jpg,IIR0241,lateral_left,320,240,.jpg,223834,normal,malignant,N,PM,73,36.2,84.7,157.3,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0242/IIR0242_anterior.jpg,thermal,Mendeley_Thermography,IIR0242_anterior.jpg,IIR0242,frontal,320,240,.jpg,223798,benign,benign,N,PB,39,36.0,64.8,164.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0242/IIR0242_oblder.jpg,thermal,Mendeley_Thermography,IIR0242_oblder.jpg,IIR0242,lateral_right,320,240,.jpg,223898,benign,benign,N,PB,39,36.0,64.8,164.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0242/IIR0242_oblizq.jpg,thermal,Mendeley_Thermography,IIR0242_oblizq.jpg,IIR0242,lateral_left,320,240,.jpg,223814,normal,benign,N,PB,39,36.0,64.8,164.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0350/IIR0350_anterior.jpg,thermal,Mendeley_Thermography,IIR0350_anterior.jpg,IIR0350,frontal,320,240,.jpg,223817,benign,benign,N,PB,38,36.4,70.3,154.7,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0350/IIR0350_oblder.jpg,thermal,Mendeley_Thermography,IIR0350_oblder.jpg,IIR0350,lateral_right,320,240,.jpg,223605,benign,benign,N,PB,38,36.4,70.3,154.7,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0350/IIR0350_oblizq.jpg,thermal,Mendeley_Thermography,IIR0350_oblizq.jpg,IIR0350,lateral_left,320,240,.jpg,223455,normal,benign,N,PB,38,36.4,70.3,154.7,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0404/IIR0404_anterior.jpg,thermal,Mendeley_Thermography,IIR0404_anterior.jpg,IIR0404,frontal,320,240,.jpg,223443,benign,benign,PB,N,51,35.9,83.0,165.0,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0404/IIR0404_oblder.jpg,thermal,Mendeley_Thermography,IIR0404_oblder.jpg,IIR0404,lateral_right,320,240,.jpg,223044,normal,benign,PB,N,51,35.9,83.0,165.0,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0404/IIR0404_oblizq.jpg,thermal,Mendeley_Thermography,IIR0404_oblizq.jpg,IIR0404,lateral_left,320,240,.jpg,222733,benign,benign,PB,N,51,35.9,83.0,165.0,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0441/IIR0441_anterior.jpg,thermal,Mendeley_Thermography,IIR0441_anterior.jpg,IIR0441,frontal,320,240,.jpg,223994,benign,benign,PB,N,45,36.5,58.9,164.2,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0441/IIR0441_oblder.jpg,thermal,Mendeley_Thermography,IIR0441_oblder.jpg,IIR0441,lateral_right,320,240,.jpg,223807,normal,benign,PB,N,45,36.5,58.9,164.2,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0441/IIR0441_oblizq.jpg,thermal,Mendeley_Thermography,IIR0441_oblizq.jpg,IIR0441,lateral_left,320,240,.jpg,223839,benign,benign,PB,N,45,36.5,58.9,164.2,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0510/IIR0510_anterior.jpg,thermal,Mendeley_Thermography,IIR0510_anterior.jpg,IIR0510,frontal,320,240,.jpg,224076,benign,benign,PB,N,41,36.2,93.2,167.0,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0510/IIR0510_oblder.jpg,thermal,Mendeley_Thermography,IIR0510_oblder.jpg,IIR0510,lateral_right,320,240,.jpg,224036,normal,benign,PB,N,41,36.2,93.2,167.0,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0510/IIR0510_oblizq.jpg,thermal,Mendeley_Thermography,IIR0510_oblizq.jpg,IIR0510,lateral_left,320,240,.jpg,224036,benign,benign,PB,N,41,36.2,93.2,167.0,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0524/IIR0524_anterior.jpg,thermal,Mendeley_Thermography,IIR0524_anterior.jpg,IIR0524,frontal,320,240,.jpg,223940,malignant,malignant,PM,N,44,36.5,67.5,170.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0524/IIR0524_oblder.jpg,thermal,Mendeley_Thermography,IIR0524_oblder.jpg,IIR0524,lateral_right,320,240,.jpg,223904,normal,malignant,PM,N,44,36.5,67.5,170.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0524/IIR0524_oblizq.jpg,thermal,Mendeley_Thermography,IIR0524_oblizq.jpg,IIR0524,lateral_left,320,240,.jpg,223810,malignant,malignant,PM,N,44,36.5,67.5,170.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0560/IIR0560_anterior.jpg,thermal,Mendeley_Thermography,IIR0560_anterior.jpg,IIR0560,frontal,320,240,.jpg,223814,benign,benign,N,PB,59,36.2,68.2,162.0,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0560/IIR0560_oblder.jpg,thermal,Mendeley_Thermography,IIR0560_oblder.jpg,IIR0560,lateral_right,320,240,.jpg,223251,benign,benign,N,PB,59,36.2,68.2,162.0,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0560/IIR0560_oblizq.jpg,thermal,Mendeley_Thermography,IIR0560_oblizq.jpg,IIR0560,lateral_left,320,240,.jpg,223458,normal,benign,N,PB,59,36.2,68.2,162.0,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0594/IIR0594_anterior.jpg,thermal,Mendeley_Thermography,IIR0594_anterior.jpg,IIR0594,frontal,320,240,.jpg,224995,benign,benign,PB,PB,78,36.4,65.0,149.6,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0594/IIR0594_oblder.jpg,thermal,Mendeley_Thermography,IIR0594_oblder.jpg,IIR0594,lateral_right,320,240,.jpg,224284,benign,benign,PB,PB,78,36.4,65.0,149.6,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0594/IIR0594_oblizq.jpg,thermal,Mendeley_Thermography,IIR0594_oblizq.jpg,IIR0594,lateral_left,320,240,.jpg,224533,benign,benign,PB,PB,78,36.4,65.0,149.6,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0599/IIR0599_anterior.jpg,thermal,Mendeley_Thermography,IIR0599_anterior.jpg,IIR0599,frontal,320,240,.jpg,223543,benign,benign,N,PB,51,35.6,57.1,148.6,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0599/IIR0599_oblder.jpg,thermal,Mendeley_Thermography,IIR0599_oblder.jpg,IIR0599,lateral_right,320,240,.jpg,223349,benign,benign,N,PB,51,35.6,57.1,148.6,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0599/IIR0599_oblizq.jpg,thermal,Mendeley_Thermography,IIR0599_oblizq.jpg,IIR0599,lateral_left,320,240,.jpg,223215,normal,benign,N,PB,51,35.6,57.1,148.6,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0634/IIR0634_anterior.jpg,thermal,Mendeley_Thermography,IIR0634_anterior.jpg,IIR0634,frontal,320,240,.jpg,223628,malignant,malignant,N,PM,46,36.1,63.0,154.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0634/IIR0634_oblder.jpg,thermal,Mendeley_Thermography,IIR0634_oblder.jpg,IIR0634,lateral_right,320,240,.jpg,223551,malignant,malignant,N,PM,46,36.1,63.0,154.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0634/IIR0634_oblizq.jpg,thermal,Mendeley_Thermography,IIR0634_oblizq.jpg,IIR0634,lateral_left,320,240,.jpg,223415,normal,malignant,N,PM,46,36.1,63.0,154.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0692/IIR0692_anterior.jpg,thermal,Mendeley_Thermography,IIR0692_anterior.jpg,IIR0692,frontal,320,240,.jpg,224405,malignant,malignant,PM,N,46,36.3,73.0,154.2,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0692/IIR0692_oblder.jpg,thermal,Mendeley_Thermography,IIR0692_oblder.jpg,IIR0692,lateral_right,320,240,.jpg,224211,normal,malignant,PM,N,46,36.3,73.0,154.2,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0692/IIR0692_oblizq.jpg,thermal,Mendeley_Thermography,IIR0692_oblizq.jpg,IIR0692,lateral_left,320,240,.jpg,224226,malignant,malignant,PM,N,46,36.3,73.0,154.2,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0770/IIR0770_anterior.jpg,thermal,Mendeley_Thermography,IIR0770_anterior.jpg,IIR0770,frontal,320,240,.jpg,223331,unannotated,unannotated,,,,,,,None,valid,,val
-Breast Thermography/IIR0770/IIR0770_oblder.jpg,thermal,Mendeley_Thermography,IIR0770_oblder.jpg,IIR0770,lateral_right,320,240,.jpg,222803,unannotated,unannotated,,,,,,,None,valid,,val
-Breast Thermography/IIR0770/IIR0770_oblizq.jpg,thermal,Mendeley_Thermography,IIR0770_oblizq.jpg,IIR0770,lateral_left,320,240,.jpg,222890,unannotated,unannotated,,,,,,,None,valid,,val
-Breast Thermography/IIR0924/IIR0924_anterior.jpg,thermal,Mendeley_Thermography,IIR0924_anterior.jpg,IIR0924,frontal,320,240,.jpg,224411,benign,benign,PB,N,38,36.1,76.5,158.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0924/IIR0924_oblder.jpg,thermal,Mendeley_Thermography,IIR0924_oblder.jpg,IIR0924,lateral_right,320,240,.jpg,224276,normal,benign,PB,N,38,36.1,76.5,158.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0924/IIR0924_oblizq.jpg,thermal,Mendeley_Thermography,IIR0924_oblizq.jpg,IIR0924,lateral_left,320,240,.jpg,224293,benign,benign,PB,N,38,36.1,76.5,158.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0975/IIR0975_anterior.jpg,thermal,Mendeley_Thermography,IIR0975_anterior.jpg,IIR0975,frontal,320,240,.jpg,224321,benign,benign,N,PB,40,36.0,71.6,150.0,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0975/IIR0975_oblder.jpg,thermal,Mendeley_Thermography,IIR0975_oblder.jpg,IIR0975,lateral_right,320,240,.jpg,224250,benign,benign,N,PB,40,36.0,71.6,150.0,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0975/IIR0975_oblizq.jpg,thermal,Mendeley_Thermography,IIR0975_oblizq.jpg,IIR0975,lateral_left,320,240,.jpg,224255,normal,benign,N,PB,40,36.0,71.6,150.0,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0983/IIR0983_anterior.jpg,thermal,Mendeley_Thermography,IIR0983_anterior.jpg,IIR0983,frontal,320,240,.jpg,223792,benign,benign,PB,N,45,36.1,77.5,162.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0983/IIR0983_oblder.jpg,thermal,Mendeley_Thermography,IIR0983_oblder.jpg,IIR0983,lateral_right,320,240,.jpg,223620,normal,benign,PB,N,45,36.1,77.5,162.5,Diagnostics.xlsx,valid,,val
-Breast Thermography/IIR0983/IIR0983_oblizq.jpg,thermal,Mendeley_Thermography,IIR0983_oblizq.jpg,IIR0983,lateral_left,320,240,.jpg,223669,benign,benign,PB,N,45,36.1,77.5,162.5,Diagnostics.xlsx,valid,,val
+filename,dataset,patient_id,label,width,height,channels,sha256,relative_path,split
+IIR0130_anterior.jpg,Mendeley Thermography (Mexico),IIR0130,benign,320,240,3,,Breast Thermography/IIR0130/IIR0130_anterior.jpg,val
+IIR0130_oblder.jpg,Mendeley Thermography (Mexico),IIR0130,normal,320,240,3,,Breast Thermography/IIR0130/IIR0130_oblder.jpg,val
+IIR0130_oblizq.jpg,Mendeley Thermography (Mexico),IIR0130,benign,320,240,3,,Breast Thermography/IIR0130/IIR0130_oblizq.jpg,val
+IIR0205_anterior.jpg,Mendeley Thermography (Mexico),IIR0205,malignant,320,240,3,,Breast Thermography/IIR0205/IIR0205_anterior.jpg,val
+IIR0205_oblder.jpg,Mendeley Thermography (Mexico),IIR0205,normal,320,240,3,,Breast Thermography/IIR0205/IIR0205_oblder.jpg,val
+IIR0205_oblizq.jpg,Mendeley Thermography (Mexico),IIR0205,malignant,320,240,3,,Breast Thermography/IIR0205/IIR0205_oblizq.jpg,val
+IIR0242_anterior.jpg,Mendeley Thermography (Mexico),IIR0242,benign,320,240,3,,Breast Thermography/IIR0242/IIR0242_anterior.jpg,val
+IIR0242_oblder.jpg,Mendeley Thermography (Mexico),IIR0242,benign,320,240,3,,Breast Thermography/IIR0242/IIR0242_oblder.jpg,val
+IIR0242_oblizq.jpg,Mendeley Thermography (Mexico),IIR0242,normal,320,240,3,,Breast Thermography/IIR0242/IIR0242_oblizq.jpg,val
+IIR0324_anterior.jpg,Mendeley Thermography (Mexico),IIR0324,unannotated,320,240,3,,Breast Thermography/IIR0324/IIR0324_anterior.jpg,val
+IIR0324_oblder.jpg,Mendeley Thermography (Mexico),IIR0324,unannotated,320,240,3,,Breast Thermography/IIR0324/IIR0324_oblder.jpg,val
+IIR0324_oblizq.jpg,Mendeley Thermography (Mexico),IIR0324,unannotated,320,240,3,,Breast Thermography/IIR0324/IIR0324_oblizq.jpg,val
+IIR0350_anterior.jpg,Mendeley Thermography (Mexico),IIR0350,benign,320,240,3,,Breast Thermography/IIR0350/IIR0350_anterior.jpg,val
+IIR0350_oblder.jpg,Mendeley Thermography (Mexico),IIR0350,benign,320,240,3,,Breast Thermography/IIR0350/IIR0350_oblder.jpg,val
+IIR0350_oblizq.jpg,Mendeley Thermography (Mexico),IIR0350,normal,320,240,3,,Breast Thermography/IIR0350/IIR0350_oblizq.jpg,val
+IIR0351_anterior.jpg,Mendeley Thermography (Mexico),IIR0351,malignant,320,240,3,,Breast Thermography/IIR0351/IIR0351_anterior.jpg,val
+IIR0351_oblder.jpg,Mendeley Thermography (Mexico),IIR0351,normal,320,240,3,,Breast Thermography/IIR0351/IIR0351_oblder.jpg,val
+IIR0351_oblizq.jpg,Mendeley Thermography (Mexico),IIR0351,malignant,320,240,3,,Breast Thermography/IIR0351/IIR0351_oblizq.jpg,val
+IIR0404_anterior.jpg,Mendeley Thermography (Mexico),IIR0404,benign,320,240,3,,Breast Thermography/IIR0404/IIR0404_anterior.jpg,val
+IIR0404_oblder.jpg,Mendeley Thermography (Mexico),IIR0404,normal,320,240,3,,Breast Thermography/IIR0404/IIR0404_oblder.jpg,val
+IIR0404_oblizq.jpg,Mendeley Thermography (Mexico),IIR0404,benign,320,240,3,,Breast Thermography/IIR0404/IIR0404_oblizq.jpg,val
+IIR0441_anterior.jpg,Mendeley Thermography (Mexico),IIR0441,benign,320,240,3,,Breast Thermography/IIR0441/IIR0441_anterior.jpg,val
+IIR0441_oblder.jpg,Mendeley Thermography (Mexico),IIR0441,normal,320,240,3,,Breast Thermography/IIR0441/IIR0441_oblder.jpg,val
+IIR0441_oblizq.jpg,Mendeley Thermography (Mexico),IIR0441,benign,320,240,3,,Breast Thermography/IIR0441/IIR0441_oblizq.jpg,val
+IIR0510_anterior.jpg,Mendeley Thermography (Mexico),IIR0510,benign,320,240,3,,Breast Thermography/IIR0510/IIR0510_anterior.jpg,val
+IIR0510_oblder.jpg,Mendeley Thermography (Mexico),IIR0510,normal,320,240,3,,Breast Thermography/IIR0510/IIR0510_oblder.jpg,val
+IIR0510_oblizq.jpg,Mendeley Thermography (Mexico),IIR0510,benign,320,240,3,,Breast Thermography/IIR0510/IIR0510_oblizq.jpg,val
+IIR0524_anterior.jpg,Mendeley Thermography (Mexico),IIR0524,malignant,320,240,3,,Breast Thermography/IIR0524/IIR0524_anterior.jpg,val
+IIR0524_oblder.jpg,Mendeley Thermography (Mexico),IIR0524,normal,320,240,3,,Breast Thermography/IIR0524/IIR0524_oblder.jpg,val
+IIR0524_oblizq.jpg,Mendeley Thermography (Mexico),IIR0524,malignant,320,240,3,,Breast Thermography/IIR0524/IIR0524_oblizq.jpg,val
+IIR0560_anterior.jpg,Mendeley Thermography (Mexico),IIR0560,benign,320,240,3,,Breast Thermography/IIR0560/IIR0560_anterior.jpg,val
+IIR0560_oblder.jpg,Mendeley Thermography (Mexico),IIR0560,benign,320,240,3,,Breast Thermography/IIR0560/IIR0560_oblder.jpg,val
+IIR0560_oblizq.jpg,Mendeley Thermography (Mexico),IIR0560,normal,320,240,3,,Breast Thermography/IIR0560/IIR0560_oblizq.jpg,val
+IIR0594_anterior.jpg,Mendeley Thermography (Mexico),IIR0594,benign,320,240,3,,Breast Thermography/IIR0594/IIR0594_anterior.jpg,val
+IIR0594_oblder.jpg,Mendeley Thermography (Mexico),IIR0594,benign,320,240,3,,Breast Thermography/IIR0594/IIR0594_oblder.jpg,val
+IIR0594_oblizq.jpg,Mendeley Thermography (Mexico),IIR0594,benign,320,240,3,,Breast Thermography/IIR0594/IIR0594_oblizq.jpg,val
+IIR0599_anterior.jpg,Mendeley Thermography (Mexico),IIR0599,benign,320,240,3,,Breast Thermography/IIR0599/IIR0599_anterior.jpg,val
+IIR0599_oblder.jpg,Mendeley Thermography (Mexico),IIR0599,benign,320,240,3,,Breast Thermography/IIR0599/IIR0599_oblder.jpg,val
+IIR0599_oblizq.jpg,Mendeley Thermography (Mexico),IIR0599,normal,320,240,3,,Breast Thermography/IIR0599/IIR0599_oblizq.jpg,val
+IIR0634_anterior.jpg,Mendeley Thermography (Mexico),IIR0634,malignant,320,240,3,,Breast Thermography/IIR0634/IIR0634_anterior.jpg,val
+IIR0634_oblder.jpg,Mendeley Thermography (Mexico),IIR0634,malignant,320,240,3,,Breast Thermography/IIR0634/IIR0634_oblder.jpg,val
+IIR0634_oblizq.jpg,Mendeley Thermography (Mexico),IIR0634,normal,320,240,3,,Breast Thermography/IIR0634/IIR0634_oblizq.jpg,val
+IIR0729_anterior.jpg,Mendeley Thermography (Mexico),IIR0729,malignant,320,240,3,,Breast Thermography/IIR0729/IIR0729_anterior.jpg,val
+IIR0729_oblder.jpg,Mendeley Thermography (Mexico),IIR0729,malignant,320,240,3,,Breast Thermography/IIR0729/IIR0729_oblder.jpg,val
+IIR0729_oblizq.jpg,Mendeley Thermography (Mexico),IIR0729,normal,320,240,3,,Breast Thermography/IIR0729/IIR0729_oblizq.jpg,val
+IIR0924_anterior.jpg,Mendeley Thermography (Mexico),IIR0924,benign,320,240,3,,Breast Thermography/IIR0924/IIR0924_anterior.jpg,val
+IIR0924_oblder.jpg,Mendeley Thermography (Mexico),IIR0924,normal,320,240,3,,Breast Thermography/IIR0924/IIR0924_oblder.jpg,val
+IIR0924_oblizq.jpg,Mendeley Thermography (Mexico),IIR0924,benign,320,240,3,,Breast Thermography/IIR0924/IIR0924_oblizq.jpg,val
+IIR0975_anterior.jpg,Mendeley Thermography (Mexico),IIR0975,benign,320,240,3,,Breast Thermography/IIR0975/IIR0975_anterior.jpg,val
+IIR0975_oblder.jpg,Mendeley Thermography (Mexico),IIR0975,benign,320,240,3,,Breast Thermography/IIR0975/IIR0975_oblder.jpg,val
+IIR0975_oblizq.jpg,Mendeley Thermography (Mexico),IIR0975,normal,320,240,3,,Breast Thermography/IIR0975/IIR0975_oblizq.jpg,val
+IIR0983_anterior.jpg,Mendeley Thermography (Mexico),IIR0983,benign,320,240,3,,Breast Thermography/IIR0983/IIR0983_anterior.jpg,val
+IIR0983_oblder.jpg,Mendeley Thermography (Mexico),IIR0983,normal,320,240,3,,Breast Thermography/IIR0983/IIR0983_oblder.jpg,val
+IIR0983_oblizq.jpg,Mendeley Thermography (Mexico),IIR0983,benign,320,240,3,,Breast Thermography/IIR0983/IIR0983_oblizq.jpg,val
+241-11.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,a3902820121548468bda8917b1e54e4a6e01cfc00d175c722b3b8cdf7d68c8dd,unpaired/thermal/dmr_ir/241-11.txt.jpg,val
+R241-1.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,1e8fe854caa755ac63cdb4c48487ec960111cf871a5b2566ef40a1649a63ccb1,unpaired/thermal/dmr_ir/R241-1.txt.jpg,val
+R241-10.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,4c34669e55ff5862ada066ef656b5e071f53637acbd3607ad8fe3d2fc8a8e999,unpaired/thermal/dmr_ir/R241-10.txt.jpg,val
+R241-12.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,17363ac7efe57b8df158e039d78365510496aae08c04999eed90e710343fef8f,unpaired/thermal/dmr_ir/R241-12.txt.jpg,val
+R241-13.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,4766d652fda79ede6a33e562750370648b6199b779435595b2f004ca6f8de0cc,unpaired/thermal/dmr_ir/R241-13.txt.jpg,val
+R241-14.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,2e96d4e26bfa5fa80d23cab023e6ae81a302e4435d5670f08dcd33e24749a054,unpaired/thermal/dmr_ir/R241-14.txt.jpg,val
+R241-15.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,d798989fb9417b656917e5d788047d70cd65f6b6e11016ff5f5122958e340b1f,unpaired/thermal/dmr_ir/R241-15.txt.jpg,val
+R241-16.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,009dc701d04ff82de6cd8ee3477a7907556ecfef35260094c47e7614f8dd1616,unpaired/thermal/dmr_ir/R241-16.txt.jpg,val
+R241-17.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,963ffa161f25634fb76b7c902f900ef5d6f03a7e890b47474cb978e41d114aa0,unpaired/thermal/dmr_ir/R241-17.txt.jpg,val
+R241-18.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,a05ab224f0915ccfb57f4b9e9fa19b216dd0580e0c3edc813b1f1452b9bdcf95,unpaired/thermal/dmr_ir/R241-18.txt.jpg,val
+R241-19.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,7e720619b09d375cc613d74f8910219017744f49878193062fbf0b9a2860358f,unpaired/thermal/dmr_ir/R241-19.txt.jpg,val
+R241-2.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,aa5d150eec260b274e8ffce808249088338807bede07e6747c73cc2731fca8af,unpaired/thermal/dmr_ir/R241-2.txt.jpg,val
+R241-20.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,21d8737d64e70aa38be72bfe59f7cc9dde3faa285ef0bf7a101875cc14d10824,unpaired/thermal/dmr_ir/R241-20.txt.jpg,val
+R241-3.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,3ed4b521c980399a264ead48f405ac83255a07285b5a0d064de235db22a74fb1,unpaired/thermal/dmr_ir/R241-3.txt.jpg,val
+R241-4.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,88ee75fe8f0241d7f4ca6f97517bdb1c38f9e15a2d058fc89f89f553aa77cc64,unpaired/thermal/dmr_ir/R241-4.txt.jpg,val
+R241-5.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,6901e7563b2eaee5f2adb12262b791c9b830b9c337b36a689ab3ee83841bbaa0,unpaired/thermal/dmr_ir/R241-5.txt.jpg,val
+R241-6.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,a651d2afb1a7722072d6bf8093f03dbbc53ee8f29d06488942b68ec5095a2f25,unpaired/thermal/dmr_ir/R241-6.txt.jpg,val
+R241-7.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,415448e97654be72eb3902bf7bb3f382fe1a368000ad80db445b33f034228e9b,unpaired/thermal/dmr_ir/R241-7.txt.jpg,val
+R241-8.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,a856a65f4b1f1513603373deecbd562d01258bc8aade825b7b16bfcbf7151785,unpaired/thermal/dmr_ir/R241-8.txt.jpg,val
+R241-9.txt.jpg,DMR-IR (Brazil),DMR_PT_241,malignant,224,224,1,758c8a06d253867dad89c8cf274926f47cf050987db493bfdb9fdce919d35dab,unpaired/thermal/dmr_ir/R241-9.txt.jpg,val
+IR_2015-04-17_0007.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,c42fbfb9e3c27f0343e365405e2233d189a2bbe40192446377e71a08ee7db318,unpaired/thermal/dmr_ir/IR_2015-04-17_0007.jpg,val
+IR_2015-04-17_0008.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,660dcc38e94cc0c7ee2d6399316788795024e2f97ab5869cb5da8e6ecf9ad9f1,unpaired/thermal/dmr_ir/IR_2015-04-17_0008.jpg,val
+IR_2015-04-17_0009.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,363a9957785c33c168d3a25d221d6efe512ada1f20e16451bfff2d33b3b8f488,unpaired/thermal/dmr_ir/IR_2015-04-17_0009.jpg,val
+IR_2015-04-17_0010.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,fd99f29aa3c365093d81dd30f6f588c9bc535ef0c5c35649ca65469c8b4c8299,unpaired/thermal/dmr_ir/IR_2015-04-17_0010.jpg,val
+IR_2015-04-17_0011.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,fbecd15ac54de2b551b8b50be6f8e43e9f6d9f11e222d18ef9e44ba98826e0ea,unpaired/thermal/dmr_ir/IR_2015-04-17_0011.jpg,val
+IR_2015-04-17_0012.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,a1cb2c29c9640e142d9344dd12458c87328ec158c9b0e4e0ddeb1c164aef6348,unpaired/thermal/dmr_ir/IR_2015-04-17_0012.jpg,val
+IR_2015-04-17_0013.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,40b17bf5d1f596abb81f02b79fc3d482bd819142f87ceb2988bb77da2506b9bb,unpaired/thermal/dmr_ir/IR_2015-04-17_0013.jpg,val
+IR_2015-04-17_0014.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,7e0ad3940bbadf3b1c9a04bdf5e4921b4b63231cb930854c7bb4a254e6594ad6,unpaired/thermal/dmr_ir/IR_2015-04-17_0014.jpg,val
+IR_2015-04-17_0015.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,d7db9025ede5a8042976497e44f72864ee9993ff965cc6180e739f7ac23f53f8,unpaired/thermal/dmr_ir/IR_2015-04-17_0015.jpg,val
+IR_2015-04-17_0016.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,1642c951ac09c6b3b681089d9e998404eaddd8c61eacf36b2fff725d3660d201,unpaired/thermal/dmr_ir/IR_2015-04-17_0016.jpg,val
+IR_2015-04-17_0017.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,1190456fae615e993dc05e1db49576a8cd3af7a83b75bfdd9e02b1d6aacae8a3,unpaired/thermal/dmr_ir/IR_2015-04-17_0017.jpg,val
+IR_2015-04-17_0018.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,b9701bc896052a27ccc9dd8f26167da45f9e586acf3edfd1634be969ef2184c2,unpaired/thermal/dmr_ir/IR_2015-04-17_0018.jpg,val
+IR_2015-04-17_0019.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,789d6ccf173619fcedee60ea5dde5b3da2fd008bd20319a350eed017dc14c227,unpaired/thermal/dmr_ir/IR_2015-04-17_0019.jpg,val
+IR_2015-04-17_0020.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,89a7cf2fbabc02177d1c881cf2b69dc7485f58b4842bc4043674f80eedd5a4cf,unpaired/thermal/dmr_ir/IR_2015-04-17_0020.jpg,val
+IR_2015-04-17_0021.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,c4dbc3ba1f985df4f7de71708c17262bb73b0a780a7ed585788e2ee746405f7a,unpaired/thermal/dmr_ir/IR_2015-04-17_0021.jpg,val
+IR_2015-04-17_0022.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,ffa6ee48924ec3522ce773b2d88196c8285c6d0dc54053d9c3346653b14fd0af,unpaired/thermal/dmr_ir/IR_2015-04-17_0022.jpg,val
+IR_2015-04-17_0023.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,50dff64ca78e8e157853d52bdebfa16bc35cfd776105cbfe03ea718316a07f59,unpaired/thermal/dmr_ir/IR_2015-04-17_0023.jpg,val
+IR_2015-04-17_0024.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,a845e6f17e7ce8d6590c9747182ec5bd20e496ff49634062eacc4e334a73c93f,unpaired/thermal/dmr_ir/IR_2015-04-17_0024.jpg,val
+IR_2015-04-17_0025.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,1c95f360a48fa9d6a9db2df1654b4d77a1bd34328329bc183e267211414acb1a,unpaired/thermal/dmr_ir/IR_2015-04-17_0025.jpg,val
+IR_2015-04-17_0026.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S1,malignant,224,224,3,2cb29dfe49f3677e779908ca00910e839148eff26c031142efa26aa0594c8624,unpaired/thermal/dmr_ir/IR_2015-04-17_0026.jpg,val
+IR_2015-04-24_0049.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,235c17cb4d3d65577a9e4e7f32d7d34215c73e41802ec89e9c8bdbbe959b0783,unpaired/thermal/dmr_ir/IR_2015-04-24_0049.jpg,val
+IR_2015-04-24_0050.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,4ce8bf5a4f5a5cc6bc10b4a6e74d8f1b07f1dcc4c025157d6244428a2f8c2f39,unpaired/thermal/dmr_ir/IR_2015-04-24_0050.jpg,val
+IR_2015-04-24_0051.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,25f59377385825a51214609723d62d2eb0f8cf2ee6665b0c0320db522d7a93d4,unpaired/thermal/dmr_ir/IR_2015-04-24_0051.jpg,val
+IR_2015-04-24_0052.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,9876c9123004d48a4ebd21bbe2db7783d047cb223bb064ffcd07cc26e3324fc3,unpaired/thermal/dmr_ir/IR_2015-04-24_0052.jpg,val
+IR_2015-04-24_0053.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,32143858642e9f3cc982f3879a027e13a19ff2d849d836d501ac9bbf5158cb25,unpaired/thermal/dmr_ir/IR_2015-04-24_0053.jpg,val
+IR_2015-04-24_0054.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,44386db31d0f40a6f8ba5591f57c639608d1d8803f8a5ec6d00a10192957c43c,unpaired/thermal/dmr_ir/IR_2015-04-24_0054.jpg,val
+IR_2015-04-24_0055.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,3b44fdb3f04b72f548fcdac7f0ac123dd3aefaebd712eb8f8e28c90cd184abea,unpaired/thermal/dmr_ir/IR_2015-04-24_0055.jpg,val
+IR_2015-04-24_0056.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,076d71f03f42c403f0ebe68dcc539240d2499fbee8caf043569dee096ac49b0b,unpaired/thermal/dmr_ir/IR_2015-04-24_0056.jpg,val
+IR_2015-04-24_0057.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,b799bc0b737e9afd0c9b80d500e9fd6b8687ef158d192fd7617221eef0c26a68,unpaired/thermal/dmr_ir/IR_2015-04-24_0057.jpg,val
+IR_2015-04-24_0058.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,ca29ff39f72947a96b8ee689ed06de88c091d50f0d171d8057dd580a2a8b05fd,unpaired/thermal/dmr_ir/IR_2015-04-24_0058.jpg,val
+IR_2015-04-24_0059.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,8df4acdab6f6cd4c8155d3b35548beebf98c02cd33ed175c184937cd11884d93,unpaired/thermal/dmr_ir/IR_2015-04-24_0059.jpg,val
+IR_2015-04-24_0060.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,1d4d86de4bbdf50e286d0c96fe84c58347ec12ca816fe68172454e648c35ed86,unpaired/thermal/dmr_ir/IR_2015-04-24_0060.jpg,val
+IR_2015-04-24_0061.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,1eac481e35ac76c2ba030677b94b0ee613d6046c45a9425e828e8d51cbfad17a,unpaired/thermal/dmr_ir/IR_2015-04-24_0061.jpg,val
+IR_2015-04-24_0062.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,131b22666d2f9f7ef3f42070ce1125577abfaedda70d675f94c49f3725990f86,unpaired/thermal/dmr_ir/IR_2015-04-24_0062.jpg,val
+IR_2015-04-24_0063.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,d11e98acba4e4a8dddcbce0d9c60f9590f8bbceae79648848435394cedbd930d,unpaired/thermal/dmr_ir/IR_2015-04-24_0063.jpg,val
+IR_2015-04-24_0064.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,2c7cf37d9c236341e1ab1cc80f585edd9e612452fdc72459ebc9f93531a854bd,unpaired/thermal/dmr_ir/IR_2015-04-24_0064.jpg,val
+IR_2015-04-24_0065.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,c805ca211cc80a12f63c4aadd64190f1c935e2e913b7ad5df3079d4050a1cd76,unpaired/thermal/dmr_ir/IR_2015-04-24_0065.jpg,val
+IR_2015-04-24_0066.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,a93a4a5215c99407ac17e868cfc5a09c4733de9280c39a5528e924ae900cdd4f,unpaired/thermal/dmr_ir/IR_2015-04-24_0066.jpg,val
+IR_2015-04-24_0067.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,4866d12d50abeae109636a49b0b7d1f219defde952960e2242d54d95dc46dd18,unpaired/thermal/dmr_ir/IR_2015-04-24_0067.jpg,val
+IR_2015-04-24_0068.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,ab38a5dc92648b9a1d6e40b0f5ea907019feb01e7fcd1bb35954d16bffdfcc0e,unpaired/thermal/dmr_ir/IR_2015-04-24_0068.jpg,val
+IR_2015-04-24_0152.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,645d14def2ed4fca62ca67218532a1963ee09771fa915f767b06b4f457642a67,unpaired/thermal/dmr_ir/IR_2015-04-24_0152.jpg,val
+IR_2015-04-24_0153.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,ad04bdf5523e052a32926e64f6a9ec4f8f23fa33700af734c3abdd7160cf8ee8,unpaired/thermal/dmr_ir/IR_2015-04-24_0153.jpg,val
+IR_2015-04-24_0154.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,1dbaa722f0e2626400a4fbbb241b2edf25232dc7592da8f2739fd74bf3157ab0,unpaired/thermal/dmr_ir/IR_2015-04-24_0154.jpg,val
+IR_2015-04-24_0155.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,d0e52e54892e8dc7e512e60ad105d2957abda9cbade1250b44062ddd39b6d347,unpaired/thermal/dmr_ir/IR_2015-04-24_0155.jpg,val
+IR_2015-04-24_0156.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,6b1b874d7e488dc83a15981e158999c97b5aba839e542c28f9853d8a2f06b8e9,unpaired/thermal/dmr_ir/IR_2015-04-24_0156.jpg,val
+IR_2015-04-24_0157.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,1375153d2d5e8513e1e5f8bd10c989bdac569f7659a825b9b8441b0e2951a427,unpaired/thermal/dmr_ir/IR_2015-04-24_0157.jpg,val
+IR_2015-04-24_0158.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,5c29806772595f214b72e85dcf6a6b546d478491ec7618d7a7d39d9d2daa69ff,unpaired/thermal/dmr_ir/IR_2015-04-24_0158.jpg,val
+IR_2015-04-24_0159.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,13ee940f7696e062354ff77179deef999ae8de391108bd398d68dc40d530b2d2,unpaired/thermal/dmr_ir/IR_2015-04-24_0159.jpg,val
+IR_2015-04-24_0160.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,b0486d5e931fe0b7b72cfb0d3a4e0e1ef90b5df87e1629fc8cd5662c4f5c6677,unpaired/thermal/dmr_ir/IR_2015-04-24_0160.jpg,val
+IR_2015-04-24_0161.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,8631933572a5fbaa28c5b66227d64113bc7a3202947aa5bd777fdeb50e376fa0,unpaired/thermal/dmr_ir/IR_2015-04-24_0161.jpg,val
+IR_2015-04-24_0162.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,7b465b1281982788f72e7c77435438c84b5a9d62dd670f122319eceeb7e172fc,unpaired/thermal/dmr_ir/IR_2015-04-24_0162.jpg,val
+IR_2015-04-24_0163.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,8e91d370af22ddbd228b978207d0c57d8b124457f7b06a1037fea9c7e3c0c6a0,unpaired/thermal/dmr_ir/IR_2015-04-24_0163.jpg,val
+IR_2015-04-24_0164.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,b36ec012cdbdccbc3ddd9b279d46e7794e88b13ec39fc90c0ab3df08c7e406d3,unpaired/thermal/dmr_ir/IR_2015-04-24_0164.jpg,val
+IR_2015-04-24_0165.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,48ab0a12d781a9ae34c4f0ec533b565727036191374d5e8349d5b70d3a061b87,unpaired/thermal/dmr_ir/IR_2015-04-24_0165.jpg,val
+IR_2015-04-24_0166.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,93c0291d9b86e547e1747499c103ebe19d6731e404dd47b267332351f69d51ec,unpaired/thermal/dmr_ir/IR_2015-04-24_0166.jpg,val
+IR_2015-04-24_0167.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,b8827d783f74f3013d4c08964016d4c411acfb426cf360918937ba1d37aef588,unpaired/thermal/dmr_ir/IR_2015-04-24_0167.jpg,val
+IR_2015-04-24_0168.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,e0f9f1cb8bb151d3a65ffbd4e367302aa2e34780783379968d3df7400aaca769,unpaired/thermal/dmr_ir/IR_2015-04-24_0168.jpg,val
+IR_2015-04-24_0169.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,d01d0f83149cd4dd1601bbdedaf30746d3960e7a11bcafd7d1487bec2d45f53f,unpaired/thermal/dmr_ir/IR_2015-04-24_0169.jpg,val
+IR_2015-04-24_0170.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,552aff7d91a43ce7aa94083d866a7aa69d6ef703e423c93ee0f3feebfe69276b,unpaired/thermal/dmr_ir/IR_2015-04-24_0170.jpg,val
+IR_2015-04-24_0171.jpg,DMR-IR (Brazil),DMR_IR_2015-04-24_S2,malignant,224,224,3,5aa456c91a6d09b3f6c6e0b881b6fc9eadb89579ec829dff01961ff3ad6c10e1,unpaired/thermal/dmr_ir/IR_2015-04-24_0171.jpg,val
+TFRON_V251_8-9-2014_0.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,e7ff39e3c49cc92902e21689fff88e132119b6903cd061daba9955384eb3cd5e,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_0.jpg,val
+TFRON_V251_8-9-2014_1.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,fd377cd6e5ac0e4cbd63f11da97d9888efbc095161cc4bc2a46035c93727112f,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_1.jpg,val
+TFRON_V251_8-9-2014_10.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,52a7d4637fde3c392cece73ddf363851f82951ce65070c917d9ac16a911cb9f0,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_10.jpg,val
+TFRON_V251_8-9-2014_11.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,ea8f0d5e19c32968b0c6d1156038ba4eca0dda94a35cc8ee2a0fe2f816872aef,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_11.jpg,val
+TFRON_V251_8-9-2014_12.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,93d0e27b24fc81fe2de1834e3ac2dd9748397ef44a163c95977546a338c4fdce,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_12.jpg,val
+TFRON_V251_8-9-2014_13.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,32a385a747a2e8eca05ca66b889699f832c9b18a279a4ec650f2261a218b7ad3,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_13.jpg,val
+TFRON_V251_8-9-2014_14.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,c11d1620c3ea0fdd0d4fb7e680c75f321fcdbcdddf7d08bd6dde7eed3e5b499a,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_14.jpg,val
+TFRON_V251_8-9-2014_15.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,367af5cd556343f584b9e65e4484c68cc3fa8a079606bdd7e130bc18c264c5d9,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_15.jpg,val
+TFRON_V251_8-9-2014_16.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,d395cc65d5d0caf8213b55b96d054a7caffc701d81773a274c19b6c4a1c28ac8,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_16.jpg,val
+TFRON_V251_8-9-2014_17.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,fca883645b5aa763a2e3238be0b566ecfab4055b6e266d124b4230cf5e6b9aae,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_17.jpg,val
+TFRON_V251_8-9-2014_18.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,0b7eeb460a59f30505748a971d8a81dc76422cbaf6cd99ca528d2d911e5c4b38,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_18.jpg,val
+TFRON_V251_8-9-2014_19.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,cc0d538d0c2242c2396ca5adf058941b84991a97d842b5aced3e9f9d4bd87f09,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_19.jpg,val
+TFRON_V251_8-9-2014_2.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,1fea6a855af99c51e48900ccfcc21b0e79a8bc046c90841cf3a7b8fe4b1615cf,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_2.jpg,val
+TFRON_V251_8-9-2014_3.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,bee12548db6bc6a73d09e70d08e31b92083ebd2113fd2603e4791cf246296e90,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_3.jpg,val
+TFRON_V251_8-9-2014_4.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,8ca32854425742c58bae7edcdc5d0dc345cc3d3bb861775186d3b80e5c9a4054,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_4.jpg,val
+TFRON_V251_8-9-2014_5.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,f28ad885e8f2d865d73301eebcebcbd12dc4cd4a91a0718c593bbd25c9641dca,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_5.jpg,val
+TFRON_V251_8-9-2014_6.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,8b836f43bab5956ad56d2895b9a09ad78b4ca165f39c441e98a8a2de2d7cec89,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_6.jpg,val
+TFRON_V251_8-9-2014_7.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,26c5b1b9fb346da7e52f34e4d3c85fb06603dda66873c72a65309c97905e356f,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_7.jpg,val
+TFRON_V251_8-9-2014_8.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,ca78bb5b1ea613bf5e3f9bf433b5d1c98c0ded38393fbeed430a5801e50cc8e9,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_8.jpg,val
+TFRON_V251_8-9-2014_9.jpg,DMR-IR (Brazil),DMR_PT_V251,malignant,224,224,3,4e94e82e351afc9873adeee385861563ba13992fe7411de8aecee0cb49fc4d43,unpaired/thermal/dmr_ir/TFRON_V251_8-9-2014_9.jpg,val
+108-1.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,09fdf0fcfc7c9562c56f66f38a9d28a551843d1f967d7c315cded5e7f4a11381,unpaired/thermal/dmr_ir/108-1.txt.jpg,val
+R108-10.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,86b6d670a7234be36d384975f053da2e6580db4da5ab0a3950b5c1a6dd4b3931,unpaired/thermal/dmr_ir/R108-10.txt.jpg,val
+R108-11.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,c5f66b7c6efbdc30bea073a8b79b2a753cb8c4d41454306c11b6923905997d68,unpaired/thermal/dmr_ir/R108-11.txt.jpg,val
+R108-12.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,4b951fbb50dfbb3751c263ffadbdd0748ef42f458c9eb2d323fc23db1198819e,unpaired/thermal/dmr_ir/R108-12.txt.jpg,val
+R108-13.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,2d591a45c4e79fbc206347f52ab2d96aa1c74395429e3d39dde6890679d5ae77,unpaired/thermal/dmr_ir/R108-13.txt.jpg,val
+R108-14.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,5370c7042d9f161f4330d366ad863614750bf3bc867959adbb386e1db8b1a374,unpaired/thermal/dmr_ir/R108-14.txt.jpg,val
+R108-15.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,8542ac437fdc8a62695d240f6ea8456798d50d35387709b563c9eeb2386fcbc0,unpaired/thermal/dmr_ir/R108-15.txt.jpg,val
+R108-16.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,3c0b9407cf470e298e12d305a6b59f95237feffda5c5d1c47cec00471fc6bbcb,unpaired/thermal/dmr_ir/R108-16.txt.jpg,val
+R108-17.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,6b7397eb142cd6710944a842b594f7cc15a357a27af8c5edb8555a326f128028,unpaired/thermal/dmr_ir/R108-17.txt.jpg,val
+R108-18.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,ec24bf383ed34e5333f29d7d4c52ca679b3a7a13a3222dc5a9a18157f86d9830,unpaired/thermal/dmr_ir/R108-18.txt.jpg,val
+R108-19.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,d8cfca68179294acc015f3e9b9ede36ba0558b33a382179b7e50616e4b16496b,unpaired/thermal/dmr_ir/R108-19.txt.jpg,val
+R108-2.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,2976db0fbc11458c538d7811d633e90ecd9c48d6e229f48927fd581dcd3516fc,unpaired/thermal/dmr_ir/R108-2.txt.jpg,val
+R108-20.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,489fa0a2a05dc43ca332c104faf44fb75660c65386967d21e0cd5c65cd53c58f,unpaired/thermal/dmr_ir/R108-20.txt.jpg,val
+R108-3.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,3b804ebfd24a0c7bce8a236768e27c5dc63a1fcf10a59b5bfff51aff4b1aa7de,unpaired/thermal/dmr_ir/R108-3.txt.jpg,val
+R108-4.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,34f56942467ff2b0f82e5ae59a170f7079b2cf99c76240741546a1a400142f03,unpaired/thermal/dmr_ir/R108-4.txt.jpg,val
+R108-5.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,48884c43cd54dbbcce697459910635a7088ff39853c77b8fafa67e7b355374db,unpaired/thermal/dmr_ir/R108-5.txt.jpg,val
+R108-6.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,b0b803f47b36b537fb7257012fdb516f08548c4c4f3f2ed1aa949f0045d5247c,unpaired/thermal/dmr_ir/R108-6.txt.jpg,val
+R108-7.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,d31dfa489108b56e6a92115834bfc7a191c410cadda3cf0c5b1071cb00176a89,unpaired/thermal/dmr_ir/R108-7.txt.jpg,val
+R108-8.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,c5ec3ed2e6b16ce97a0e3ff290a9b63e482b27f54ff8e942bd3f9aa7fd8a40f7,unpaired/thermal/dmr_ir/R108-8.txt.jpg,val
+R108-9.txt.jpg,DMR-IR (Brazil),DMR_PT_108,normal,224,224,1,d8889fb626557801820fff882f93fbc16b614d636f55e83b9229a4a81f8fc3fb,unpaired/thermal/dmr_ir/R108-9.txt.jpg,val
+172-1.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,dc7de5a8f272840ea0c478ae943975e9859d75fa8a2baa0d7bd496f4bbce2853,unpaired/thermal/dmr_ir/172-1.txt.jpg,val
+R172-10.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,2ae8361545137f604867abc812737484a2f2c58c4f15106fa27f12c65bc72cc9,unpaired/thermal/dmr_ir/R172-10.txt.jpg,val
+R172-11.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,1b68a894f71be5524b12450ddd014d6a07914cdd88e572eee947c979dddec36d,unpaired/thermal/dmr_ir/R172-11.txt.jpg,val
+R172-12.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,7288a50aa06170d9be96d8a8cbc12dd28fa135721070be4cc3880e6e36d8d764,unpaired/thermal/dmr_ir/R172-12.txt.jpg,val
+R172-13.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,930a961ff3a4b25b08828f131c1a9210997b6477bca9d27fb289c82ca14bc981,unpaired/thermal/dmr_ir/R172-13.txt.jpg,val
+R172-14.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,ff63167d7eda5e79d63937318877215a96074b089e385fb751e6414538a01e30,unpaired/thermal/dmr_ir/R172-14.txt.jpg,val
+R172-15.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,f835e5d4f35713d182278e3f1d6ea822c21b358b3e366e865bd95bfd9ac9bd6c,unpaired/thermal/dmr_ir/R172-15.txt.jpg,val
+R172-16.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,ec09587737090c4909c0b8c701fb1066ce68f76606b33603642559bfaf6a53a3,unpaired/thermal/dmr_ir/R172-16.txt.jpg,val
+R172-17.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,76eaa1a00477b2682c829e2790e94cd05307af6a5a6ed1dc02496ad5a09a2aa4,unpaired/thermal/dmr_ir/R172-17.txt.jpg,val
+R172-18.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,b1e9efc5cec813ddf6a1a5ff8967dd46489e19d8345df016c9c31e82f1dca158,unpaired/thermal/dmr_ir/R172-18.txt.jpg,val
+R172-19.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,2e895a4dd93e0f07ca482a482beb77295437220a143866c88baf84e8c953fdeb,unpaired/thermal/dmr_ir/R172-19.txt.jpg,val
+R172-2.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,82f4bba9c329b660fbe173e84ecc0b0bf77100720a682ddfb7a171d3b717460f,unpaired/thermal/dmr_ir/R172-2.txt.jpg,val
+R172-20.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,4e16ef0cf5fd358bfcecf81d703706aa5b6e4bc07a86d464e8ed339299427365,unpaired/thermal/dmr_ir/R172-20.txt.jpg,val
+R172-3.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,8cc5e74300010f00048f0f4dcdab0ca8cab4574df00f459c8d19288b3e5d4896,unpaired/thermal/dmr_ir/R172-3.txt.jpg,val
+R172-4.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,d451e7265c105973396a8e88fabafe27466c4aebfdbac547d033d0e25d01b32b,unpaired/thermal/dmr_ir/R172-4.txt.jpg,val
+R172-5.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,227c1462bf91b7d10176acd4d253a53734d33acc3c94f35167dd9bf87f5d3603,unpaired/thermal/dmr_ir/R172-5.txt.jpg,val
+R172-6.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,957bc50377b301a12e5d6525f46e410d345e8572cb8f258f53cabcd2d1f1692c,unpaired/thermal/dmr_ir/R172-6.txt.jpg,val
+R172-7.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,95f47ee21c859bf3e50d2dcb710b0f008c350de60f73a8d9885cffafcec51c4e,unpaired/thermal/dmr_ir/R172-7.txt.jpg,val
+R172-8.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,655914fd5b48fef1923d1aaa84a2dadd450b5844feaee02d6a77a2d863f13f1a,unpaired/thermal/dmr_ir/R172-8.txt.jpg,val
+R172-9.txt.jpg,DMR-IR (Brazil),DMR_PT_172,normal,224,224,1,cf4fd4c64ce1a9812267ab1b9d90020b4a14c5a6f8dc83db14500a1f9800ba9c,unpaired/thermal/dmr_ir/R172-9.txt.jpg,val
+IR_2015-04-17_0034.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,54f5c743f5dc2da5f2f443551559d3569cd1ccdc3fcac67e4cdc4575936d3913,unpaired/thermal/dmr_ir/IR_2015-04-17_0034.jpg,val
+IR_2015-04-17_0035.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,4075135866237830e5ef132df0a4f36039154ce2fe75d392c954de4487600272,unpaired/thermal/dmr_ir/IR_2015-04-17_0035.jpg,val
+IR_2015-04-17_0036.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,34258865dcd0236d656ea79ac5abb8991d3252e10bfc48294e28a11e30dc3142,unpaired/thermal/dmr_ir/IR_2015-04-17_0036.jpg,val
+IR_2015-04-17_0037.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,3385e66545f05921152045289f4f8ca095a488ab8b3ce4e40f5c10eb947786b2,unpaired/thermal/dmr_ir/IR_2015-04-17_0037.jpg,val
+IR_2015-04-17_0038.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,7b7dc77317f93f35a2dd7b472ce4af7699bf7589e49890c0660e03a37437dbb4,unpaired/thermal/dmr_ir/IR_2015-04-17_0038.jpg,val
+IR_2015-04-17_0039.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,585574fe8238ad12647478433ee3ad0458c2c96976ef693ffaa4a96da4290e86,unpaired/thermal/dmr_ir/IR_2015-04-17_0039.jpg,val
+IR_2015-04-17_0040.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,e1eea9161b26edea6ebcae7d0eef2fe37440f53f68a8a0c6f9bc9b3066b3d21c,unpaired/thermal/dmr_ir/IR_2015-04-17_0040.jpg,val
+IR_2015-04-17_0041.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,c3542a75a56a16e3ef71a46a0789438d983b4e1aadaa082a7ecc324c2941c918,unpaired/thermal/dmr_ir/IR_2015-04-17_0041.jpg,val
+IR_2015-04-17_0042.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,7382770787629cd930d5bfbe89c3905a6ef23933b3047de2feb064f338e6d3f5,unpaired/thermal/dmr_ir/IR_2015-04-17_0042.jpg,val
+IR_2015-04-17_0043.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,0c8486a4e9a52275a5789beffac7cd25c731cfbd3a411a07ceec8f590c9308f6,unpaired/thermal/dmr_ir/IR_2015-04-17_0043.jpg,val
+IR_2015-04-17_0044.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,f41e22f00aa0012849c2f605054e9d4934604334ab6455ed9db76d0f9f7c712f,unpaired/thermal/dmr_ir/IR_2015-04-17_0044.jpg,val
+IR_2015-04-17_0045.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,e36612b759d207ca619e2d4a834b17ef71e0b53d79ff1a93073d1110449ccc84,unpaired/thermal/dmr_ir/IR_2015-04-17_0045.jpg,val
+IR_2015-04-17_0046.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,2894cf54716390564d365fb1143b1baabd497de51b627e780085fe8cec9b2aa2,unpaired/thermal/dmr_ir/IR_2015-04-17_0046.jpg,val
+IR_2015-04-17_0047.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,32f415c498987e17e95751d9a8c4c771c3b79bea305944d0a1c09ea15ca54c11,unpaired/thermal/dmr_ir/IR_2015-04-17_0047.jpg,val
+IR_2015-04-17_0048.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,9bfae25e7da8c62f22aa92787c78301da6baaf764dca542bcd2cfb415a6f8ecc,unpaired/thermal/dmr_ir/IR_2015-04-17_0048.jpg,val
+IR_2015-04-17_0049.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,ebbd4b7b682204bf634600e3001cacdbdf878294ba3f98b1d43613fd573c1ff6,unpaired/thermal/dmr_ir/IR_2015-04-17_0049.jpg,val
+IR_2015-04-17_0050.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,5745469ef47a299a8eeaa983d009057c4b8b14468ef20c5f55722fca098a371e,unpaired/thermal/dmr_ir/IR_2015-04-17_0050.jpg,val
+IR_2015-04-17_0051.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,2843d1979076ac3384f8a1af7fdd09f7b695e67826b844c111457a77bd30ac58,unpaired/thermal/dmr_ir/IR_2015-04-17_0051.jpg,val
+IR_2015-04-17_0052.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,6118b6f5b490e1fd161458a9d4973fd52b3ba46b230612e8c9b142a4e03d2eb7,unpaired/thermal/dmr_ir/IR_2015-04-17_0052.jpg,val
+IR_2015-04-17_0053.jpg,DMR-IR (Brazil),DMR_IR_2015-04-17_S2,normal,224,224,3,3150945bf8df0209c75f2e2fef40a9b4b2ddaad079661a87adfcd6452957b3fe,unpaired/thermal/dmr_ir/IR_2015-04-17_0053.jpg,val
+TFRON_V170_8-4-2013_0.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,85fdb36a2c7b2a3b68e352c77521851f5a7a50342d02a69db5ab9374c3cc91a4,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_0.jpg,val
+TFRON_V170_8-4-2013_1.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,5ce0cf16e4eee934a038333558a2ea8223355f0319fa79fb5c75cac7236cca85,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_1.jpg,val
+TFRON_V170_8-4-2013_10.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,b45f84a3cee5fa6cbc4fdc8abf4b8726d22b8e0c58baa48acf9b3d05651b7fc0,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_10.jpg,val
+TFRON_V170_8-4-2013_11.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,c305111bccd80d9d00fe94485a305b61b8770b3f7fb396b32acd8e6bea7bf141,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_11.jpg,val
+TFRON_V170_8-4-2013_12.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,f1f0a258742aeb0eb6eca8b6d87e65f69be627f8e9b8a6338abe3edd6195884a,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_12.jpg,val
+TFRON_V170_8-4-2013_13.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,cb24daceb236f199c3cabc12ec085d021bd22795adeffdb6b4f68c619c91c787,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_13.jpg,val
+TFRON_V170_8-4-2013_14.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,7e26717688095d43d5250b916b1edc5b903a024f9594bc041f204c038a677c6f,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_14.jpg,val
+TFRON_V170_8-4-2013_15.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,ef1b9af6cb7d5eb5d9147d75345fcac8246cefc8fd713fda036230019d45bc9f,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_15.jpg,val
+TFRON_V170_8-4-2013_16.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,659b028745b3b6bdf3108cc54acd855e0a6cac3dd29843aa32c3e44ddcb8fb24,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_16.jpg,val
+TFRON_V170_8-4-2013_17.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,d33fc0d77521d2fb53df1a292a89b89348af873d596a4e4d819daa55340cf376,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_17.jpg,val
+TFRON_V170_8-4-2013_18.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,b8c635aea50e25925aaf58befb7459a108034c9b83ca9c3204478637fc546a49,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_18.jpg,val
+TFRON_V170_8-4-2013_19.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,42cc09770a4e5dcffe9a0ca8ffb130e8dbbcd3ace0da738fa403d7a6308606e3,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_19.jpg,val
+TFRON_V170_8-4-2013_2.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,88d4105483866fbaa7202d9cec00ca6b600d8da6b8186b51a56e2fd28abab0df,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_2.jpg,val
+TFRON_V170_8-4-2013_3.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,2d8cf8b358f3494b195c969da1a047c67744b2f3aabb4f8164a625b44b50399c,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_3.jpg,val
+TFRON_V170_8-4-2013_4.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,fab06380fdca7a81a136f2d89b505dd066faa571e5e15ee53f43a957393a7d70,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_4.jpg,val
+TFRON_V170_8-4-2013_5.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,debf5552eeda45e64ec8966759e24f0cacf33dbc03bd1b5659967baa9db87dc2,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_5.jpg,val
+TFRON_V170_8-4-2013_6.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,198dd339529489e79fdfd6b1e19ab76171b833115a9f3dc2012fa7e97b036970,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_6.jpg,val
+TFRON_V170_8-4-2013_7.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,b5b64d8991e66be1638dffca5585203889205e12b84cda234fee3f2d87d29f90,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_7.jpg,val
+TFRON_V170_8-4-2013_8.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,f751c8f8128128d1595e9e46928a65ea31800852e03d5624108a106e7032d4ae,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_8.jpg,val
+TFRON_V170_8-4-2013_9.jpg,DMR-IR (Brazil),DMR_PT_V170,normal,224,224,3,67cbb9a2c69cf153da9c55fe8192d9c43bdadf81303ff8441bd9e8fd5625d25a,unpaired/thermal/dmr_ir/TFRON_V170_8-4-2013_9.jpg,val

@@ -110,17 +110,27 @@ class MammogramDataset(Dataset):
         rec = self.records[idx]
         filename = rec.get("filename", "")
         rel_path = rec.get(self.path_column, filename)
-
-        # Check preprocessed 224x224 PNG first for ultra-fast I/O
         stem_png = Path(filename).with_suffix(".png").name
-        proc_path = self.image_root_dir / stem_png
-        raw_path = self.image_root_dir / rel_path
 
-        img_path = proc_path if proc_path.exists() else raw_path
+        # Resolve image path across candidate directories
+        project_root = Path(__file__).resolve().parent.parent.parent
+        candidates = [
+            self.image_root_dir / stem_png,
+            self.image_root_dir / rel_path,
+            self.image_root_dir / filename,
+            project_root / "data" / "raw" / "mammogram" / filename,
+            project_root / "data" / "raw" / rel_path,
+            project_root / "data" / "processed" / "mammogram" / stem_png,
+        ]
+        img_path = None
+        for cand in candidates:
+            if cand.exists():
+                img_path = cand
+                break
 
         # Load as grayscale PIL Image
         try:
-            image = Image.open(img_path).convert("L")
+            image = Image.open(img_path).convert("L") if img_path else Image.new("L", (224, 224), 0)
         except Exception:
             image = Image.new("L", (224, 224), 0)
 
@@ -177,16 +187,30 @@ class ThermalDataset(Dataset):
         rec = self.records[idx]
         filename = rec.get("filename", "")
         rel_path = rec.get(self.path_column, filename)
-
-        # Check preprocessed 224x224 PNG first
         stem_png = Path(filename).with_suffix(".png").name
-        proc_path = self.image_root_dir / stem_png
-        raw_path = self.image_root_dir / rel_path
 
-        img_path = proc_path if proc_path.exists() else raw_path
+        # Resolve image path across candidate directories
+        project_root = Path(__file__).resolve().parent.parent.parent
+        candidates = [
+            self.image_root_dir / stem_png,
+            self.image_root_dir / rel_path,
+            self.image_root_dir / filename,
+            project_root / "data" / "raw" / "unpaired" / "thermal" / "dmr_ir" / filename,
+            project_root / "data" / "raw" / "s1_extracted" / "Dataset" / "abnormal" / filename,
+            project_root / "data" / "raw" / "s1_extracted" / "Dataset" / "normal" / filename,
+            project_root / "data" / "raw" / "thermal" / "Breast Thermography" / rec.get("patient_id", "") / filename,
+            project_root / "data" / "raw" / "thermal" / rel_path,
+            project_root / "data" / "raw" / rel_path,
+            project_root / "data" / "processed" / "thermal" / stem_png,
+        ]
+        img_path = None
+        for cand in candidates:
+            if cand.exists():
+                img_path = cand
+                break
 
         try:
-            image = Image.open(img_path).convert("RGB")
+            image = Image.open(img_path).convert("RGB") if img_path else Image.new("RGB", (224, 224), (0, 0, 0))
         except Exception:
             image = Image.new("RGB", (224, 224), (0, 0, 0))
 

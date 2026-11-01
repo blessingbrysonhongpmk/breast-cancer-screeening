@@ -1,0 +1,9 @@
+
+The Database for Mastology Research with Infrared Image (DMR-IR) [1] was developed in 2014 during the PROENG Project at the Institute of Computer Science of the Federal Fluminense University in Brazil. 
+It is currently the only public dataset of breast thermograms. It is used to evaluate the proposed methods in this study. 
+This database is created by collecting the IR images from the Hospital of UFF University and published publicly with the approval of the ethics committee where consent should be signed by any patient.
+ This study used a set of 1000 frontal thermogram images, captured using a FLIR SC-620 IR camera with a resolution of 640×480 pixels from this database (including 500 normal and 500 abnormal subjects). 
+These images contain breasts in various shapes and sizes.  The thermal images are resized to a smaller size of 224×224 pixels for faster computation
+
+
+[1] Da Silva L et al. A New Database for Breast Research with Infrared Image. Journal of Medical Imaging and Health Informatics. 2014; 4:  92–100. doi: 10.1166/jmihi.2014.1226.

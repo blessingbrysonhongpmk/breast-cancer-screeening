@@ -120,3 +120,4 @@ Upon successful completion, the pipeline outputs:
 - `data/manifests/thermal_manifest.csv`: Image paths, participant IDs, projection angles, RGB channels, diagnostic category.
 - `reports/dataset_audit_report.json`: Machine-readable breakdown of readable vs corrupt files, patient counts, and class balance.
 - `reports/dataset_audit_report.md`: Human-readable summary for clinical audit and grant compliance.
+

@@ -68,3 +68,4 @@ In addition to automated testing, the frontend UI has been verified across all 5
    - Displays verified past examinations with export and clear history options.
 5. **About (`/about`):**
    - Displays research methodology, cohort boundary policy, dataset ingestion controls, and mandatory medical disclaimer.
+

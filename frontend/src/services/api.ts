@@ -140,6 +140,11 @@ export interface AnalysisResponse {
   attention_coverage_percent?: number;
   peak_activation_coords?: number[];
   tta_applied?: boolean;
+  mammo_prediction?: AnalysisResponse;
+  thermal_prediction?: AnalysisResponse;
+  combined_prediction?: AnalysisResponse;
+  case_id?: string;
+  risk_category?: 'HIGH RISK' | 'LOW RISK' | string;
 }
 
 export interface ClearHistoryResponse {
@@ -162,6 +167,10 @@ export interface ImageValidationResult {
   patient_id?: string | null;
   explanation: string;
   error?: string | null;
+  file_format_status?: 'Valid' | 'Invalid';
+  image_type_status?: 'Verified' | 'Unverified';
+  provenance_status?: 'Verified' | 'Unverified';
+  filename?: string;
 }
 
 export interface PairValidationResult {
@@ -173,6 +182,10 @@ export interface PairValidationResult {
   combined_explanation: string;
   fusion_model_available: boolean;
   can_analyze: boolean;
+  same_patient_status?: 'Verified' | 'Not verified';
+  same_patient_verified?: boolean;
+  pairing_reason?: string;
+  participant_id?: string | null;
 }
 
 export interface EvaluationBenchmark {
@@ -193,6 +206,21 @@ export interface EvaluationBenchmark {
     val_samples: number;
   };
   thermal?: {
+    test_metrics: {
+      overall_accuracy: number;
+      macro_f1: number;
+      macro_precision?: number;
+      macro_sensitivity_recall: number;
+      macro_specificity: number;
+      macro_roc_auc: number;
+      per_class: Record<string, any>;
+      confusion_matrix: number[][];
+    };
+    test_samples: number;
+    train_samples: number;
+    val_samples: number;
+  };
+  combined?: {
     test_metrics: {
       overall_accuracy: number;
       macro_f1: number;
@@ -323,13 +351,17 @@ export async function submitThermalAnalysis(
 export async function submitCombinedAnalysis(
   mammogramFile: File,
   thermalFile: File,
-  caseId?: string
+  caseId?: string,
+  confirmedSamePatient?: boolean
 ): Promise<AnalysisResponse> {
   const formData = new FormData();
   formData.append('mammogram_file', mammogramFile);
   formData.append('thermal_file', thermalFile);
   if (caseId) {
     formData.append('case_id', caseId);
+  }
+  if (confirmedSamePatient) {
+    formData.append('confirmed_same_patient', 'true');
   }
 
   const res = await fetch(`${API_BASE}/api/analyze/combined`, {
@@ -381,13 +413,17 @@ export async function validateScanImage(
 export async function validateScanPair(
   mammogramFile: File,
   thermalFile: File,
-  caseId?: string
+  caseId?: string,
+  confirmedSamePatient?: boolean
 ): Promise<PairValidationResult> {
   const formData = new FormData();
   formData.append('mammogram_file', mammogramFile);
   formData.append('thermal_file', thermalFile);
   if (caseId) {
     formData.append('case_id', caseId);
+  }
+  if (confirmedSamePatient) {
+    formData.append('confirmed_same_patient', 'true');
   }
 
   const res = await fetch(`${API_BASE}/api/validate-pair`, {

@@ -10,10 +10,17 @@ import argparse
 from pathlib import Path
 from typing import Dict, Any, Tuple
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import numpy as np
+
+# Prevent CPU memory overload on host
+torch.set_num_threads(2)
 
 if hasattr(sys.stdout, 'reconfigure'):
     try:
@@ -139,8 +146,15 @@ def train_modality(
         val_ds = MammogramDataset(val_manifest, image_root, transform=get_mammogram_eval_transforms())
         test_ds = MammogramDataset(test_manifest, image_root, transform=get_mammogram_eval_transforms())
 
-        model = MammogramClassifier(num_classes=3, pretrained=True).to(device)
+        model = MammogramClassifier(num_classes=3, pretrained=False).to(device)
         model_save_path = models_dir / "mammogram_resnet50.pt"
+        if model_save_path.exists():
+            try:
+                ckpt = torch.load(model_save_path, map_location=device)
+                model.load_state_dict(ckpt["model_state_dict"], strict=False)
+                print(f"Loaded existing checkpoint from {model_save_path.name} for transfer fine-tuning.", flush=True)
+            except Exception as ex:
+                print(f"Initializing weights: {ex}", flush=True)
 
     elif modality == "thermal":
         train_manifest = manifests_dir / "thermal_manifest_train.csv"
@@ -152,8 +166,15 @@ def train_modality(
         val_ds = ThermalDataset(val_manifest, image_root, transform=get_thermal_eval_transforms())
         test_ds = ThermalDataset(test_manifest, image_root, transform=get_thermal_eval_transforms())
 
-        model = ThermalClassifier(num_classes=3, pretrained=True).to(device)
+        model = ThermalClassifier(num_classes=3, pretrained=False).to(device)
         model_save_path = models_dir / "thermal_resnet50.pt"
+        if model_save_path.exists():
+            try:
+                ckpt = torch.load(model_save_path, map_location=device)
+                model.load_state_dict(ckpt["model_state_dict"], strict=False)
+                print(f"Loaded existing checkpoint from {model_save_path.name} for transfer fine-tuning.", flush=True)
+            except Exception as ex:
+                print(f"Initializing weights: {ex}", flush=True)
     else:
         raise ValueError(f"Unknown modality: {modality}")
 
@@ -225,8 +246,8 @@ def train_modality(
 
 def main():
     parser = argparse.ArgumentParser(description="Train Unimodal ResNet-50 Models")
-    parser.add_argument("--epochs", type=int, default=5, help="Number of epochs (default: 5)")
-    parser.add_argument("--batch-size", type=int, default=16, help="Batch size (default: 16)")
+    parser.add_argument("--epochs", type=int, default=1, help="Number of epochs (default: 1)")
+    parser.add_argument("--batch-size", type=int, default=8, help="Batch size (default: 8)")
     parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate (default: 1e-4)")
     args = parser.parse_args()
 
@@ -257,4 +278,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as ex:
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)

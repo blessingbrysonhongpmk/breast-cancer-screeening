@@ -67,7 +67,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '860px', margin: '0 auto', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
@@ -268,10 +268,10 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigate, onSelectRe
           <button
             type="button"
             className="btn-primary"
-            onClick={() => onNavigate('examination')}
+            onClick={() => onNavigate('screening')}
             style={{ fontSize: '13px', padding: '10px 18px' }}
           >
-            <span>Start an Examination</span>
+            <span>Start Screening</span>
             <ArrowRight size={14} />
           </button>
         </div>

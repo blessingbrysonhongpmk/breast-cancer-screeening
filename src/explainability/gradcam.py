@@ -186,3 +186,88 @@ def extract_cam_roi(
         "mean_focal_intensity": focal_intensity
     }
 
+
+
+
+class MultimodalGradCAM:
+    """Computes dual Grad-CAM visual heatmaps for two-branch multimodal neural networks."""
+
+    def __init__(self, model: nn.Module, mammo_layer: nn.Module, thermal_layer: nn.Module):
+        self.model = model
+        self.mammo_layer = mammo_layer
+        self.thermal_layer = thermal_layer
+        self.mammo_acts = None
+        self.mammo_grads = None
+        self.thermal_acts = None
+        self.thermal_grads = None
+        self.handles = []
+        self._register_hooks()
+
+    def _register_hooks(self):
+        def m_fwd(m, i, o): self.mammo_acts = o.detach()
+        def m_bwd(m, gi, go): self.mammo_grads = go[0].detach()
+        def t_fwd(m, i, o): self.thermal_acts = o.detach()
+        def t_bwd(m, gi, go): self.thermal_grads = go[0].detach()
+
+        h1 = self.mammo_layer.register_forward_hook(m_fwd)
+        h2 = self.mammo_layer.register_full_backward_hook(m_bwd)
+        h3 = self.thermal_layer.register_forward_hook(t_fwd)
+        h4 = self.thermal_layer.register_full_backward_hook(t_bwd)
+        self.handles = [h1, h2, h3, h4]
+
+    def remove_hooks(self):
+        for h in self.handles:
+            try: h.remove()
+            except Exception: pass
+        self.handles = []
+
+    def generate(
+        self,
+        xm: torch.Tensor,
+        xt: torch.Tensor,
+        target_class: Optional[int] = None
+    ) -> Tuple[np.ndarray, np.ndarray, int, float]:
+        """Generates synchronized saliency heatmaps for both mammogram and thermal branches."""
+        self.model.eval()
+        self.model.zero_grad()
+        
+        logits = self.model(xm, xt)
+        probs = F.softmax(logits, dim=1)
+        if target_class is None:
+            target_class = int(torch.argmax(logits, dim=1).item())
+        confidence = float(probs[0, target_class].item())
+
+        try:
+            score = logits[0, target_class]
+            score.backward()
+
+            # Process Mammogram CAM
+            if self.mammo_grads is not None and self.mammo_acts is not None:
+                w_m = torch.mean(self.mammo_grads, dim=(2, 3), keepdim=True)
+                cam_m = F.relu(torch.sum(w_m * self.mammo_acts, dim=1, keepdim=True))
+                cam_m = F.interpolate(cam_m, size=(xm.shape[2], xm.shape[3]), mode="bilinear", align_corners=False)
+                cam_m_np = cam_m.squeeze().cpu().numpy()
+                if cam_m_np.max() > cam_m_np.min():
+                    cam_m_np = (cam_m_np - cam_m_np.min()) / (cam_m_np.max() - cam_m_np.min())
+                else:
+                    cam_m_np = np.zeros_like(cam_m_np)
+            else:
+                cam_m_np = np.zeros((xm.shape[2], xm.shape[3]), dtype=np.float32)
+
+            # Process Thermal CAM
+            if self.thermal_grads is not None and self.thermal_acts is not None:
+                w_t = torch.mean(self.thermal_grads, dim=(2, 3), keepdim=True)
+                cam_t = F.relu(torch.sum(w_t * self.thermal_acts, dim=1, keepdim=True))
+                cam_t = F.interpolate(cam_t, size=(xt.shape[2], xt.shape[3]), mode="bilinear", align_corners=False)
+                cam_t_np = cam_t.squeeze().cpu().numpy()
+                if cam_t_np.max() > cam_t_np.min():
+                    cam_t_np = (cam_t_np - cam_t_np.min()) / (cam_t_np.max() - cam_t_np.min())
+                else:
+                    cam_t_np = np.zeros_like(cam_t_np)
+            else:
+                cam_t_np = np.zeros((xt.shape[2], xt.shape[3]), dtype=np.float32)
+
+            return cam_m_np, cam_t_np, target_class, confidence
+        finally:
+            self.remove_hooks()
+            self.model.zero_grad(set_to_none=True)
