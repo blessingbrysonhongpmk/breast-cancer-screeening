@@ -158,9 +158,14 @@ def generate_cam_images(
 
     colored = colormap(heatmap)[:, :, :3]  # Drop alpha, float RGB [0, 1]
     colored_uint8 = (colored * 255).astype(np.uint8)
-    raw_cam_pil = Image.fromarray(colored_uint8).resize(original_pil.size, Image.BILINEAR)
 
-    orig_rgb = original_pil.convert("RGB")
+    # Downscale large original images (e.g. 4320x2048) to a max preview dimension of 1024 for memory safety and fast web streaming
+    display_pil = original_pil.copy()
+    if display_pil.width > 1024 or display_pil.height > 1024:
+        display_pil.thumbnail((1024, 1024), Image.Resampling.BILINEAR)
+
+    orig_rgb = display_pil.convert("RGB")
+    raw_cam_pil = Image.fromarray(colored_uint8).resize(orig_rgb.size, Image.BILINEAR)
     blended = Image.blend(orig_rgb, raw_cam_pil, alpha=alpha)
 
     return blended, raw_cam_pil

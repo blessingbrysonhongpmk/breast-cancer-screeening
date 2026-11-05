@@ -620,6 +620,47 @@ def get_models_legacy_status() -> Dict[str, Any]:
     }
 
 
+@app.get("/api/model/status")
+@app.get("/api/models/status")
+def get_model_status() -> Dict[str, Any]:
+    """Returns real deep learning model status, architecture, and readiness."""
+    mammo_model = get_modality_model("mammogram")
+    thermal_model = get_modality_model("thermal")
+    fusion_model = get_modality_model("combined")
+
+    return {
+        "status": "ready" if (mammo_model and thermal_model) else "partial",
+        "mammogram": {
+            "loaded": mammo_model is not None,
+            "architecture": "ResNet-50",
+            "checkpoint": "mammogram_resnet50.pt" if mammo_model is not None else None,
+            "target_layer": "backbone.layer4[-1]",
+            "num_classes": 3,
+            "classes": ["normal", "benign", "malignant"],
+            "status": "ready" if mammo_model is not None else "missing"
+        },
+        "thermal": {
+            "loaded": thermal_model is not None,
+            "architecture": "ResNet-50",
+            "checkpoint": "thermal_resnet50.pt" if thermal_model is not None else None,
+            "target_layer": "backbone.layer4[-1]",
+            "num_classes": 3,
+            "classes": ["normal", "benign", "malignant"],
+            "status": "ready" if thermal_model is not None else "missing"
+        },
+        "multimodal": {
+            "loaded": fusion_model is not None,
+            "architecture": getattr(fusion_model, "__class__", type("Obj", (), {})).__name__ if fusion_model else "MultimodalFusionClassifier",
+            "checkpoint": "cross_attention_fusion.pt" if fusion_model is not None else None,
+            "num_classes": 3,
+            "classes": ["normal", "benign", "malignant"],
+            "status": "ready" if fusion_model is not None else "missing"
+        },
+        "gradcam_supported": True,
+        "device": "cpu"
+    }
+
+
 # ============================================================================
 # Dataset and Manifest Statistics Endpoints
 # ============================================================================
@@ -1067,20 +1108,33 @@ async def _process_modality_inference(
         uncertainty_info = compute_prediction_uncertainty(probs)
 
         # Genuine Grad-CAM visual attribution from actual network gradients
-        target_layer = model.get_target_layer()
-        gradcam = GradCAM(model, target_layer)
-        cam_np, _, _ = gradcam.generate(input_tensor, target_class=pred_idx)
+        gradcam_url = None
+        raw_cam_url = None
+        roi_box = None
+        attention_coverage = None
+        peak_coords = None
+        try:
+            target_layer = model.get_target_layer()
+            gradcam = GradCAM(model, target_layer)
+            cam_np, _, _ = gradcam.generate(input_tensor, target_class=pred_idx)
 
-        # Quantitative ROI bounding box & attention focus localization
-        roi_info = extract_cam_roi(cam_np, original_size=(width, height), threshold_ratio=0.60)
+            # Quantitative ROI bounding box & attention focus localization
+            roi_info = extract_cam_roi(cam_np, original_size=(width, height), threshold_ratio=0.60)
+            roi_box = roi_info.get("roi_box")
+            attention_coverage = roi_info.get("coverage_percent")
+            peak_coords = roi_info.get("peak_coords")
 
-        # Save blended heatmap and raw colormap heatmap
-        blended, raw_cam = generate_cam_images(cam_np, pil_img, alpha=0.45)
-        _uid = uuid.uuid4().hex[:12]
-        cam_filename = f"cam_{_uid}.jpg"
-        raw_cam_filename = f"cam_raw_{_uid}.jpg"
-        blended.save(HEATMAPS_DIR / cam_filename, "JPEG", quality=90)
-        raw_cam.save(HEATMAPS_DIR / raw_cam_filename, "JPEG", quality=90)
+            # Save blended heatmap and raw colormap heatmap
+            blended, raw_cam = generate_cam_images(cam_np, pil_img, alpha=0.45)
+            _uid = uuid.uuid4().hex[:12]
+            cam_filename = f"cam_{_uid}.jpg"
+            raw_cam_filename = f"cam_raw_{_uid}.jpg"
+            blended.save(HEATMAPS_DIR / cam_filename, "JPEG", quality=90)
+            raw_cam.save(HEATMAPS_DIR / raw_cam_filename, "JPEG", quality=90)
+            gradcam_url = f"/api/gradcam-image/{cam_filename}"
+            raw_cam_url = f"/api/gradcam-image/{raw_cam_filename}"
+        except Exception as cam_ex:
+            logger.warning(f"Grad-CAM generation failed for {safe_name}: {cam_ex}")
 
         record_entry = {
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -1098,17 +1152,17 @@ async def _process_modality_inference(
                 "benign": round(float(probs[1]), 4),
                 "malignant": round(float(probs[2]), 4)
             },
-            "gradcam_url": f"/api/gradcam-image/{cam_filename}",
-            "raw_gradcam_url": f"/api/gradcam-image/{raw_cam_filename}",
+            "gradcam_url": gradcam_url,
+            "raw_gradcam_url": raw_cam_url,
             "model_architecture": "ResNet-50 Deep ConvNet",
             "predictive_entropy": uncertainty_info["entropy"],
             "uncertainty_score": uncertainty_info["uncertainty_score"],
             "confidence_margin": uncertainty_info["confidence_margin"],
-            "roi_bounding_box": roi_info["roi_box"],
-            "attention_coverage_percent": roi_info["coverage_percent"],
-            "peak_activation_coords": roi_info["peak_coords"],
+            "roi_bounding_box": roi_box,
+            "attention_coverage_percent": attention_coverage,
+            "peak_activation_coords": peak_coords,
             "tta_applied": tta,
-            "message": f"ResNet-50 inference complete. Classified as {pred_label.upper()} with {conf*100:.1f}% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
+            "message": f"ResNet-50 inference complete. Classified as {pred_label.upper()} with {conf*100:.1f}% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients." if gradcam_url else f"ResNet-50 inference complete. Classified as {pred_label.upper()} with {conf*100:.1f}% confidence.",
             "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
         }
         _append_recent_analysis(record_entry)
@@ -1128,17 +1182,17 @@ async def _process_modality_inference(
                 "benign": round(float(probs[1]), 4),
                 "malignant": round(float(probs[2]), 4)
             },
-            gradcam_url=f"/api/gradcam-image/{cam_filename}",
-            raw_gradcam_url=f"/api/gradcam-image/{raw_cam_filename}",
+            gradcam_url=gradcam_url,
+            raw_gradcam_url=raw_cam_url,
             model_architecture="ResNet-50 Deep ConvNet",
             predictive_entropy=uncertainty_info["entropy"],
             uncertainty_score=uncertainty_info["uncertainty_score"],
             confidence_margin=uncertainty_info["confidence_margin"],
-            roi_bounding_box=roi_info["roi_box"],
-            attention_coverage_percent=roi_info["coverage_percent"],
-            peak_activation_coords=roi_info["peak_coords"],
+            roi_bounding_box=roi_box,
+            attention_coverage_percent=attention_coverage,
+            peak_activation_coords=peak_coords,
             tta_applied=tta,
-            message=f"ResNet-50 inference complete. Classified as {pred_label.upper()} with {conf*100:.1f}% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
+            message=f"ResNet-50 inference complete. Classified as {pred_label.upper()} with {conf*100:.1f}% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients." if gradcam_url else f"ResNet-50 inference complete. Classified as {pred_label.upper()} with {conf*100:.1f}% confidence.",
             recommendation="Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
         )
     except Exception as ex:
@@ -1150,6 +1204,7 @@ async def _process_modality_inference(
 
 
 @app.post("/api/analyze/mammogram", response_model=AnalysisResponse)
+@app.post("/api/predict/mammogram", response_model=AnalysisResponse)
 async def analyze_mammogram_image(
     file: UploadFile = File(...),
     tta: bool = Form(False)
@@ -1159,6 +1214,7 @@ async def analyze_mammogram_image(
 
 
 @app.post("/api/analyze/thermal", response_model=AnalysisResponse)
+@app.post("/api/predict/thermal", response_model=AnalysisResponse)
 async def analyze_thermal_image(
     file: UploadFile = File(...),
     tta: bool = Form(False)
@@ -1178,6 +1234,7 @@ async def analyze_uploaded_image(
 
 
 @app.post("/api/analyze/combined", response_model=AnalysisResponse)
+@app.post("/api/predict/multimodal", response_model=AnalysisResponse)
 async def analyze_combined_images(
     mammogram_file: UploadFile = File(...),
     thermal_file: UploadFile = File(...),
@@ -1523,7 +1580,11 @@ async def validate_scan_image(
     norm_expected = expected_modality.lower().strip()
     suffix = Path(safe_name).suffix.lower()
 
-    allowed_exts = {".png", ".jpg", ".jpeg", ".pgm", ".webp", ".bmp", ".jfif", ".tif", ".tiff"}
+    allowed_exts = (
+        {".png", ".jpg", ".jpeg", ".pgm", ".webp", ".bmp", ".jfif", ".tif", ".tiff"}
+        if norm_expected == "mammogram"
+        else {".png", ".jpg", ".jpeg", ".webp", ".bmp"}
+    )
     # If suffix is explicitly provided and invalid for medical scans, reject unless PIL reads it
     if suffix and suffix not in allowed_exts:
         err_msg = MAMMOGRAM_ERROR_MSG if norm_expected == "mammogram" else THERMAL_ERROR_MSG

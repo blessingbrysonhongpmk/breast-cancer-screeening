@@ -34,6 +34,7 @@ def test_dashboard_last_analysis_truth():
         latest = records[0]
         assert "timestamp" in latest
         assert "modality" in latest
+        assert latest["modality"] in {"mammogram", "thermal"}
         assert latest["modality"] in {"mammogram", "thermal", "combined"}
         assert latest.get("predicted_class") in {"normal", "benign", "malignant"}
 

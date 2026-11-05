@@ -1,240 +1,8 @@
 [
   {
-    "timestamp": "2026-11-05T06:57:31Z",
-    "modality": "mammogram",
-    "filename": "test_advanced.png",
-    "dimensions": {
-      "width": 224,
-      "height": 224
-    },
-    "color_mode": "L",
-    "format": "PNG",
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "normal",
-    "confidence": 0.6058,
-    "probabilities": {
-      "normal": 0.6058,
-      "benign": 0.2213,
-      "malignant": 0.1729
-    },
-    "gradcam_url": "/api/gradcam-image/cam_9d1b040f7ea7.jpg",
-    "raw_gradcam_url": "/api/gradcam-image/cam_raw_9d1b040f7ea7.jpg",
-    "model_architecture": "ResNet-50 Deep ConvNet",
-    "predictive_entropy": 0.9409,
-    "uncertainty_score": 0.8564,
-    "confidence_margin": 0.3845,
-    "roi_bounding_box": [
-      164,
-      72,
-      224,
-      166
-    ],
-    "attention_coverage_percent": 2.69,
-    "peak_activation_coords": [
-      177,
-      145
-    ],
-    "tta_applied": true,
-    "message": "ResNet-50 inference complete. Classified as NORMAL with 60.6% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
-    "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
-  },
-  {
-    "analysis_id": "analysis_d5246267f358",
-    "modality": "combined",
-    "case_id": "MF-COMBINED-TEST_PT_001",
-    "participant_id": "TEST_PT_001",
-    "filename": "paired_mammo.pgm + paired_thermal.jpg",
-    "predicted_class": "benign",
-    "confidence": 0.9994,
-    "probabilities": {
-      "normal": 0.0003,
-      "benign": 0.9994,
-      "malignant": 0.0003
-    },
-    "gradcam_url": "/api/gradcam-image/analysis_d5246267f358.jpg",
-    "raw_gradcam_url": "/api/gradcam-image/raw_analysis_d5246267f358.jpg",
-    "model_architecture": "Cross-Attention Dual-Branch ResNet-50 Fusion",
-    "data_note": "RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only.",
-    "predictive_entropy": 0.0055,
-    "uncertainty_score": 0.005,
-    "confidence_margin": 0.9991,
-    "message": "Cross-Attention Dual-Branch fusion inference complete. Classified as BENIGN with 99.9% confidence. Bidirectional cross-attention over ResNet-50 features applied. NOTE: RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only.",
-    "recommendation": "Review paired radiologic density and thermographic vascular heat distribution across bilateral views.",
-    "timestamp": "2026-11-05 06:56:44"
-  },
-  {
-    "timestamp": "2026-11-05T06:56:41Z",
+    "timestamp": "2026-11-05T10:53:18Z",
     "modality": "thermal",
-    "filename": "IIR0110_anterior.jpg",
-    "dimensions": {
-      "width": 320,
-      "height": 240
-    },
-    "color_mode": "RGB",
-    "format": "JPEG",
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "benign",
-    "confidence": 0.7205,
-    "probabilities": {
-      "normal": 0.0356,
-      "benign": 0.7205,
-      "malignant": 0.2439
-    },
-    "gradcam_url": "/api/gradcam-image/cam_70f2022774b2.jpg",
-    "raw_gradcam_url": "/api/gradcam-image/cam_raw_70f2022774b2.jpg",
-    "model_architecture": "ResNet-50 Deep ConvNet",
-    "predictive_entropy": 0.6991,
-    "uncertainty_score": 0.6364,
-    "confidence_margin": 0.4766,
-    "roi_bounding_box": [
-      46,
-      84,
-      320,
-      211
-    ],
-    "attention_coverage_percent": 2.1,
-    "peak_activation_coords": [
-      69,
-      189
-    ],
-    "tta_applied": false,
-    "message": "ResNet-50 inference complete. Classified as BENIGN with 72.0% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
-    "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
-  },
-  {
-    "timestamp": "2026-11-05T06:56:39Z",
-    "modality": "mammogram",
-    "filename": "mdb001lm.pgm",
-    "dimensions": {
-      "width": 4320,
-      "height": 2048
-    },
-    "color_mode": "L",
-    "format": "PPM",
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "normal",
-    "confidence": 0.5673,
-    "probabilities": {
-      "normal": 0.5673,
-      "benign": 0.1958,
-      "malignant": 0.2369
-    },
-    "gradcam_url": "/api/gradcam-image/cam_e1affd128975.jpg",
-    "raw_gradcam_url": "/api/gradcam-image/cam_raw_e1affd128975.jpg",
-    "model_architecture": "ResNet-50 Deep ConvNet",
-    "predictive_entropy": 0.982,
-    "uncertainty_score": 0.8939,
-    "confidence_margin": 0.3304,
-    "roi_bounding_box": [
-      2712,
-      413,
-      3661,
-      845
-    ],
-    "attention_coverage_percent": 1.71,
-    "peak_activation_coords": [
-      3390,
-      726
-    ],
-    "tta_applied": false,
-    "message": "ResNet-50 inference complete. Classified as NORMAL with 56.7% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
-    "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
-  },
-  {
-    "timestamp": "2026-11-05T06:52:35Z",
-    "modality": "mammogram",
-    "filename": "test_advanced.png",
-    "dimensions": {
-      "width": 224,
-      "height": 224
-    },
-    "color_mode": "L",
-    "format": "PNG",
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "normal",
-    "confidence": 0.6058,
-    "probabilities": {
-      "normal": 0.6058,
-      "benign": 0.2213,
-      "malignant": 0.1729
-    },
-    "gradcam_url": "/api/gradcam-image/cam_e06cf5cd0a0e.jpg",
-    "raw_gradcam_url": "/api/gradcam-image/cam_raw_e06cf5cd0a0e.jpg",
-    "model_architecture": "ResNet-50 Deep ConvNet",
-    "predictive_entropy": 0.9409,
-    "uncertainty_score": 0.8564,
-    "confidence_margin": 0.3845,
-    "roi_bounding_box": [
-      164,
-      72,
-      224,
-      166
-    ],
-    "attention_coverage_percent": 2.69,
-    "peak_activation_coords": [
-      177,
-      145
-    ],
-    "tta_applied": true,
-    "message": "ResNet-50 inference complete. Classified as NORMAL with 60.6% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
-    "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
-  },
-  {
-    "analysis_id": "analysis_6db3c63de3cc",
-    "modality": "combined",
-    "case_id": "MF-TEST-PT-USER",
-    "participant_id": "MF-TEST-PT-USER",
-    "filename": "mammo.jpeg + thermal.jpg",
-    "predicted_class": "malignant",
-    "confidence": 0.9514,
-    "probabilities": {
-      "normal": 0.0015,
-      "benign": 0.0471,
-      "malignant": 0.9514
-    },
-    "gradcam_url": "/api/gradcam-image/analysis_6db3c63de3cc.jpg",
-    "raw_gradcam_url": "/api/gradcam-image/raw_analysis_6db3c63de3cc.jpg",
-    "model_architecture": "Cross-Attention Dual-Branch ResNet-50 Fusion",
-    "data_note": "RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only.",
-    "predictive_entropy": 0.2011,
-    "uncertainty_score": 0.183,
-    "confidence_margin": 0.9043,
-    "message": "Cross-Attention Dual-Branch fusion inference complete. Classified as MALIGNANT with 95.1% confidence. Bidirectional cross-attention over ResNet-50 features applied. NOTE: RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only.",
-    "recommendation": "Review paired radiologic density and thermographic vascular heat distribution across bilateral views.",
-    "timestamp": "2026-11-05 06:51:52"
-  },
-  {
-    "analysis_id": "analysis_513ec45e6676",
-    "modality": "combined",
-    "case_id": "MF-TEST-PT-USER",
-    "participant_id": "MF-TEST-PT-USER",
-    "filename": "mammo.jpeg + thermal.jpg",
-    "predicted_class": "malignant",
-    "confidence": 0.9514,
-    "probabilities": {
-      "normal": 0.0015,
-      "benign": 0.0471,
-      "malignant": 0.9514
-    },
-    "gradcam_url": null,
-    "raw_gradcam_url": null,
-    "model_architecture": "Cross-Attention Dual-Branch ResNet-50 Fusion",
-    "data_note": "RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only.",
-    "predictive_entropy": 0.2011,
-    "uncertainty_score": 0.183,
-    "confidence_margin": 0.9043,
-    "message": "Cross-Attention Dual-Branch fusion inference complete. Classified as MALIGNANT with 95.1% confidence. Bidirectional cross-attention over ResNet-50 features applied. NOTE: RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only.",
-    "recommendation": "Review paired radiologic density and thermographic vascular heat distribution across bilateral views.",
-    "timestamp": "2026-11-05 06:49:56"
-  },
-  {
-    "timestamp": "2026-11-05T06:49:10Z",
-    "modality": "thermal",
-    "filename": "thermal.jpg",
+    "filename": "Hh-kL9rPb7AK0Il8XDwHeGMNOnocYlGoyQkVVS8_urQhEIcOUJF7xK9ox15ZZXQ_d-spkR3KEqMKvfcbxl-zzsJ9BTXASAOSgAcCO9gFWp0PABqw2LfO2J4U_lPewNgFa-DQFMyeX2_3YfMoUbxYvdQ9uKw0SJgwakFEueuVuJ-6Ilm_fAXtdwuVZpNSvSdb.jpg",
     "dimensions": {
       "width": 477,
       "height": 382
@@ -250,8 +18,8 @@
       "benign": 0.0,
       "malignant": 0.0
     },
-    "gradcam_url": "/api/gradcam-image/cam_714f752bba1f.jpg",
-    "raw_gradcam_url": "/api/gradcam-image/cam_raw_714f752bba1f.jpg",
+    "gradcam_url": "/api/gradcam-image/cam_b302b6f78802.jpg",
+    "raw_gradcam_url": "/api/gradcam-image/cam_raw_b302b6f78802.jpg",
     "model_architecture": "ResNet-50 Deep ConvNet",
     "predictive_entropy": 0.0,
     "uncertainty_score": 0.0,
@@ -272,9 +40,9 @@
     "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
   },
   {
-    "timestamp": "2026-11-05T06:49:08Z",
+    "timestamp": "2026-11-05T10:53:17Z",
     "modality": "mammogram",
-    "filename": "mammo.jpeg",
+    "filename": "WhatsApp_Image_2026-10-31_at_6.59.56_PM__1_.jpeg",
     "dimensions": {
       "width": 615,
       "height": 800
@@ -290,8 +58,8 @@
       "benign": 0.2918,
       "malignant": 0.1799
     },
-    "gradcam_url": "/api/gradcam-image/cam_91137408b051.jpg",
-    "raw_gradcam_url": "/api/gradcam-image/cam_raw_91137408b051.jpg",
+    "gradcam_url": "/api/gradcam-image/cam_7ac0812d2831.jpg",
+    "raw_gradcam_url": "/api/gradcam-image/cam_raw_7ac0812d2831.jpg",
     "model_architecture": "ResNet-50 Deep ConvNet",
     "predictive_entropy": 1.0051,
     "uncertainty_score": 0.9149,
@@ -312,513 +80,135 @@
     "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
   },
   {
-    "analysis_id": "analysis_b67eed177f0a",
+    "analysis_id": "analysis_414c791832fc",
     "modality": "combined",
-    "case_id": "MF-COMBINED-TEST_PT_001",
-    "participant_id": "TEST_PT_001",
-    "filename": "paired_mammo.pgm + paired_thermal.jpg",
-    "predicted_class": "benign",
-    "confidence": 0.9994,
-    "probabilities": {
-      "normal": 0.0003,
-      "benign": 0.9994,
-      "malignant": 0.0003
-    },
-    "gradcam_url": null,
-    "raw_gradcam_url": null,
-    "model_architecture": "Cross-Attention Dual-Branch ResNet-50 Fusion",
-    "data_note": "RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only.",
-    "predictive_entropy": 0.0055,
-    "uncertainty_score": 0.005,
-    "confidence_margin": 0.9991,
-    "message": "Cross-Attention Dual-Branch fusion inference complete. Classified as BENIGN with 99.9% confidence. Bidirectional cross-attention over ResNet-50 features applied. NOTE: RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only.",
-    "recommendation": "Review paired radiologic density and thermographic vascular heat distribution across bilateral views.",
-    "timestamp": "2026-11-05 00:18:18"
-  },
-  {
-    "timestamp": "2026-11-05T00:18:16Z",
-    "modality": "thermal",
-    "filename": "IIR0110_anterior.jpg",
-    "dimensions": {
-      "width": 320,
-      "height": 240
-    },
-    "color_mode": "RGB",
-    "format": "JPEG",
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "benign",
-    "confidence": 0.7205,
-    "probabilities": {
-      "normal": 0.0356,
-      "benign": 0.7205,
-      "malignant": 0.2439
-    },
-    "gradcam_url": "/api/gradcam-image/cam_15f40c1e9223.jpg",
-    "raw_gradcam_url": "/api/gradcam-image/cam_raw_15f40c1e9223.jpg",
-    "model_architecture": "ResNet-50 Deep ConvNet",
-    "predictive_entropy": 0.6991,
-    "uncertainty_score": 0.6364,
-    "confidence_margin": 0.4766,
-    "roi_bounding_box": [
-      46,
-      84,
-      320,
-      211
-    ],
-    "attention_coverage_percent": 2.1,
-    "peak_activation_coords": [
-      69,
-      189
-    ],
-    "tta_applied": false,
-    "message": "ResNet-50 inference complete. Classified as BENIGN with 72.0% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
-    "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
-  },
-  {
-    "timestamp": "2026-11-05T00:18:14Z",
-    "modality": "mammogram",
-    "filename": "mdb001lm.pgm",
-    "dimensions": {
-      "width": 4320,
-      "height": 2048
-    },
-    "color_mode": "L",
-    "format": "PPM",
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "normal",
-    "confidence": 0.5673,
-    "probabilities": {
-      "normal": 0.5673,
-      "benign": 0.1958,
-      "malignant": 0.2369
-    },
-    "gradcam_url": "/api/gradcam-image/cam_6825e21a1fa1.jpg",
-    "raw_gradcam_url": "/api/gradcam-image/cam_raw_6825e21a1fa1.jpg",
-    "model_architecture": "ResNet-50 Deep ConvNet",
-    "predictive_entropy": 0.982,
-    "uncertainty_score": 0.8939,
-    "confidence_margin": 0.3304,
-    "roi_bounding_box": [
-      2712,
-      413,
-      3661,
-      845
-    ],
-    "attention_coverage_percent": 1.71,
-    "peak_activation_coords": [
-      3390,
-      726
-    ],
-    "tta_applied": false,
-    "message": "ResNet-50 inference complete. Classified as NORMAL with 56.7% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
-    "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
-  },
-  {
-    "analysis_id": "analysis_8040bb19e217",
-    "modality": "combined",
-    "case_id": "MF-COMBINED-TEST_PT_001",
-    "participant_id": "TEST_PT_001",
-    "filename": "paired_mammo.pgm + paired_thermal.jpg",
-    "predicted_class": "benign",
-    "confidence": 0.9994,
-    "probabilities": {
-      "normal": 0.0003,
-      "benign": 0.9994,
-      "malignant": 0.0003
-    },
-    "gradcam_url": null,
-    "raw_gradcam_url": null,
-    "model_architecture": "Cross-Attention Dual-Branch ResNet-50 Fusion",
-    "data_note": "RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only.",
-    "predictive_entropy": 0.0055,
-    "uncertainty_score": 0.005,
-    "confidence_margin": 0.9991,
-    "message": "Cross-Attention Dual-Branch fusion inference complete. Classified as BENIGN with 99.9% confidence. Bidirectional cross-attention over ResNet-50 features applied. NOTE: RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only.",
-    "recommendation": "Review paired radiologic density and thermographic vascular heat distribution across bilateral views.",
-    "timestamp": "2026-11-05 00:17:34"
-  },
-  {
-    "timestamp": "2026-11-05T00:17:31Z",
-    "modality": "thermal",
-    "filename": "IIR0110_anterior.jpg",
-    "dimensions": {
-      "width": 320,
-      "height": 240
-    },
-    "color_mode": "RGB",
-    "format": "JPEG",
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "benign",
-    "confidence": 0.7205,
-    "probabilities": {
-      "normal": 0.0356,
-      "benign": 0.7205,
-      "malignant": 0.2439
-    },
-    "gradcam_url": "/api/gradcam-image/cam_22e47499819a.jpg",
-    "raw_gradcam_url": "/api/gradcam-image/cam_raw_22e47499819a.jpg",
-    "model_architecture": "ResNet-50 Deep ConvNet",
-    "predictive_entropy": 0.6991,
-    "uncertainty_score": 0.6364,
-    "confidence_margin": 0.4766,
-    "roi_bounding_box": [
-      46,
-      84,
-      320,
-      211
-    ],
-    "attention_coverage_percent": 2.1,
-    "peak_activation_coords": [
-      69,
-      189
-    ],
-    "tta_applied": false,
-    "message": "ResNet-50 inference complete. Classified as BENIGN with 72.0% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
-    "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
-  },
-  {
-    "timestamp": "2026-11-05T00:17:30Z",
-    "modality": "mammogram",
-    "filename": "mdb001lm.pgm",
-    "dimensions": {
-      "width": 4320,
-      "height": 2048
-    },
-    "color_mode": "L",
-    "format": "PPM",
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "normal",
-    "confidence": 0.5673,
-    "probabilities": {
-      "normal": 0.5673,
-      "benign": 0.1958,
-      "malignant": 0.2369
-    },
-    "gradcam_url": "/api/gradcam-image/cam_b07e3c8841ea.jpg",
-    "raw_gradcam_url": "/api/gradcam-image/cam_raw_b07e3c8841ea.jpg",
-    "model_architecture": "ResNet-50 Deep ConvNet",
-    "predictive_entropy": 0.982,
-    "uncertainty_score": 0.8939,
-    "confidence_margin": 0.3304,
-    "roi_bounding_box": [
-      2712,
-      413,
-      3661,
-      845
-    ],
-    "attention_coverage_percent": 1.71,
-    "peak_activation_coords": [
-      3390,
-      726
-    ],
-    "tta_applied": false,
-    "message": "ResNet-50 inference complete. Classified as NORMAL with 56.7% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
-    "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
-  },
-  {
-    "timestamp": "2026-11-05T00:10:47Z",
-    "modality": "thermal",
-    "filename": "IIR0110_anterior.jpg",
-    "dimensions": {
-      "width": 320,
-      "height": 240
-    },
-    "color_mode": "RGB",
-    "format": "JPEG",
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "benign",
-    "confidence": 0.7205,
-    "probabilities": {
-      "normal": 0.0356,
-      "benign": 0.7205,
-      "malignant": 0.2439
-    },
-    "gradcam_url": "/api/gradcam-image/cam_b13df0f61e68.jpg",
-    "raw_gradcam_url": "/api/gradcam-image/cam_raw_b13df0f61e68.jpg",
-    "model_architecture": "ResNet-50 Deep ConvNet",
-    "predictive_entropy": 0.6991,
-    "uncertainty_score": 0.6364,
-    "confidence_margin": 0.4766,
-    "roi_bounding_box": [
-      46,
-      84,
-      320,
-      211
-    ],
-    "attention_coverage_percent": 2.1,
-    "peak_activation_coords": [
-      69,
-      189
-    ],
-    "tta_applied": false,
-    "message": "ResNet-50 inference complete. Classified as BENIGN with 72.0% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
-    "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
-  },
-  {
-    "timestamp": "2026-11-05T00:10:45Z",
-    "modality": "mammogram",
-    "filename": "mdb001lm.pgm",
-    "dimensions": {
-      "width": 4320,
-      "height": 2048
-    },
-    "color_mode": "L",
-    "format": "PPM",
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "normal",
-    "confidence": 0.5673,
-    "probabilities": {
-      "normal": 0.5673,
-      "benign": 0.1958,
-      "malignant": 0.2369
-    },
-    "gradcam_url": "/api/gradcam-image/cam_e79dea1b126e.jpg",
-    "raw_gradcam_url": "/api/gradcam-image/cam_raw_e79dea1b126e.jpg",
-    "model_architecture": "ResNet-50 Deep ConvNet",
-    "predictive_entropy": 0.982,
-    "uncertainty_score": 0.8939,
-    "confidence_margin": 0.3304,
-    "roi_bounding_box": [
-      2712,
-      413,
-      3661,
-      845
-    ],
-    "attention_coverage_percent": 1.71,
-    "peak_activation_coords": [
-      3390,
-      726
-    ],
-    "tta_applied": false,
-    "message": "ResNet-50 inference complete. Classified as NORMAL with 56.7% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
-    "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
-  },
-  {
-    "timestamp": "2026-11-04T23:58:18Z",
-    "modality": "mammogram",
-    "filename": "mdb001lm.pgm",
-    "dimensions": {
-      "width": 4320,
-      "height": 2048
-    },
-    "color_mode": "L",
-    "format": "PPM",
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "normal",
-    "confidence": 0.5673,
-    "probabilities": {
-      "normal": 0.5673,
-      "benign": 0.1958,
-      "malignant": 0.2369
-    },
-    "gradcam_url": "/api/gradcam-image/cam_455c81ee36b1.jpg",
-    "model_architecture": "ResNet-50 Deep ConvNet",
-    "predictive_entropy": 0.982,
-    "uncertainty_score": 0.8939,
-    "confidence_margin": 0.3304,
-    "roi_bounding_box": [
-      2712,
-      413,
-      3661,
-      845
-    ],
-    "attention_coverage_percent": 1.71,
-    "peak_activation_coords": [
-      3390,
-      726
-    ],
-    "tta_applied": false,
-    "message": "ResNet-50 inference complete. Classified as NORMAL with 56.7% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
-    "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
-  },
-  {
-    "timestamp": "2026-11-04T23:57:56Z",
-    "modality": "thermal",
-    "filename": "IIR0110_anterior.jpg",
-    "dimensions": {
-      "width": 320,
-      "height": 240
-    },
-    "color_mode": "RGB",
-    "format": "JPEG",
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "benign",
-    "confidence": 0.7205,
-    "probabilities": {
-      "normal": 0.0356,
-      "benign": 0.7205,
-      "malignant": 0.2439
-    },
-    "gradcam_url": "/api/gradcam-image/cam_36dda033164d.jpg",
-    "model_architecture": "ResNet-50 Deep ConvNet",
-    "predictive_entropy": 0.6991,
-    "uncertainty_score": 0.6364,
-    "confidence_margin": 0.4766,
-    "roi_bounding_box": [
-      46,
-      84,
-      320,
-      211
-    ],
-    "attention_coverage_percent": 2.1,
-    "peak_activation_coords": [
-      69,
-      189
-    ],
-    "tta_applied": false,
-    "message": "ResNet-50 inference complete. Classified as BENIGN with 72.0% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
-    "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
-  },
-  {
-    "analysis_id": "analysis_4263d3747b85",
-    "modality": "combined",
-    "case_id": "MF-2026-PT_001",
-    "participant_id": "TEST_PT_001",
-    "filename": "paired_mammo.pgm + paired_thermal.jpg",
-    "predicted_class": "benign",
-    "confidence": 0.9995,
-    "probabilities": {
-      "normal": 0.0003,
-      "benign": 0.9995,
-      "malignant": 0.0002
-    },
-    "gradcam_url": "/api/gradcam-image/analysis_4263d3747b85.jpg",
-    "model_architecture": "Cross-Attention Dual-Branch ResNet-50 Fusion",
-    "data_note": "RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only.",
-    "predictive_entropy": 0.0048,
-    "uncertainty_score": 0.0043,
-    "confidence_margin": 0.9992,
-    "message": "Cross-Attention Dual-Branch fusion inference complete. Classified as BENIGN with 99.9% confidence. Bidirectional cross-attention over ResNet-50 features applied. NOTE: RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only.",
-    "recommendation": "Review paired radiologic density and thermographic vascular heat distribution across bilateral views.",
-    "timestamp": "2026-11-04 23:38:53"
-  },
-  {
-    "timestamp": "2026-11-04T23:38:50Z",
-    "modality": "thermal",
-    "filename": "TFRON_V57_19-11-2012_0.jpg",
-    "dimensions": {
-      "width": 224,
-      "height": 224
-    },
-    "color_mode": "RGB",
-    "format": "JPEG",
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "normal",
-    "confidence": 0.9459,
-    "probabilities": {
-      "normal": 0.9459,
-      "benign": 0.035,
-      "malignant": 0.0191
-    },
-    "gradcam_url": "/api/gradcam-image/cam_8659b3e7bc26.jpg",
-    "model_architecture": "ResNet-50 Deep ConvNet",
-    "predictive_entropy": 0.2455,
-    "uncertainty_score": 0.2235,
-    "confidence_margin": 0.9109,
-    "roi_bounding_box": [
-      98,
-      141,
-      154,
-      224
-    ],
-    "attention_coverage_percent": 7.77,
-    "peak_activation_coords": [
-      113,
-      177
-    ],
-    "tta_applied": false,
-    "message": "ResNet-50 inference complete. Classified as NORMAL with 94.6% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
-    "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
-  },
-  {
-    "timestamp": "2026-11-04T23:38:49Z",
-    "modality": "thermal",
-    "filename": "IR_2015-04-17_0007.jpg",
-    "dimensions": {
-      "width": 224,
-      "height": 224
-    },
-    "color_mode": "RGB",
-    "format": "JPEG",
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "normal",
-    "confidence": 0.4834,
-    "probabilities": {
-      "normal": 0.4834,
-      "benign": 0.2268,
-      "malignant": 0.2898
-    },
-    "gradcam_url": "/api/gradcam-image/cam_6905e46fc6ac.jpg",
-    "model_architecture": "ResNet-50 Deep ConvNet",
-    "predictive_entropy": 1.0468,
-    "uncertainty_score": 0.9528,
-    "confidence_margin": 0.1937,
-    "roi_bounding_box": [
-      67,
-      33,
-      183,
-      62
-    ],
-    "attention_coverage_percent": 3.51,
-    "peak_activation_coords": [
-      80,
-      47
-    ],
-    "tta_applied": false,
-    "message": "ResNet-50 inference complete. Classified as NORMAL with 48.3% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
-    "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
-  },
-  {
-    "timestamp": "2026-11-04T23:38:48Z",
-    "modality": "thermal",
-    "filename": "IIR0130_anterior.jpg",
-    "dimensions": {
-      "width": 320,
-      "height": 240
-    },
-    "color_mode": "RGB",
-    "format": "JPEG",
-    "status": "classified",
-    "inference_ready": true,
+    "case_id": "MF-2026-507",
+    "participant_id": "MF-2026-507",
+    "filename": "WhatsApp_Image_2026-10-31_at_6.59.56_PM__1_.jpeg + WhatsApp_Image_2026-10-31_at_7.04.41_PM.jpeg",
     "predicted_class": "malignant",
-    "confidence": 0.8261,
+    "confidence": 0.9924,
     "probabilities": {
-      "normal": 0.0153,
-      "benign": 0.1586,
-      "malignant": 0.8261
+      "normal": 0.0009,
+      "benign": 0.0068,
+      "malignant": 0.9924
     },
-    "gradcam_url": "/api/gradcam-image/cam_f832a1df5dad.jpg",
+    "gradcam_url": "/api/gradcam-image/analysis_414c791832fc.jpg",
+    "raw_gradcam_url": "/api/gradcam-image/raw_analysis_414c791832fc.jpg",
+    "model_architecture": "Cross-Attention Dual-Branch ResNet-50 Fusion",
+    "data_note": "RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only.",
+    "predictive_entropy": 0.0476,
+    "uncertainty_score": 0.0433,
+    "confidence_margin": 0.9856,
+    "message": "Cross-Attention Dual-Branch fusion inference complete. Classified as MALIGNANT with 99.2% confidence. Bidirectional cross-attention over ResNet-50 features applied. NOTE: RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only.",
+    "recommendation": "Review paired radiologic density and thermographic vascular heat distribution across bilateral views.",
+    "timestamp": "2026-11-05 09:01:00"
+  },
+  {
+    "timestamp": "2026-11-05T09:00:58Z",
+    "modality": "thermal",
+    "filename": "WhatsApp_Image_2026-10-31_at_7.04.41_PM.jpeg",
+    "dimensions": {
+      "width": 684,
+      "height": 576
+    },
+    "color_mode": "RGB",
+    "format": "JPEG",
+    "status": "classified",
+    "inference_ready": true,
+    "predicted_class": "normal",
+    "confidence": 1.0,
+    "probabilities": {
+      "normal": 1.0,
+      "benign": 0.0,
+      "malignant": 0.0
+    },
+    "gradcam_url": "/api/gradcam-image/cam_a114aacf5ff6.jpg",
+    "raw_gradcam_url": "/api/gradcam-image/cam_raw_a114aacf5ff6.jpg",
     "model_architecture": "ResNet-50 Deep ConvNet",
-    "predictive_entropy": 0.5139,
-    "uncertainty_score": 0.4678,
-    "confidence_margin": 0.6674,
+    "predictive_entropy": 0.0,
+    "uncertainty_score": 0.0,
+    "confidence_margin": 1.0,
     "roi_bounding_box": [
-      185,
-      103,
-      228,
-      135
+      196,
+      114,
+      555,
+      576
     ],
-    "attention_coverage_percent": 1.15,
+    "attention_coverage_percent": 15.77,
     "peak_activation_coords": [
-      207,
-      119
+      245,
+      204
     ],
     "tta_applied": false,
-    "message": "ResNet-50 inference complete. Classified as MALIGNANT with 82.6% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
+    "message": "ResNet-50 inference complete. Classified as NORMAL with 100.0% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
     "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
   },
   {
-    "timestamp": "2026-11-04T23:38:46Z",
+    "timestamp": "2026-11-05T09:00:57Z",
+    "modality": "mammogram",
+    "filename": "WhatsApp_Image_2026-10-31_at_6.59.56_PM__1_.jpeg",
+    "dimensions": {
+      "width": 615,
+      "height": 800
+    },
+    "color_mode": "RGB",
+    "format": "JPEG",
+    "status": "classified",
+    "inference_ready": true,
+    "predicted_class": "normal",
+    "confidence": 0.5283,
+    "probabilities": {
+      "normal": 0.5283,
+      "benign": 0.2918,
+      "malignant": 0.1799
+    },
+    "gradcam_url": "/api/gradcam-image/cam_606fad173fa1.jpg",
+    "raw_gradcam_url": "/api/gradcam-image/cam_raw_606fad173fa1.jpg",
+    "model_architecture": "ResNet-50 Deep ConvNet",
+    "predictive_entropy": 1.0051,
+    "uncertainty_score": 0.9149,
+    "confidence_margin": 0.2365,
+    "roi_bounding_box": [
+      108,
+      240,
+      320,
+      660
+    ],
+    "attention_coverage_percent": 7.68,
+    "peak_activation_coords": [
+      218,
+      287
+    ],
+    "tta_applied": false,
+    "message": "ResNet-50 inference complete. Classified as NORMAL with 52.8% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
+    "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
+  },
+  {
+    "analysis_id": "analysis_17f686f1e9d1",
+    "modality": "combined",
+    "case_id": "MF-COMBINED-TEST_PT_001",
+    "participant_id": "TEST_PT_001",
+    "filename": "paired_mammo.pgm + paired_thermal.jpg",
+    "predicted_class": "benign",
+    "confidence": 0.9994,
+    "probabilities": {
+      "normal": 0.0003,
+      "benign": 0.9994,
+      "malignant": 0.0003
+    },
+    "gradcam_url": "/api/gradcam-image/analysis_17f686f1e9d1.jpg",
+    "raw_gradcam_url": "/api/gradcam-image/raw_analysis_17f686f1e9d1.jpg",
+    "model_architecture": "Cross-Attention Dual-Branch ResNet-50 Fusion",
+    "data_note": "RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only.",
+    "predictive_entropy": 0.0055,
+    "uncertainty_score": 0.005,
+    "confidence_margin": 0.9991,
+    "message": "Cross-Attention Dual-Branch fusion inference complete. Classified as BENIGN with 99.9% confidence. Bidirectional cross-attention over ResNet-50 features applied. NOTE: RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only.",
+    "recommendation": "Review paired radiologic density and thermographic vascular heat distribution across bilateral views.",
+    "timestamp": "2026-11-05 08:47:48"
+  },
+  {
+    "timestamp": "2026-11-05T08:47:43Z",
     "modality": "thermal",
     "filename": "IIR0110_anterior.jpg",
     "dimensions": {
@@ -836,7 +226,8 @@
       "benign": 0.7205,
       "malignant": 0.2439
     },
-    "gradcam_url": "/api/gradcam-image/cam_6d50fa919754.jpg",
+    "gradcam_url": "/api/gradcam-image/cam_67f1df7df6ce.jpg",
+    "raw_gradcam_url": "/api/gradcam-image/cam_raw_67f1df7df6ce.jpg",
     "model_architecture": "ResNet-50 Deep ConvNet",
     "predictive_entropy": 0.6991,
     "uncertainty_score": 0.6364,
@@ -857,46 +248,7 @@
     "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
   },
   {
-    "timestamp": "2026-11-04T23:38:45Z",
-    "modality": "mammogram",
-    "filename": "mdb004rl.pgm",
-    "dimensions": {
-      "width": 4320,
-      "height": 2600
-    },
-    "color_mode": "L",
-    "format": "PPM",
-    "status": "classified",
-    "inference_ready": true,
-    "predicted_class": "normal",
-    "confidence": 0.6986,
-    "probabilities": {
-      "normal": 0.6986,
-      "benign": 0.1369,
-      "malignant": 0.1645
-    },
-    "gradcam_url": "/api/gradcam-image/cam_443376e448a4.jpg",
-    "model_architecture": "ResNet-50 Deep ConvNet",
-    "predictive_entropy": 0.8196,
-    "uncertainty_score": 0.7461,
-    "confidence_margin": 0.5342,
-    "roi_bounding_box": [
-      0,
-      1877,
-      1182,
-      2215
-    ],
-    "attention_coverage_percent": 1.98,
-    "peak_activation_coords": [
-      910,
-      2052
-    ],
-    "tta_applied": false,
-    "message": "ResNet-50 inference complete. Classified as NORMAL with 69.9% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
-    "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
-  },
-  {
-    "timestamp": "2026-11-04T23:38:39Z",
+    "timestamp": "2026-11-05T08:47:41Z",
     "modality": "mammogram",
     "filename": "mdb001lm.pgm",
     "dimensions": {
@@ -914,7 +266,8 @@
       "benign": 0.1958,
       "malignant": 0.2369
     },
-    "gradcam_url": "/api/gradcam-image/cam_a11ef00b47b4.jpg",
+    "gradcam_url": "/api/gradcam-image/cam_3ec248e484df.jpg",
+    "raw_gradcam_url": "/api/gradcam-image/cam_raw_3ec248e484df.jpg",
     "model_architecture": "ResNet-50 Deep ConvNet",
     "predictive_entropy": 0.982,
     "uncertainty_score": 0.8939,
@@ -932,6 +285,46 @@
     ],
     "tta_applied": false,
     "message": "ResNet-50 inference complete. Classified as NORMAL with 56.7% confidence. Grad-CAM attribution generated from layer4 bottleneck gradients.",
+    "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
+  },
+  {
+    "timestamp": "2026-11-05T08:42:20Z",
+    "modality": "mammogram",
+    "filename": "mdb001lm.pgm",
+    "dimensions": {
+      "width": 4320,
+      "height": 2048
+    },
+    "color_mode": "L",
+    "format": "PPM",
+    "status": "classified",
+    "inference_ready": true,
+    "predicted_class": "normal",
+    "confidence": 0.5673,
+    "probabilities": {
+      "normal": 0.5673,
+      "benign": 0.1958,
+      "malignant": 0.2369
+    },
+    "gradcam_url": null,
+    "raw_gradcam_url": null,
+    "model_architecture": "ResNet-50 Deep ConvNet",
+    "predictive_entropy": 0.982,
+    "uncertainty_score": 0.8939,
+    "confidence_margin": 0.3304,
+    "roi_bounding_box": [
+      2712,
+      413,
+      3661,
+      845
+    ],
+    "attention_coverage_percent": 1.71,
+    "peak_activation_coords": [
+      3390,
+      726
+    ],
+    "tta_applied": false,
+    "message": "ResNet-50 inference complete. Classified as NORMAL with 56.7% confidence.",
     "recommendation": "Review Grad-CAM focal hyperthermia / lesion boundary against radiological screening standard."
   }
 ]

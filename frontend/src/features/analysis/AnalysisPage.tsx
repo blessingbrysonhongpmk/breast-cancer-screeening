@@ -118,6 +118,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
   const [pairValidation, setPairValidation] = useState<PairValidationResult | null>(null);
   const [isPairValidating, setIsPairValidating] = useState<boolean>(false);
   const [isLoadingSamplePair, setIsLoadingSamplePair] = useState<boolean>(false);
+  const [benchmarkError, setBenchmarkError] = useState<string | null>(null);
   const [confirmedSamePatient, setConfirmedSamePatient] = useState<boolean>(false);
 
   // Case Reference ID & timestamp
@@ -570,6 +571,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
   // One-click Benchmark Pair Loader
   const handleLoadSamplePair = async () => {
     setIsLoadingSamplePair(true);
+    setBenchmarkError(null);
     try {
       setCaseId('MF-2026-607');
       const mRes = await fetch('/api/sample-file/combined/paired_mammo.pgm');
@@ -589,8 +591,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       await handleCombinedThermalProcess(tFile);
       await checkPairValidation(mFile, tFile, false);
     } catch (err: any) {
-      console.error('Failed to load benchmark scan pair:', err);
-      alert('Could not load benchmark scans: ' + (err.message || err));
+      console.warn('Failed to load benchmark scan pair:', err);
+      setBenchmarkError('Benchmark scans are currently unavailable.');
     } finally {
       setIsLoadingSamplePair(false);
     }
@@ -654,8 +656,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
           (isHighRisk
             ? 'malignant'
             : (probMal >= probBen && probMal >= probNorm
-                ? 'malignant'
-                : (probBen >= probNorm ? 'benign' : 'normal')));
+              ? 'malignant'
+              : (probBen >= probNorm ? 'benign' : 'normal')));
 
         const combinedConfidence = combinedRes?.confidence ?? (combinedProbs[combinedPredClass] || 0.5);
 
@@ -810,17 +812,17 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
   const isDualThermal = Boolean(
     combinedMammoFile && combinedThermalFile &&
     (combinedMammoValidation?.detectedModality === 'thermal' ||
-     combinedMammoValidation?.errorMessage?.includes('Thermal') ||
-     pairValidation?.pairing_badge?.includes('Dual Thermal') ||
-     pairValidation?.combined_status?.includes('Dual Thermal'))
+      combinedMammoValidation?.errorMessage?.includes('Thermal') ||
+      pairValidation?.pairing_badge?.includes('Dual Thermal') ||
+      pairValidation?.combined_status?.includes('Dual Thermal'))
   );
 
   const isDualMammogram = Boolean(
     combinedMammoFile && combinedThermalFile &&
     (combinedThermalValidation?.detectedModality === 'mammogram' ||
-     combinedThermalValidation?.errorMessage?.includes('Mammogram') ||
-     pairValidation?.pairing_badge?.includes('Dual Mammogram') ||
-     pairValidation?.combined_status?.includes('Dual Mammogram'))
+      combinedThermalValidation?.errorMessage?.includes('Mammogram') ||
+      pairValidation?.pairing_badge?.includes('Dual Mammogram') ||
+      pairValidation?.combined_status?.includes('Dual Mammogram'))
   );
 
   const hasInvalidScan = combinedMammoStage === 'invalid' || combinedThermalStage === 'invalid' || combinedMammoStage === 'error' || combinedThermalStage === 'error';
@@ -836,8 +838,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
   const riskScore: number = rawMalignantProb !== undefined
     ? rawMalignantProb
     : (activeResult && activeResult.confidence !== undefined
-        ? (activeResult.predicted_class === 'malignant' ? activeResult.confidence : (1.0 - activeResult.confidence))
-        : 0);
+      ? (activeResult.predicted_class === 'malignant' ? activeResult.confidence : (1.0 - activeResult.confidence))
+      : 0);
   const overallConfidencePct = activeResult?.confidence !== undefined ? ((activeResult.confidence) * 100).toFixed(1) : '—';
 
   // Specific Modality Availability Flags
@@ -870,19 +872,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
 
   const isCamAvailable = Boolean(selectedCamModality === 'thermal' ? isThermalAnalyzed : isMammoAnalyzed);
 
-  // Compute Dynamic Lesion ROI Bounding Box percentage from real Grad-CAM outputs
-  const computedRoiStyle: React.CSSProperties = React.useMemo(() => {
-    let base: React.CSSProperties = {
-      position: 'absolute',
-      top: '25%',
-      left: '30%',
-      width: '35%',
-      height: '35%',
-      border: '2px dashed #EF4444',
-      borderRadius: '2px',
-      pointerEvents: 'none',
-      boxShadow: '0 0 10px rgba(239, 68, 68, 0.4)'
-    };
+  // Compute Dynamic Lesion ROI Bounding Box percentage from real Grad-CAM outputs only
+  const computedRoiStyle: React.CSSProperties | null = React.useMemo(() => {
     const targetPrediction = selectedCamModality === 'thermal'
       ? (activeResult?.thermal_prediction || activeResult)
       : (activeResult?.mammo_prediction || activeResult);
@@ -894,15 +885,19 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       const topPct = Math.max(2, Math.min(88, (ymin / dims.height) * 100));
       const widthPct = Math.max(8, Math.min(95 - leftPct, ((xmax - xmin) / dims.width) * 100));
       const heightPct = Math.max(8, Math.min(95 - topPct, ((ymax - ymin) / dims.height) * 100));
-      base = {
-        ...base,
-        left: `${leftPct.toFixed(1)}%`,
+      return {
+        position: 'absolute',
         top: `${topPct.toFixed(1)}%`,
+        left: `${leftPct.toFixed(1)}%`,
         width: `${widthPct.toFixed(1)}%`,
-        height: `${heightPct.toFixed(1)}%`
+        height: `${heightPct.toFixed(1)}%`,
+        border: '2px dashed #EF4444',
+        borderRadius: '2px',
+        pointerEvents: 'none',
+        boxShadow: '0 0 10px rgba(239, 68, 68, 0.4)'
       };
     }
-    return base;
+    return null;
   }, [activeResult, selectedCamModality]);
 
   return (
@@ -918,7 +913,20 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {benchmarkError && (
+            <span style={{
+              fontSize: '11px',
+              color: '#BE123C',
+              background: '#FFF1F2',
+              padding: '5px 12px',
+              borderRadius: '9999px',
+              border: '1px solid #FDA4AF',
+              fontWeight: 500
+            }}>
+              {benchmarkError}
+            </span>
+          )}
           {/* Quick Benchmark Button */}
           <button
             type="button"
@@ -942,6 +950,11 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
               <>
                 <RefreshCw size={13} className="spinning" />
                 <span>Loading Benchmark Scans...</span>
+              </>
+            ) : benchmarkError ? (
+              <>
+                <RefreshCw size={13} />
+                <span>Retry Benchmark Scans</span>
               </>
             ) : (
               <>
@@ -1221,8 +1234,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                       {combinedMammoValidation?.detectedModality === 'thermal' && !combinedMammoValidation?.errorMessage?.toLowerCase().includes('fetch') && !combinedMammoValidation?.errorMessage?.toLowerCase().includes('connect')
                         ? 'Upload Denied — Modality Mismatch'
                         : (combinedMammoValidation?.errorMessage?.toLowerCase().includes('connect') || combinedMammoValidation?.errorMessage?.toLowerCase().includes('fetch')
-                            ? 'Server Connection Notice'
-                            : 'Upload Denied — Validation Error')}
+                          ? 'Server Connection Notice'
+                          : 'Upload Denied — Validation Error')}
                     </div>
                     <div style={{ marginTop: '2px', color: '#9F1239' }}>
                       {combinedMammoValidation?.errorMessage || 'Please upload a valid radiographic mammogram.'}
@@ -1597,8 +1610,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                       {combinedThermalValidation?.detectedModality === 'mammogram' && !combinedThermalValidation?.errorMessage?.toLowerCase().includes('fetch') && !combinedThermalValidation?.errorMessage?.toLowerCase().includes('connect')
                         ? 'Upload Denied — Modality Mismatch'
                         : (combinedThermalValidation?.errorMessage?.toLowerCase().includes('connect') || combinedThermalValidation?.errorMessage?.toLowerCase().includes('fetch')
-                            ? 'Server Connection Notice'
-                            : 'Upload Denied — Validation Error')}
+                          ? 'Server Connection Notice'
+                          : 'Upload Denied — Validation Error')}
                     </div>
                     <div style={{ marginTop: '2px', color: '#9F1239' }}>
                       {combinedThermalValidation?.errorMessage || 'Please upload a valid infrared thermal image.'}
@@ -2340,11 +2353,6 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                       ) : (
                         <div style={{ color: '#888', fontSize: '11px' }}>Original scan preview</div>
                       )}
-                      {/* HUD Text in top-left */}
-                      <div style={{ position: 'absolute', top: '6px', left: '6px', fontSize: '8px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.2, fontFamily: 'monospace' }}>
-                        <div>L-MLO 18x24</div>
-                        <div>ACR: BI-RADS</div>
-                      </div>
                     </div>
                     <div style={{ fontSize: '11.5px', textAlign: 'center', color: '#6B7280', marginTop: '6px', fontWeight: 600 }}>
                       Original
@@ -2424,8 +2432,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                           Overlay preview
                         </div>
                       )}
-                      {/* Lesion ROI Box */}
-                      {highlightRoi && (
+                      {/* Lesion ROI Box (Displayed ONLY when model extracts an authentic activation ROI bounding box) */}
+                      {highlightRoi && computedRoiStyle && (
                         <div style={computedRoiStyle}>
                           <span style={{
                             position: 'absolute',

@@ -67,6 +67,8 @@ export async function inspectImageModalityClient(
 
   let totalDiff = 0;
   let darkCount = 0;
+  let visiblePixels = 0;
+  let highSatPixels = 0;
   const totalPixels = size * size;
 
   for (let i = 0; i < data.length; i += 4) {
@@ -77,6 +79,17 @@ export async function inspectImageModalityClient(
     const diff = (Math.abs(r - g) + Math.abs(g - b) + Math.abs(b - r)) / 3.0;
     totalDiff += diff;
 
+    const maxC = Math.max(r, g, b);
+    const minC = Math.min(r, g, b);
+
+    if (maxC >= 20.0) {
+      visiblePixels++;
+      const sat = (maxC - minC) / (maxC + 0.0001);
+      if (sat > 0.25) {
+        highSatPixels++;
+      }
+    }
+
     const gray = 0.299 * r + 0.587 * g + 0.114 * b;
     if (gray < 20.0) {
       darkCount++;
@@ -85,6 +98,7 @@ export async function inspectImageModalityClient(
 
   const avgDiff = totalDiff / totalPixels;
   const darkRatio = darkCount / totalPixels;
+  const chromaticFraction = visiblePixels > 30 ? (highSatPixels / visiblePixels) : 0;
 
   // Known hints in filename
   const thermalHints = ['iir', 'anterior', 'oblder', 'oblizq', 'therm', 'infrared', 'flir'];
@@ -110,18 +124,20 @@ export async function inspectImageModalityClient(
     };
   }
 
-  // False-color thermal images have high channel divergence (typically > 15-20)
-  if (avgDiff >= 15.0) {
+  // False-color thermal thermograms exhibit significant channel divergence AND genuine chromatic saturation on visible pixels
+  const isColorThermal = (avgDiff >= 12.0 && chromaticFraction >= 0.12) || (avgDiff >= 28.0);
+
+  if (isColorThermal) {
     return {
       detectedModality: 'thermal',
       isColor: true,
       channelDivergence: avgDiff,
       darkRatio,
-      explanation: `Color infrared thermogram detected (channel divergence: ${avgDiff.toFixed(1)}).`
+      explanation: `Color infrared thermogram detected (channel divergence: ${avgDiff.toFixed(1)}, chromatic fraction: ${(chromaticFraction * 100).toFixed(1)}%).`
     };
   }
 
-  // Grayscale radiographs have low channel divergence (< 15) and typically dark background border
+  // Grayscale radiographs have low chromatic saturation and typically dark background border
   return {
     detectedModality: 'mammogram',
     isColor: false,
@@ -130,3 +146,4 @@ export async function inspectImageModalityClient(
     explanation: `Radiographic mammogram verified (grayscale contrast confirmed, dark background ratio: ${darkRatio.toFixed(2)}).`
   };
 }
+

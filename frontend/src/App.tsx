@@ -2,15 +2,11 @@ import React, { useState, useEffect } from 'react';
 import {
   Home,
   Scan,
-  BarChart3,
   FileText,
   Clock,
   Info,
-  RefreshCw,
   Menu,
   X,
-  Bell,
-  ChevronDown,
   Heart
 } from 'lucide-react';
 
@@ -68,7 +64,6 @@ export function App() {
   const [latestAnalysis, setLatestAnalysis] = useState<AnalysisResponse | null>(null);
   const [targetSample, setTargetSample] = useState<string | null>(null);
 
-  const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   useEffect(() => {
@@ -78,26 +73,6 @@ export function App() {
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
-
-  const syncBackendData = async () => {
-    setIsSyncing(true);
-    setBackendStatus('checking');
-    try {
-      const [hlth, readi] = await Promise.all([
-        fetchHealthCheck(),
-        fetchModelReadiness()
-      ]);
-      setHealth(hlth);
-      setModelReadiness(readi);
-      setBackendStatus(hlth?.status === 'healthy' ? 'online' : 'offline');
-    } catch (e) {
-      console.error('Failed to sync backend:', e);
-      setBackendStatus('offline');
-      setHealth(null);
-    } finally {
-      setIsSyncing(false);
-    }
-  };
 
   useEffect(() => {
     let active = true;
@@ -242,74 +217,6 @@ export function App() {
             >
               <Menu size={22} color="var(--text-primary)" />
             </button>
-          </div>
-
-          {/* User Profile & Notifications */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            {/* Sync Refresh Button */}
-            <button
-              type="button"
-              onClick={syncBackendData}
-              disabled={isSyncing}
-              className="btn-secondary"
-              style={{ padding: '5px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px', borderRadius: '9999px' }}
-              title="Refresh connection status"
-            >
-              <RefreshCw size={11} className={isSyncing ? 'spinning' : ''} />
-              <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
-            </button>
-
-            {/* Notification Bell with Badge */}
-            <div style={{ position: 'relative', cursor: 'pointer', padding: '4px' }}>
-              <Bell size={18} color="#4A0E2E" />
-              <span style={{
-                position: 'absolute',
-                top: '0',
-                right: '0',
-                width: '14px',
-                height: '14px',
-                borderRadius: '50%',
-                backgroundColor: '#D82873',
-                color: '#FFFFFF',
-                fontSize: '9px',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                1
-              </span>
-            </div>
-
-            {/* User Avatar Capsule */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '4px 10px 4px 6px',
-              borderRadius: '9999px',
-              backgroundColor: '#FFFFFF',
-              border: '1px solid #F2CCD7',
-              cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(44, 24, 32, 0.04)'
-            }}>
-              <div style={{
-                width: '26px',
-                height: '26px',
-                borderRadius: '50%',
-                backgroundColor: '#3D0B24',
-                color: '#FFFFFF',
-                fontSize: '12px',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                B
-              </div>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: '#2A061B' }}>Blessing</span>
-              <ChevronDown size={14} color="#826674" />
-            </div>
           </div>
         </header>
 
