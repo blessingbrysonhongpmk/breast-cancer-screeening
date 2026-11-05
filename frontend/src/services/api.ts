@@ -130,6 +130,7 @@ export interface AnalysisResponse {
     [key: string]: number | undefined;
   };
   gradcam_url?: string;
+  raw_gradcam_url?: string;
   model_architecture?: string;
   message: string;
   recommendation: string;

@@ -39,6 +39,7 @@ import {
   PairValidationResult
 } from '../../services/api';
 import { decodePgmImage } from '../../utils/pgmDecoder';
+import { inspectImageModalityClient } from '../../utils/modalityInspector';
 
 export type SlotStage =
   | 'empty'
@@ -240,27 +241,26 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       setCombinedMammoPreview(imagePreview);
       setCombinedMammoStage('format_validated');
 
-      const val = await validateScanImage(file, 'mammogram');
-      if (!val.valid_format || !val.modality_verified) {
+      // 1. Fast client-side modality check (catches thermal images in mammogram slot instantly)
+      const clientInspect = await inspectImageModalityClient(imagePreview, file.name);
+      if (clientInspect.detectedModality === 'thermal') {
         setCombinedMammoStage('invalid');
         setCombinedMammoValidation({
           stage: 'invalid',
-          fileValid: val.valid_format,
-          format: val.format || file.name.split('.').pop()?.toUpperCase() || 'PGM',
+          fileValid: true,
+          format: file.name.split('.').pop()?.toUpperCase() || 'JPEG',
           sizeFormatted: formatFileSize(file.size),
-          dimensions: val.dimensions.width > 0 ? val.dimensions : dims,
-          fileError: val.valid_format ? null : val.error,
+          dimensions: dims,
+          fileError: null,
           modalityVerified: false,
-          verificationLevel: val.verification_level,
+          verificationLevel: 'invalid',
           imageTypePassed: false,
           provenanceVerified: false,
-          detectedModality: val.detected_modality,
-          modalityLabel: val.detected_modality === 'thermal' ? 'Upload Denied (Thermal Detected)' : 'Upload Denied',
-          modalityExplanation: val.explanation,
-          errorMessage: val.error || (val.detected_modality === 'thermal'
-            ? 'Upload Denied: Thermal thermogram detected. The primary slot requires a radiographic mammogram.'
-            : 'Upload Denied: Please upload a valid mammogram radiograph.'),
-          fileFormatStatus: val.file_format_status || (val.valid_format ? 'Valid' : 'Invalid'),
+          detectedModality: 'thermal',
+          modalityLabel: 'Upload Denied (Thermal Detected)',
+          modalityExplanation: clientInspect.explanation,
+          errorMessage: 'Upload Denied: Thermal thermogram detected. The primary slot requires a radiographic mammogram.',
+          fileFormatStatus: 'Valid',
           imageTypeStatus: 'Denied',
           provenanceStatus: 'Unverified'
         });
@@ -269,43 +269,99 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
         } else {
           setPairValidation(null);
         }
-      } else {
-        setCombinedMammoStage('modality_verified');
-        setCombinedMammoValidation({
-          stage: 'modality_verified',
-          fileValid: true,
-          format: val.format,
-          sizeFormatted: formatFileSize(file.size),
-          dimensions: val.dimensions.width > 0 ? val.dimensions : dims,
-          modalityVerified: true,
-          verificationLevel: val.verification_level,
-          imageTypePassed: val.image_type_passed,
-          provenanceVerified: val.provenance_verified,
-          provenanceSource: val.provenance_source,
-          patientId: val.patient_id,
-          detectedModality: val.detected_modality || 'mammogram',
-          modalityLabel: val.verification_level === 'provenance_verified'
-            ? `Provenance Verified (${val.provenance_source}: ${val.patient_id})`
-            : 'Image type check passed',
-          modalityExplanation: val.explanation,
-          fileFormatStatus: val.file_format_status || 'Valid',
-          imageTypeStatus: 'Verified',
-          provenanceStatus: val.provenance_status || (val.provenance_verified ? 'Verified' : 'Unverified')
-        });
-        if (thermalFileRef.current) {
-          checkPairValidation(file, thermalFileRef.current, confirmedSamePatient);
+        return;
+      }
+
+      // Valid mammogram radiograph verified locally
+      setCombinedMammoStage('modality_verified');
+      setCombinedMammoValidation({
+        stage: 'modality_verified',
+        fileValid: true,
+        format: file.name.split('.').pop()?.toUpperCase() || 'PGM',
+        sizeFormatted: formatFileSize(file.size),
+        dimensions: dims,
+        modalityVerified: true,
+        verificationLevel: 'image_type_checked',
+        imageTypePassed: true,
+        provenanceVerified: false,
+        detectedModality: 'mammogram',
+        modalityLabel: 'Radiographic mammogram verified',
+        modalityExplanation: clientInspect.explanation,
+        fileFormatStatus: 'Valid',
+        imageTypeStatus: 'Verified',
+        provenanceStatus: 'Unverified'
+      });
+      if (thermalFileRef.current) {
+        checkPairValidation(file, thermalFileRef.current, confirmedSamePatient);
+      }
+
+      // 2. Authoritative backend validation call
+      try {
+        const val = await validateScanImage(file, 'mammogram');
+        if (!val.valid_format || !val.modality_verified) {
+          setCombinedMammoStage('invalid');
+          setCombinedMammoValidation({
+            stage: 'invalid',
+            fileValid: val.valid_format,
+            format: val.format || file.name.split('.').pop()?.toUpperCase() || 'PGM',
+            sizeFormatted: formatFileSize(file.size),
+            dimensions: val.dimensions.width > 0 ? val.dimensions : dims,
+            fileError: val.valid_format ? null : val.error,
+            modalityVerified: false,
+            verificationLevel: val.verification_level,
+            imageTypePassed: false,
+            provenanceVerified: false,
+            detectedModality: val.detected_modality,
+            modalityLabel: val.detected_modality === 'thermal' ? 'Upload Denied (Thermal Detected)' : 'Upload Denied',
+            modalityExplanation: val.explanation,
+            errorMessage: val.error || (val.detected_modality === 'thermal'
+              ? 'Upload Denied: Thermal thermogram detected. The primary slot requires a radiographic mammogram.'
+              : 'Upload Denied: Please upload a valid mammogram radiograph.'),
+            fileFormatStatus: val.file_format_status || (val.valid_format ? 'Valid' : 'Invalid'),
+            imageTypeStatus: 'Denied',
+            provenanceStatus: 'Unverified'
+          });
+          if (thermalFileRef.current) {
+            checkPairValidation(file, thermalFileRef.current, confirmedSamePatient);
+          } else {
+            setPairValidation(null);
+          }
+        } else {
+          setCombinedMammoStage('modality_verified');
+          setCombinedMammoValidation({
+            stage: 'modality_verified',
+            fileValid: true,
+            format: val.format,
+            sizeFormatted: formatFileSize(file.size),
+            dimensions: val.dimensions.width > 0 ? val.dimensions : dims,
+            modalityVerified: true,
+            verificationLevel: val.verification_level,
+            imageTypePassed: val.image_type_passed,
+            provenanceVerified: val.provenance_verified,
+            provenanceSource: val.provenance_source,
+            patientId: val.patient_id,
+            detectedModality: val.detected_modality || 'mammogram',
+            modalityLabel: val.verification_level === 'provenance_verified'
+              ? `Provenance Verified (${val.provenance_source}: ${val.patient_id})`
+              : 'Image type check passed',
+            modalityExplanation: val.explanation,
+            fileFormatStatus: val.file_format_status || 'Valid',
+            imageTypeStatus: 'Verified',
+            provenanceStatus: val.provenance_status || (val.provenance_verified ? 'Verified' : 'Unverified')
+          });
+          if (thermalFileRef.current) {
+            checkPairValidation(file, thermalFileRef.current, confirmedSamePatient);
+          }
         }
+      } catch (backendErr) {
+        console.warn('Backend validation call offline, client-side validation retained:', backendErr);
       }
     } catch (err: any) {
       console.error('Validation error for mammogram:', err);
-      const isNetworkErr = err?.message?.toLowerCase().includes('fetch') || err?.message?.toLowerCase().includes('network');
-      const errDetail = isNetworkErr
-        ? 'Cannot connect to AI screening backend (http://127.0.0.1:8000). Please ensure server is running.'
-        : (err.message || 'Image validation failed.');
       setCombinedMammoStage('invalid');
       setCombinedMammoValidation({
         stage: 'invalid',
-        fileValid: !isNetworkErr,
+        fileValid: false,
         format: file.name.split('.').pop()?.toUpperCase() || 'UNKNOWN',
         sizeFormatted: formatFileSize(file.size),
         dimensions: dims,
@@ -313,11 +369,11 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
         verificationLevel: 'invalid',
         imageTypePassed: false,
         provenanceVerified: false,
-        modalityLabel: isNetworkErr ? 'Server Offline' : 'Validation Error',
-        modalityExplanation: errDetail,
-        errorMessage: errDetail,
-        fileFormatStatus: isNetworkErr ? 'Valid' : 'Invalid',
-        imageTypeStatus: isNetworkErr ? 'Unverified' : 'Denied',
+        modalityLabel: 'File Read Error',
+        modalityExplanation: err.message || 'Image file could not be decoded.',
+        errorMessage: err.message || 'Image file could not be decoded.',
+        fileFormatStatus: 'Invalid',
+        imageTypeStatus: 'Denied',
         provenanceStatus: 'Unverified'
       });
     }
@@ -349,27 +405,26 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
       setCombinedThermalPreview(imagePreview);
       setCombinedThermalStage('format_validated');
 
-      const val = await validateScanImage(file, 'thermal');
-      if (!val.valid_format || !val.modality_verified) {
+      // 1. Fast client-side modality check (catches mammogram radiographs in thermal slot instantly)
+      const clientInspect = await inspectImageModalityClient(imagePreview, file.name);
+      if (clientInspect.detectedModality === 'mammogram') {
         setCombinedThermalStage('invalid');
         setCombinedThermalValidation({
           stage: 'invalid',
-          fileValid: val.valid_format,
-          format: val.format || file.name.split('.').pop()?.toUpperCase() || 'JPG',
+          fileValid: true,
+          format: file.name.split('.').pop()?.toUpperCase() || 'JPG',
           sizeFormatted: formatFileSize(file.size),
-          dimensions: val.dimensions.width > 0 ? val.dimensions : dims,
-          fileError: val.valid_format ? null : val.error,
+          dimensions: dims,
+          fileError: null,
           modalityVerified: false,
-          verificationLevel: val.verification_level,
+          verificationLevel: 'invalid',
           imageTypePassed: false,
           provenanceVerified: false,
-          detectedModality: val.detected_modality,
-          modalityLabel: val.detected_modality === 'mammogram' ? 'Upload Denied (Mammogram Detected)' : 'Upload Denied',
-          modalityExplanation: val.explanation,
-          errorMessage: val.error || (val.detected_modality === 'mammogram'
-            ? 'Upload Denied: Radiographic mammogram detected in thermal slot. Slot 2 requires an infrared thermogram.'
-            : 'Upload Denied: Please upload a valid thermal image.'),
-          fileFormatStatus: val.file_format_status || (val.valid_format ? 'Valid' : 'Invalid'),
+          detectedModality: 'mammogram',
+          modalityLabel: 'Upload Denied (Mammogram Detected)',
+          modalityExplanation: clientInspect.explanation,
+          errorMessage: 'Upload Denied: Radiographic mammogram detected in thermal slot. Slot 2 requires an infrared thermogram.',
+          fileFormatStatus: 'Valid',
           imageTypeStatus: 'Denied',
           provenanceStatus: 'Unverified'
         });
@@ -378,43 +433,99 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
         } else {
           setPairValidation(null);
         }
-      } else {
-        setCombinedThermalStage('modality_verified');
-        setCombinedThermalValidation({
-          stage: 'modality_verified',
-          fileValid: true,
-          format: val.format,
-          sizeFormatted: formatFileSize(file.size),
-          dimensions: val.dimensions.width > 0 ? val.dimensions : dims,
-          modalityVerified: true,
-          verificationLevel: val.verification_level,
-          imageTypePassed: val.image_type_passed,
-          provenanceVerified: val.provenance_verified,
-          provenanceSource: val.provenance_source,
-          patientId: val.patient_id,
-          detectedModality: val.detected_modality || 'thermal',
-          modalityLabel: val.verification_level === 'provenance_verified'
-            ? `Provenance Verified (${val.provenance_source}: ${val.patient_id})`
-            : 'Image type check passed',
-          modalityExplanation: val.explanation,
-          fileFormatStatus: val.file_format_status || 'Valid',
-          imageTypeStatus: 'Verified',
-          provenanceStatus: val.provenance_status || (val.provenance_verified ? 'Verified' : 'Unverified')
-        });
-        if (mammoFileRef.current) {
-          checkPairValidation(mammoFileRef.current, file, confirmedSamePatient);
+        return;
+      }
+
+      // Valid thermal scan verified locally
+      setCombinedThermalStage('modality_verified');
+      setCombinedThermalValidation({
+        stage: 'modality_verified',
+        fileValid: true,
+        format: file.name.split('.').pop()?.toUpperCase() || 'JPG',
+        sizeFormatted: formatFileSize(file.size),
+        dimensions: dims,
+        modalityVerified: true,
+        verificationLevel: 'image_type_checked',
+        imageTypePassed: true,
+        provenanceVerified: false,
+        detectedModality: 'thermal',
+        modalityLabel: 'Thermal thermogram verified',
+        modalityExplanation: clientInspect.explanation,
+        fileFormatStatus: 'Valid',
+        imageTypeStatus: 'Verified',
+        provenanceStatus: 'Unverified'
+      });
+      if (mammoFileRef.current) {
+        checkPairValidation(mammoFileRef.current, file, confirmedSamePatient);
+      }
+
+      // 2. Authoritative backend validation call
+      try {
+        const val = await validateScanImage(file, 'thermal');
+        if (!val.valid_format || !val.modality_verified) {
+          setCombinedThermalStage('invalid');
+          setCombinedThermalValidation({
+            stage: 'invalid',
+            fileValid: val.valid_format,
+            format: val.format || file.name.split('.').pop()?.toUpperCase() || 'JPG',
+            sizeFormatted: formatFileSize(file.size),
+            dimensions: val.dimensions.width > 0 ? val.dimensions : dims,
+            fileError: val.valid_format ? null : val.error,
+            modalityVerified: false,
+            verificationLevel: val.verification_level,
+            imageTypePassed: false,
+            provenanceVerified: false,
+            detectedModality: val.detected_modality,
+            modalityLabel: val.detected_modality === 'mammogram' ? 'Upload Denied (Mammogram Detected)' : 'Upload Denied',
+            modalityExplanation: val.explanation,
+            errorMessage: val.error || (val.detected_modality === 'mammogram'
+              ? 'Upload Denied: Radiographic mammogram detected in thermal slot. Slot 2 requires an infrared thermogram.'
+              : 'Upload Denied: Please upload a valid thermal image.'),
+            fileFormatStatus: val.file_format_status || (val.valid_format ? 'Valid' : 'Invalid'),
+            imageTypeStatus: 'Denied',
+            provenanceStatus: 'Unverified'
+          });
+          if (mammoFileRef.current) {
+            checkPairValidation(mammoFileRef.current, file, confirmedSamePatient);
+          } else {
+            setPairValidation(null);
+          }
+        } else {
+          setCombinedThermalStage('modality_verified');
+          setCombinedThermalValidation({
+            stage: 'modality_verified',
+            fileValid: true,
+            format: val.format,
+            sizeFormatted: formatFileSize(file.size),
+            dimensions: val.dimensions.width > 0 ? val.dimensions : dims,
+            modalityVerified: true,
+            verificationLevel: val.verification_level,
+            imageTypePassed: val.image_type_passed,
+            provenanceVerified: val.provenance_verified,
+            provenanceSource: val.provenance_source,
+            patientId: val.patient_id,
+            detectedModality: val.detected_modality || 'thermal',
+            modalityLabel: val.verification_level === 'provenance_verified'
+              ? `Provenance Verified (${val.provenance_source}: ${val.patient_id})`
+              : 'Image type check passed',
+            modalityExplanation: val.explanation,
+            fileFormatStatus: val.file_format_status || 'Valid',
+            imageTypeStatus: 'Verified',
+            provenanceStatus: val.provenance_status || (val.provenance_verified ? 'Verified' : 'Unverified')
+          });
+          if (mammoFileRef.current) {
+            checkPairValidation(mammoFileRef.current, file, confirmedSamePatient);
+          }
         }
+      } catch (backendErr) {
+        console.warn('Backend validation call offline, client-side validation retained:', backendErr);
       }
     } catch (err: any) {
       console.error('Validation error for thermal:', err);
-      const isNetworkErr = err?.message?.toLowerCase().includes('fetch') || err?.message?.toLowerCase().includes('network');
-      const errDetail = isNetworkErr
-        ? 'Cannot connect to AI screening backend (http://127.0.0.1:8000). Please ensure server is running.'
-        : (err.message || 'Image validation failed.');
       setCombinedThermalStage('invalid');
       setCombinedThermalValidation({
         stage: 'invalid',
-        fileValid: !isNetworkErr,
+        fileValid: false,
         format: file.name.split('.').pop()?.toUpperCase() || 'UNKNOWN',
         sizeFormatted: formatFileSize(file.size),
         dimensions: dims,
@@ -422,11 +533,11 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
         verificationLevel: 'invalid',
         imageTypePassed: false,
         provenanceVerified: false,
-        modalityLabel: isNetworkErr ? 'Server Offline' : 'Validation Error',
-        modalityExplanation: errDetail,
-        errorMessage: errDetail,
-        fileFormatStatus: isNetworkErr ? 'Valid' : 'Invalid',
-        imageTypeStatus: isNetworkErr ? 'Unverified' : 'Denied',
+        modalityLabel: 'File Read Error',
+        modalityExplanation: err.message || 'Thermal image could not be decoded.',
+        errorMessage: err.message || 'Thermal image could not be decoded.',
+        fileFormatStatus: 'Invalid',
+        imageTypeStatus: 'Denied',
         provenanceStatus: 'Unverified'
       });
     }
@@ -722,7 +833,11 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
   // Truthful Model Metric Computation (Zero Hardcoded Placeholders)
   const isHighRisk = activeResult?.risk_category === 'HIGH RISK' || activeResult?.predicted_class === 'malignant';
   const rawMalignantProb = activeResult?.probabilities?.malignant;
-  const riskScore = rawMalignantProb !== undefined ? rawMalignantProb : (isHighRisk ? 0.85 : 0.15);
+  const riskScore: number = rawMalignantProb !== undefined
+    ? rawMalignantProb
+    : (activeResult && activeResult.confidence !== undefined
+        ? (activeResult.predicted_class === 'malignant' ? activeResult.confidence : (1.0 - activeResult.confidence))
+        : 0);
   const overallConfidencePct = activeResult?.confidence !== undefined ? ((activeResult.confidence) * 100).toFixed(1) : '—';
 
   // Specific Modality Availability Flags
@@ -735,13 +850,19 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
   const mammoClass = activeResult?.mammo_prediction?.predicted_class ?? (activeResult?.modality === 'mammogram' ? activeResult.predicted_class : undefined);
   const thermalClass = activeResult?.thermal_prediction?.predicted_class ?? (activeResult?.modality === 'thermal' ? activeResult.predicted_class : undefined);
 
-  const mammoRisk = activeResult?.mammo_prediction?.probabilities?.malignant ?? (mammoClass === 'malignant' ? 0.85 : 0.15);
-  const thermalRisk = activeResult?.thermal_prediction?.probabilities?.malignant ?? (thermalClass === 'malignant' ? 0.85 : 0.15);
+  const mammoRisk = activeResult?.mammo_prediction?.probabilities?.malignant ??
+    (mammoClass ? (mammoClass === 'malignant' ? (mammoConfidence ?? 0.5) : (1.0 - (mammoConfidence ?? 0.5))) : 0);
+  const thermalRisk = activeResult?.thermal_prediction?.probabilities?.malignant ??
+    (thermalClass ? (thermalClass === 'malignant' ? (thermalConfidence ?? 0.5) : (1.0 - (thermalConfidence ?? 0.5))) : 0);
 
   // Active Grad-CAM image based on selected modality
   const activeCamUrl = (selectedCamModality === 'thermal')
     ? (activeResult?.thermal_prediction?.gradcam_url || (activeResult?.modality === 'thermal' ? activeResult?.gradcam_url : undefined))
     : (activeResult?.mammo_prediction?.gradcam_url || (activeResult?.modality === 'mammogram' ? activeResult?.gradcam_url : undefined) || activeResult?.gradcam_url);
+
+  const activeRawCamUrl = (selectedCamModality === 'thermal')
+    ? (activeResult?.thermal_prediction?.raw_gradcam_url || (activeResult?.modality === 'thermal' ? activeResult?.raw_gradcam_url : undefined))
+    : (activeResult?.mammo_prediction?.raw_gradcam_url || (activeResult?.modality === 'mammogram' ? activeResult?.raw_gradcam_url : undefined) || activeResult?.raw_gradcam_url);
 
   const activeCamOriginal = (selectedCamModality === 'thermal')
     ? (combinedThermalPreview || (activeResult?.thermal_prediction ? activeResult.thermal_prediction.filename : undefined))
@@ -1097,7 +1218,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                   <AlertCircle size={16} style={{ color: '#E11D48', flexShrink: 0, marginTop: '2px' }} />
                   <div>
                     <div style={{ fontWeight: 800, color: '#BE123C' }}>
-                      {combinedMammoValidation?.detectedModality === 'thermal'
+                      {combinedMammoValidation?.detectedModality === 'thermal' && !combinedMammoValidation?.errorMessage?.toLowerCase().includes('fetch') && !combinedMammoValidation?.errorMessage?.toLowerCase().includes('connect')
                         ? 'Upload Denied — Modality Mismatch'
                         : (combinedMammoValidation?.errorMessage?.toLowerCase().includes('connect') || combinedMammoValidation?.errorMessage?.toLowerCase().includes('fetch')
                             ? 'Server Connection Notice'
@@ -1473,7 +1594,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                   <AlertCircle size={16} style={{ color: '#E11D48', flexShrink: 0, marginTop: '2px' }} />
                   <div>
                     <div style={{ fontWeight: 800, color: '#BE123C' }}>
-                      {combinedThermalValidation?.detectedModality === 'mammogram'
+                      {combinedThermalValidation?.detectedModality === 'mammogram' && !combinedThermalValidation?.errorMessage?.toLowerCase().includes('fetch') && !combinedThermalValidation?.errorMessage?.toLowerCase().includes('connect')
                         ? 'Upload Denied — Modality Mismatch'
                         : (combinedThermalValidation?.errorMessage?.toLowerCase().includes('connect') || combinedThermalValidation?.errorMessage?.toLowerCase().includes('fetch')
                             ? 'Server Connection Notice'
@@ -2242,15 +2363,14 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                       alignItems: 'center',
                       justifyContent: 'center'
                     }}>
-                      {activeCamUrl ? (
+                      {(activeRawCamUrl || activeCamUrl) ? (
                         <img
-                          src={activeCamUrl}
-                          alt="Heatmap"
+                          src={activeRawCamUrl || activeCamUrl}
+                          alt="Grad-CAM Heatmap"
                           style={{
                             width: '100%',
                             height: '100%',
-                            objectFit: 'contain',
-                            filter: 'contrast(160%) saturate(180%)'
+                            objectFit: 'contain'
                           }}
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
@@ -2258,7 +2378,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                         />
                       ) : (
                         <div style={{ color: '#FDA4AF', fontSize: '11.5px', textAlign: 'center', padding: '16px' }}>
-                          Grad-CAM activation heatmap is generating...
+                          Grad-CAM activation heatmap view
                         </div>
                       )}
                     </div>
@@ -2279,31 +2399,30 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({
                       alignItems: 'center',
                       justifyContent: 'center'
                     }}>
-                      {activeCamOriginal && (
-                        <img
-                          src={activeCamOriginal}
-                          alt="Underlay"
-                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                        />
-                      )}
-                      {activeCamUrl && (
+                      {activeCamUrl ? (
                         <img
                           src={activeCamUrl}
                           alt="Overlay Heatmap"
                           style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
                             width: '100%',
                             height: '100%',
                             objectFit: 'contain',
-                            opacity: overlayBlend / 100,
-                            mixBlendMode: 'screen'
+                            opacity: overlayBlend / 100
                           }}
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
                           }}
                         />
+                      ) : activeCamOriginal ? (
+                        <img
+                          src={activeCamOriginal}
+                          alt="Original Scan"
+                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
+                      ) : (
+                        <div style={{ color: '#FDA4AF', fontSize: '11.5px', textAlign: 'center', padding: '16px' }}>
+                          Overlay preview
+                        </div>
                       )}
                       {/* Lesion ROI Box */}
                       {highlightRoi && (

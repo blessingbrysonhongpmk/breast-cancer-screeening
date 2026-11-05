@@ -115,6 +115,7 @@ class AnalysisResponse(BaseModel):
     confidence: Optional[float] = None
     probabilities: Optional[Dict[str, float]] = None
     gradcam_url: Optional[str] = None
+    raw_gradcam_url: Optional[str] = None
     model_architecture: Optional[str] = None
     message: str
     recommendation: str
@@ -258,18 +259,12 @@ _init_manifest_lookups()
 # Model Management & Safe Loader
 # ============================================================================
 
-def get_checkpoint_path_for_modality(modality: str) -> Optional[Path]:
-    """Finds genuine PyTorch checkpoint for the given modality.
-
-    Priority for 'combined':
-      1. cross_attention_fusion.pt  (genuinely trained CrossAttentionFusionClassifier)
-      2. ensemble_fusion.pt         (ProbabilisticEnsemble — used as fallback)
-      3. fusion_resnet50.pt / multimodal_resnet50.pt (legacy concatenation fusion)
-    """
+def get_checkpoint_candidates_for_modality(modality: str):
+    """Returns candidate checkpoint paths for the given modality in priority order."""
     if not MODELS_DIR.exists():
-        return None
+        return []
     if modality in {"combined", "fusion", "multimodal", "cross_attention"}:
-        # Prefer cross-attention model (most recent genuine training)
+        candidates = []
         for name in [
             "cross_attention_fusion.pt",
             "ensemble_fusion.pt",
@@ -278,121 +273,138 @@ def get_checkpoint_path_for_modality(modality: str) -> Optional[Path]:
         ]:
             p = MODELS_DIR / name
             if p.exists():
-                return p
-        candidates = sorted(MODELS_DIR.glob("*fusion*.pt")) or sorted(MODELS_DIR.glob("*multimodal*.pt"))
-        return candidates[0] if candidates else None
+                candidates.append(p)
+        return candidates
 
     candidates = sorted(MODELS_DIR.glob(f"{modality}*.pt"))
+    return candidates
+
+
+def get_checkpoint_path_for_modality(modality: str):
+    """Finds genuine PyTorch checkpoint for the given modality."""
+    candidates = get_checkpoint_candidates_for_modality(modality)
     return candidates[0] if candidates else None
 
 
 def get_modality_model(modality: str):
     """Loads and caches verified PyTorch ResNet-50 weights for inference.
     Executes a verification forward pass to ensure checkpoint compatibility before caching.
+    Tries candidate checkpoints in priority order with graceful fallback on memory constraints.
     """
     if modality in LOADED_MODELS:
         return LOADED_MODELS[modality]
 
-    ckpt_path = get_checkpoint_path_for_modality(modality)
-    if not ckpt_path:
+    candidates = get_checkpoint_candidates_for_modality(modality)
+    if not candidates:
         return None
 
-    try:
-        import torch
-        device = torch.device("cpu")
-        checkpoint = torch.load(ckpt_path, map_location=device, weights_only=False)
+    import gc
+    import torch
+    device = torch.device("cpu")
 
-        arch = checkpoint.get("model_architecture", "") if isinstance(checkpoint, dict) else ""
+    for ckpt_path in candidates:
+        try:
+            gc.collect()
+            checkpoint = torch.load(ckpt_path, map_location=device, weights_only=False)
+            arch = checkpoint.get("model_architecture", "") if isinstance(checkpoint, dict) else ""
 
-        if modality in {"combined", "fusion", "multimodal", "cross_attention"}:
-            if arch == "CrossAttentionFusionClassifier":
-                from src.fusion.cross_attention_model import CrossAttentionFusionClassifier
-                embed_dim = checkpoint.get("embed_dim", 512)
-                num_heads = checkpoint.get("num_heads", 4)
-                model = CrossAttentionFusionClassifier(
-                    num_classes=3, embed_dim=embed_dim, num_heads=num_heads, dropout=0.0
-                )
+            if modality in {"combined", "fusion", "multimodal", "cross_attention"}:
+                if arch == "CrossAttentionFusionClassifier":
+                    from src.fusion.cross_attention_model import CrossAttentionFusionClassifier
+                    embed_dim = checkpoint.get("embed_dim", 512)
+                    num_heads = checkpoint.get("num_heads", 4)
+                    model = CrossAttentionFusionClassifier(
+                        num_classes=3, embed_dim=embed_dim, num_heads=num_heads, dropout=0.0
+                    )
+                    model.load_state_dict(checkpoint["model_state_dict"])
+                    model.eval()
+
+                    # Verify forward pass (features-based)
+                    with torch.no_grad():
+                        dummy_fm = torch.zeros((1, 2048))
+                        dummy_ft = torch.zeros((1, 2048))
+                        out = model.forward_from_features(dummy_fm, dummy_ft)
+                        if out.shape != (1, 3):
+                            raise ValueError(f"Incompatible output shape {out.shape}, expected (1, 3)")
+
+                    LOADED_MODELS[modality] = model
+                    LOADED_MODELS["combined"] = model
+                    logger.info(
+                        f"Verified and loaded CrossAttentionFusionClassifier from {ckpt_path.name} "
+                        f"[embed_dim={embed_dim}, heads={num_heads}]"
+                    )
+                    return model
+
+                elif arch == "ProbabilisticEnsemble":
+                    from src.fusion.cross_attention_model import ProbabilisticEnsemble
+                    model = ProbabilisticEnsemble(num_classes=3)
+                    model.load_state_dict(checkpoint["model_state_dict"])
+                    model.eval()
+                    LOADED_MODELS[modality] = model
+                    LOADED_MODELS["combined"] = model
+                    logger.info(f"Verified and loaded ProbabilisticEnsemble from {ckpt_path.name}")
+                    return model
+
+                else:
+                    # Legacy concatenation fusion
+                    from src.fusion.model import MultimodalFusionClassifier
+                    model = MultimodalFusionClassifier(num_classes=3, pretrained=False)
+                    model.load_state_dict(checkpoint["model_state_dict"])
+                    model.eval()
+
+                    with torch.no_grad():
+                        dummy_m = torch.zeros((1, 3, 224, 224))
+                        dummy_t = torch.zeros((1, 3, 224, 224))
+                        out = model(dummy_m, dummy_t)
+                        if out.shape != (1, 3):
+                            raise ValueError(f"Incompatible output shape {out.shape}, expected (1, 3)")
+
+                    LOADED_MODELS[modality] = model
+                    LOADED_MODELS["combined"] = model
+                    logger.info(f"Verified and loaded PyTorch Multimodal Fusion model from {ckpt_path.name}")
+                    return model
+
+            elif modality == "mammogram":
+                from src.mammogram.model import MammogramClassifier
+                model = MammogramClassifier(num_classes=3, pretrained=False)
                 model.load_state_dict(checkpoint["model_state_dict"])
                 model.eval()
 
-                # Verify forward pass (features-based)
                 with torch.no_grad():
-                    dummy_fm = torch.zeros((1, 2048))
-                    dummy_ft = torch.zeros((1, 2048))
-                    out = model.forward_from_features(dummy_fm, dummy_ft)
+                    dummy_input = torch.zeros((1, 3, 224, 224))
+                    out = model(dummy_input)
                     if out.shape != (1, 3):
                         raise ValueError(f"Incompatible output shape {out.shape}, expected (1, 3)")
 
                 LOADED_MODELS[modality] = model
-                LOADED_MODELS["combined"] = model
-                logger.info(
-                    f"Verified & loaded CrossAttentionFusionClassifier from {ckpt_path.name} "
-                    f"[embed_dim={embed_dim}, heads={num_heads}]"
-                )
-                return model
-
-            elif arch == "ProbabilisticEnsemble":
-                from src.fusion.cross_attention_model import ProbabilisticEnsemble
-                model = ProbabilisticEnsemble(num_classes=3)
-                model.load_state_dict(checkpoint["model_state_dict"])
-                model.eval()
-                LOADED_MODELS[modality] = model
-                LOADED_MODELS["combined"] = model
-                logger.info(f"Verified & loaded ProbabilisticEnsemble from {ckpt_path.name}")
+                logger.info(f"Verified and loaded PyTorch {modality} model from {ckpt_path.name}")
                 return model
 
             else:
-                # Legacy concatenation fusion
-                from src.fusion.model import MultimodalFusionClassifier
-                model = MultimodalFusionClassifier(num_classes=3, pretrained=False)
+                from src.thermal.model import ThermalClassifier
+                model = ThermalClassifier(num_classes=3, pretrained=False)
                 model.load_state_dict(checkpoint["model_state_dict"])
                 model.eval()
 
                 with torch.no_grad():
-                    dummy_m = torch.zeros((1, 3, 224, 224))
-                    dummy_t = torch.zeros((1, 3, 224, 224))
-                    out = model(dummy_m, dummy_t)
+                    dummy_input = torch.zeros((1, 3, 224, 224))
+                    out = model(dummy_input)
                     if out.shape != (1, 3):
                         raise ValueError(f"Incompatible output shape {out.shape}, expected (1, 3)")
 
                 LOADED_MODELS[modality] = model
-                LOADED_MODELS["combined"] = model
-                logger.info(f"Verified & loaded PyTorch Multimodal Fusion model from {ckpt_path.name}")
+                logger.info(f"Verified and loaded PyTorch {modality} model from {ckpt_path.name}")
                 return model
-        elif modality == "mammogram":
-            from src.mammogram.model import MammogramClassifier
-            model = MammogramClassifier(num_classes=3, pretrained=False)
-            model.load_state_dict(checkpoint["model_state_dict"])
-            model.eval()
 
-            # Strict execution verification: verify forward pass before confirming readiness
-            with torch.no_grad():
-                dummy_input = torch.zeros((1, 3, 224, 224))
-                out = model(dummy_input)
-                if out.shape != (1, 3):
-                    raise ValueError(f"Incompatible output shape {out.shape}, expected (1, 3)")
+        except Exception as ex:
+            logger.warning(
+                f"Failed to load/verify model from {ckpt_path.name}: {ex}. Trying next candidate..."
+            )
+            gc.collect()
+            continue
 
-            LOADED_MODELS[modality] = model
-            logger.info(f"Verified & loaded PyTorch {modality} model from {ckpt_path.name}")
-            return model
-        else:
-            from src.thermal.model import ThermalClassifier
-            model = ThermalClassifier(num_classes=3, pretrained=False)
-            model.load_state_dict(checkpoint["model_state_dict"])
-            model.eval()
-
-            with torch.no_grad():
-                dummy_input = torch.zeros((1, 3, 224, 224))
-                out = model(dummy_input)
-                if out.shape != (1, 3):
-                    raise ValueError(f"Incompatible output shape {out.shape}, expected (1, 3)")
-
-            LOADED_MODELS[modality] = model
-            logger.info(f"Verified & loaded PyTorch {modality} model from {ckpt_path.name}")
-            return model
-    except Exception as ex:
-        logger.error(f"Failed to load/verify model from {ckpt_path}: {ex}")
-        return None
+    logger.error(f"No viable checkpoint could be loaded for modality '{modality}'.")
+    return None
 
 
 def sanitize_filename(filename: Optional[str]) -> str:
@@ -1036,7 +1048,7 @@ async def _process_modality_inference(
             input_tensor = transform(pil_img.convert("RGB")).unsqueeze(0)
 
         from src.evaluation.metrics import compute_prediction_uncertainty, predict_with_tta
-        from src.explainability.gradcam import GradCAM, apply_colormap_to_cam, extract_cam_roi
+        from src.explainability.gradcam import GradCAM, apply_colormap_to_cam, generate_cam_images, extract_cam_roi
 
         # Forward pass for class probabilities (supports optional Test-Time Augmentation)
         with torch.no_grad():
@@ -1062,10 +1074,13 @@ async def _process_modality_inference(
         # Quantitative ROI bounding box & attention focus localization
         roi_info = extract_cam_roi(cam_np, original_size=(width, height), threshold_ratio=0.60)
 
-        # Save blended heatmap
-        blended = apply_colormap_to_cam(cam_np, pil_img, alpha=0.45)
-        cam_filename = f"cam_{uuid.uuid4().hex[:12]}.jpg"
+        # Save blended heatmap and raw colormap heatmap
+        blended, raw_cam = generate_cam_images(cam_np, pil_img, alpha=0.45)
+        _uid = uuid.uuid4().hex[:12]
+        cam_filename = f"cam_{_uid}.jpg"
+        raw_cam_filename = f"cam_raw_{_uid}.jpg"
         blended.save(HEATMAPS_DIR / cam_filename, "JPEG", quality=90)
+        raw_cam.save(HEATMAPS_DIR / raw_cam_filename, "JPEG", quality=90)
 
         record_entry = {
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -1084,6 +1099,7 @@ async def _process_modality_inference(
                 "malignant": round(float(probs[2]), 4)
             },
             "gradcam_url": f"/api/gradcam-image/{cam_filename}",
+            "raw_gradcam_url": f"/api/gradcam-image/{raw_cam_filename}",
             "model_architecture": "ResNet-50 Deep ConvNet",
             "predictive_entropy": uncertainty_info["entropy"],
             "uncertainty_score": uncertainty_info["uncertainty_score"],
@@ -1113,6 +1129,7 @@ async def _process_modality_inference(
                 "malignant": round(float(probs[2]), 4)
             },
             gradcam_url=f"/api/gradcam-image/{cam_filename}",
+            raw_gradcam_url=f"/api/gradcam-image/{raw_cam_filename}",
             model_architecture="ResNet-50 Deep ConvNet",
             predictive_entropy=uncertainty_info["entropy"],
             uncertainty_score=uncertainty_info["uncertainty_score"],
@@ -1319,24 +1336,40 @@ async def analyze_combined_images(
     fusion_model.eval()
 
     # Detect architecture type and run appropriate forward pass
-    from src.fusion.cross_attention_model import CrossAttentionFusionClassifier as _CAFC
-    _is_cross_attention = isinstance(fusion_model, _CAFC)
-    _arch_label = "Cross-Attention Dual-Branch ResNet-50 Fusion" if _is_cross_attention else "Dual-Branch ResNet-50 Multimodal Fusion Network"
-    _data_note = (
-        "RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + "
-        "Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only."
-        if _is_cross_attention else None
+    from src.fusion.cross_attention_model import (
+        CrossAttentionFusionClassifier as _CAFC,
+        ProbabilisticEnsemble as _PE,
     )
+    _is_cross_attention = isinstance(fusion_model, _CAFC)
+    _is_ensemble = isinstance(fusion_model, _PE)
+    if _is_cross_attention:
+        _arch_label = "Cross-Attention Dual-Branch ResNet-50 Fusion"
+        _data_note = (
+            "RESEARCH DISCLOSURE: Label-stratified cross-cohort pairs (MIAS mammograms + "
+            "Mendeley/DMR-IR thermograms). NOT genuine same-patient multimodal data. Research use only."
+        )
+    elif _is_ensemble:
+        _arch_label = "Probabilistic Ensemble (Alpha-weighted Dual-Branch)"
+        _data_note = "RESEARCH DISCLOSURE: Alpha-weighted ensemble of independent ResNet-50 models."
+    else:
+        _arch_label = "Dual-Branch ResNet-50 Multimodal Fusion Network"
+        _data_note = None
 
     with torch.no_grad():
         if _is_cross_attention:
-            # CrossAttentionFusionClassifier: pre-extract features then fuse
             fm = fusion_model.mammo_backbone(xm).squeeze(0)
             ft = fusion_model.thermal_backbone(xt).squeeze(0)
             logits = fusion_model.forward_from_features(fm.unsqueeze(0), ft.unsqueeze(0))
+            probs = torch.softmax(logits, dim=1)[0].numpy()
+        elif _is_ensemble:
+            mammo_m = get_modality_model("mammogram")
+            thermal_m = get_modality_model("thermal")
+            pm = torch.softmax(mammo_m(xm), dim=1)
+            pt = torch.softmax(thermal_m(xt), dim=1)
+            probs = fusion_model(pm, pt)[0].numpy()
         else:
             logits = fusion_model(xm, xt)
-        probs = torch.softmax(logits, dim=1)[0].numpy()
+            probs = torch.softmax(logits, dim=1)[0].numpy()
 
     class_names = ["normal", "benign", "malignant"]
     pred_idx = int(np.argmax(probs))
@@ -1348,7 +1381,7 @@ async def analyze_combined_images(
     gradcam_url = None
     try:
         import time
-        from src.explainability.gradcam import MultimodalGradCAM, apply_colormap_to_cam
+        from src.explainability.gradcam import MultimodalGradCAM, apply_colormap_to_cam, generate_cam_images
 
         if _is_cross_attention:
             # CrossAttentionFusionClassifier uses feature-level inference (backbone frozen).
@@ -1376,6 +1409,12 @@ async def analyze_combined_images(
                     p.requires_grad_(False)
                 fusion_model.zero_grad(set_to_none=True)
                 gc.collect()
+        elif _is_ensemble:
+            mammo_m = get_modality_model("mammogram")
+            thermal_m = get_modality_model("thermal")
+            from src.explainability.gradcam import GradCAM
+            cam_m, _, _ = GradCAM(mammo_m, mammo_m.layer4[-1]).generate(xm, target_class=pred_idx)
+            cam_t, _, _ = GradCAM(thermal_m, thermal_m.layer4[-1]).generate(xt, target_class=pred_idx)
         else:
             mgc = MultimodalGradCAM(
                 fusion_model,
@@ -1384,18 +1423,25 @@ async def analyze_combined_images(
             )
             cam_m, cam_t, _, _ = mgc.generate(xm, xt, target_class=pred_idx)
 
-        # Blend onto mammogram and thermal scans
-        blended_m = apply_colormap_to_cam(cam_m, mammo_img.resize((224, 224)))
-        blended_t = apply_colormap_to_cam(cam_t, thermal_img.resize((224, 224)))
+        # Blend onto mammogram and thermal scans (overlay + raw)
+        blended_m, raw_m = generate_cam_images(cam_m, mammo_img.resize((224, 224)))
+        blended_t, raw_t = generate_cam_images(cam_t, thermal_img.resize((224, 224)))
 
-        # Stitch side-by-side into a single combined explanation panel
+        # Stitch side-by-side into combined explanation panels
         stitched = Image.new("RGB", (448, 224))
         stitched.paste(blended_m, (0, 0))
         stitched.paste(blended_t, (224, 0))
 
+        stitched_raw = Image.new("RGB", (448, 224))
+        stitched_raw.paste(raw_m, (0, 0))
+        stitched_raw.paste(raw_t, (224, 0))
+
         cam_path = HEATMAPS_DIR / f"{analysis_id}.jpg"
+        raw_cam_path = HEATMAPS_DIR / f"raw_{analysis_id}.jpg"
         stitched.save(cam_path, format="JPEG", quality=90)
+        stitched_raw.save(raw_cam_path, format="JPEG", quality=90)
         gradcam_url = f"/api/gradcam-image/{analysis_id}.jpg"
+        raw_gradcam_url = f"/api/gradcam-image/raw_{analysis_id}.jpg"
     except Exception as ex:
         logger.warning(f"Dual Grad-CAM generation failed for combined analysis {analysis_id}: {ex}")
 
@@ -1429,6 +1475,7 @@ async def analyze_combined_images(
             "malignant": round(float(probs[2]), 4)
         },
         "gradcam_url": gradcam_url,
+        "raw_gradcam_url": raw_gradcam_url if 'raw_gradcam_url' in locals() else gradcam_url,
         "model_architecture": _arch_label,
         "data_note": _data_note,
         "predictive_entropy": uncertainty_info["entropy"],
@@ -1452,6 +1499,7 @@ async def analyze_combined_images(
         confidence=round(confidence, 4),
         probabilities=record["probabilities"],
         gradcam_url=gradcam_url,
+        raw_gradcam_url=raw_gradcam_url if 'raw_gradcam_url' in locals() else gradcam_url,
         model_architecture=_arch_label,
         predictive_entropy=uncertainty_info["entropy"],
         uncertainty_score=uncertainty_info["uncertainty_score"],
@@ -1475,8 +1523,9 @@ async def validate_scan_image(
     norm_expected = expected_modality.lower().strip()
     suffix = Path(safe_name).suffix.lower()
 
-    allowed_exts = {".png", ".jpg", ".jpeg", ".pgm"} if norm_expected == "mammogram" else {".png", ".jpg", ".jpeg"}
-    if suffix not in allowed_exts:
+    allowed_exts = {".png", ".jpg", ".jpeg", ".pgm", ".webp", ".bmp", ".jfif", ".tif", ".tiff"}
+    # If suffix is explicitly provided and invalid for medical scans, reject unless PIL reads it
+    if suffix and suffix not in allowed_exts:
         err_msg = MAMMOGRAM_ERROR_MSG if norm_expected == "mammogram" else THERMAL_ERROR_MSG
         return ImageValidationResponse(
             valid_format=False,
@@ -1491,7 +1540,7 @@ async def validate_scan_image(
             provenance_verified=False,
             provenance_source=None,
             patient_id=None,
-            explanation=f"Unsupported file format '{suffix}'.",
+            explanation=f"Unsupported file extension '{suffix}'. Supported: PNG, JPG, JPEG, PGM, WEBP, BMP.",
             error=err_msg,
             file_format_status="Invalid",
             image_type_status="Unverified",
@@ -1600,11 +1649,11 @@ async def validate_scan_image(
     if norm_expected == "mammogram":
         is_verified, modality_expl = validate_mammogram_image(pil_img, safe_name)
         err = None if is_verified else modality_expl
-        detected = raw_detected
+        detected = "mammogram" if is_verified else raw_detected
     else:
         is_verified, modality_expl = validate_thermal_image(pil_img, safe_name)
         err = None if is_verified else modality_expl
-        detected = raw_detected
+        detected = "thermal" if is_verified else raw_detected
 
     # Evaluate the 4 evidence levels:
     # 1. File format validated (already passed)
@@ -1980,7 +2029,7 @@ def export_research_report(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 """
 
-    report_md = f"""# MammoFusion-XAI — Screening Examination Clinical Report
+    report_md = f"""# MammoFusion-XAI — Research Study Analysis Report
 **Case Reference ID:** `{case_id}`  
 **Generated At:** {timestamp}  
 **Platform:** MammoFusion-XAI Breast Imaging Research Platform (v1.0.0)  

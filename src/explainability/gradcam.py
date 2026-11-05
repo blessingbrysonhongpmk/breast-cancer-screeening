@@ -133,6 +133,39 @@ def apply_colormap_to_cam(
     return blended
 
 
+def generate_cam_images(
+    heatmap: np.ndarray,
+    original_pil: Image.Image,
+    alpha: float = 0.45
+) -> Tuple[Image.Image, Image.Image]:
+    """Generates both a blended heatmap overlay on the original image AND a standalone raw colormap heatmap.
+
+    Args:
+        heatmap: 2D numpy array [H, W] normalized to [0.0, 1.0].
+        original_pil: Original PIL image to blend onto.
+        alpha: Overlay blend weight [0.0, 1.0].
+
+    Returns:
+        (blended_img, raw_heatmap_img): Tuple of two PIL RGB images.
+    """
+    import matplotlib.cm as cm
+    import matplotlib
+
+    try:
+        colormap = matplotlib.colormaps["turbo"]
+    except Exception:
+        colormap = cm.get_cmap("turbo")
+
+    colored = colormap(heatmap)[:, :, :3]  # Drop alpha, float RGB [0, 1]
+    colored_uint8 = (colored * 255).astype(np.uint8)
+    raw_cam_pil = Image.fromarray(colored_uint8).resize(original_pil.size, Image.BILINEAR)
+
+    orig_rgb = original_pil.convert("RGB")
+    blended = Image.blend(orig_rgb, raw_cam_pil, alpha=alpha)
+
+    return blended, raw_cam_pil
+
+
 def extract_cam_roi(
     heatmap: np.ndarray,
     original_size: Tuple[int, int],
